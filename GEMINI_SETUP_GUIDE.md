@@ -4,24 +4,39 @@ This guide explains how to set up and test the Gemini AI integration for intelli
 
 ## Overview
 
-The document analyzer uses Google's Gemini AI to extract structured information from legal documents and images. It provides:
+The document analyzer uses Google's Gemini AI to extract structured information from legal documents, PDFs, and images. It provides:
 
-- **OCR capabilities** for image documents (PNG, JPG, WebP)
+- **Multi-format support**: PDF, image (PNG, JPG, WebP), and text documents
+- **Advanced PDF handling**: Text extraction for text-based PDFs, vision analysis for image-based/scanned PDFs
 - **Intelligent text extraction** from legal demand letters
-- **Structured data extraction**: plaintiff names, attorney details, deadlines, settlement amounts, WCAG violations
+- **Structured data extraction**: plaintiff names, attorney details, deadlines, settlement amounts, WCAG violations, legal analysis
 - **Confidence scores** for each extracted field
+- **Model selection**: Choose between Gemini 2.5 Flash (fast) or Gemini 2.5 Pro (detailed)
+- **Analysis depth**: Standard or detailed analysis modes
 - **Automatic fallback** to regex-based analysis if Gemini is unavailable
 
-## Current Limitations
+## Current Capabilities
 
 ### PDF Support
-PDFs are **not currently supported** due to API limitations. To analyze a PDF document:
-1. Convert it to an image format (PNG or JPG)
-2. Take a screenshot of the PDF
-3. Use a PDF-to-image converter tool
+PDFs are **fully supported** with intelligent handling:
+- **Text-based PDFs**: Automatic text extraction and analysis
+- **Image-based/Scanned PDFs**: Direct vision analysis via Gemini API
+- **Hybrid approach**: Falls back to regex analysis if text extraction is successful but Gemini is unavailable
 
 ### Image Support
-Images **require Gemini API** to be configured. Without Gemini, image analysis will fail with a clear error message.
+Images (PNG, JPG, WebP) are **fully supported** via Gemini's vision capabilities:
+- **Requires Gemini API** to be configured
+- Without Gemini API, image analysis will return a clear error message
+- Supports OCR and intelligent content extraction from scanned documents
+
+### Model Selection
+Two Gemini models available:
+- **gemini-2.5-flash** (default): Faster, cost-effective for standard analysis
+- **gemini-2.5-pro**: More detailed analysis with enhanced accuracy
+
+### Analysis Modes
+- **Standard**: Quick extraction of key information
+- **Detailed**: Comprehensive legal analysis including risk assessment, potential defenses, and credibility markers
 
 ## Setup Instructions
 
@@ -60,35 +75,58 @@ You need to add the `GEMINI_API_KEY` environment variable to your Supabase proje
 
 The debug information panel will show:
 
-- **Analysis Method**: Should be `gemini-vision` for images or `gemini-text` for text
-- **AI Model**: Should be `gemini-1.5-flash` when Gemini is working
-- **Gemini API Key**: Should show "Configured" if the key is set correctly
-- **File Type**: Confirms the type of file being analyzed
+- **Analysis Method**: 
+  - `gemini-vision` for images
+  - `gemini-text` for text documents
+  - `regex-pdf` for PDFs analyzed without Gemini
+  - `regex` for fallback text analysis
+- **AI Model**: 
+  - `gemini-2.5-flash` (default, faster)
+  - `gemini-2.5-pro` (more detailed analysis)
+- **Has Gemini Key**: Shows `true` if API key is configured
+- **File Type**: Confirms the MIME type being analyzed
+- **Model Preference**: Shows selected model (flash or pro)
+- **Analysis Depth**: Shows analysis mode (standard or detailed)
 
 ### Console Logs
 
 Watch for these log messages:
 
-**Success:**
+**Success (Image):**
 ```
 [DEBUG] Processing test.jpg (image/jpeg)
-[DEBUG] Gemini API Key configured: Yes
-[DEBUG] Attempting Gemini analysis for image...
+[GEMINI] Using model: gemini-2.5-flash
+[GEMINI] Analysis depth: standard
+[GEMINI] Analyzing image with vision model
 [DEBUG] Gemini raw response length: 1234
 [SUCCESS] Parsed Gemini response successfully
-[SUCCESS] Gemini analysis completed
+[SUCCESS] Gemini vision analysis completed
+```
+
+**Success (PDF with text extraction):**
+```
+[PDF] Extracted 1523 characters from PDF
+[GEMINI] Using model: gemini-2.5-flash
+[GEMINI] Analyzing PDF with 1523 characters of extracted text
+[SUCCESS] Gemini text analysis completed
 ```
 
 **API Key Not Configured:**
 ```
-[DEBUG] Gemini API Key configured: No
+[GEMINI] API key not configured, falling back to regex analysis
+[INFO] Using regex analysis (Gemini not available)
+```
+
+**Image without API Key:**
+```
 [ERROR] No Gemini API key configured - cannot analyze images
+Response: {"error": "Image analysis requires AI configuration..."}
 ```
 
 **API Error:**
 ```
-[ERROR] Gemini API error: 400
-[ERROR] Response: {"error": {"message": "API key not valid..."}}
+[ERROR] Gemini API call failed: <error details>
+[ERROR] Error message: <specific message>
 ```
 
 ## Troubleshooting
@@ -99,38 +137,41 @@ Watch for these log messages:
 
 **Solution**: Follow Step 2 above to configure the API key in your Supabase project settings.
 
-### Error: "Image analysis failed. Gemini API may be having issues"
+### Error: "Analysis failed" or Gemini API errors
 
 **Possible causes**:
 1. Invalid API key
 2. API quota exceeded
 3. Gemini API service issue
-4. Image file is too large or corrupted
+4. File is too large (>20MB)
+5. Unsupported file format
 
 **Solutions**:
-- Verify your API key is correct
+- Verify your API key is correct in Supabase Edge Function secrets
 - Check your [Google AI Studio quota](https://makersuite.google.com/app/apikey)
-- Try a different, smaller image
+- Try a smaller file or compress the image/PDF
 - Check console logs for specific error messages
+- Verify file format is supported (PDF, PNG, JPG, WebP, TXT)
 
-### Error: "PDF analysis is currently limited"
+### PDFs Return Regex Results Instead of Gemini
 
-**Cause**: You're trying to upload a PDF file.
-
-**Solution**: Convert the PDF to an image format first. You can:
-- Take a screenshot of the PDF
-- Use an online PDF-to-image converter
-- Use a tool like Adobe Acrobat or Preview (Mac) to export as image
-
-### Images Return Regex Results Instead of Gemini
-
-**Cause**: Gemini API key is not properly configured or is invalid.
+**Cause**: Either Gemini API key is not configured, or the PDF text extraction was successful and Gemini fallback occurred.
 
 **Solution**:
-1. Verify the key is correctly set in Supabase
-2. Check that there are no extra spaces or characters
+1. Check console logs - if you see `[GEMINI]` logs, Gemini is working
+2. If you see `[INFO] Using regex analysis`, verify API key is set
+3. Text-based PDFs may successfully extract text and use regex as fallback if Gemini fails
+4. For image-based PDFs, Gemini is required - ensure API key is configured
+
+### Images Return Error Instead of Processing
+
+**Cause**: Gemini API key is not configured (images require AI processing).
+
+**Solution**:
+1. Verify `GEMINI_API_KEY` is set in Supabase Edge Functions secrets
+2. Check that there are no extra spaces or characters in the key
 3. Confirm the key is active in Google AI Studio
-4. Try regenerating the API key
+4. Try regenerating the API key if needed
 
 ## API Costs
 
@@ -146,31 +187,58 @@ Monitor your usage at [Google AI Studio](https://makersuite.google.com/app/apike
 
 ### What Gemini Extracts
 
-For legal demand letters:
-- Document type (Legal Demand Letter, Notice, etc.)
-- Plaintiff/claimant name
-- Attorney name and law firm
-- Response deadlines
-- Settlement amounts
-- WCAG/ADA violations cited
-- Urgency level
-- Key findings and recommended actions
+For legal demand letters and documents:
+- **Core Information**:
+  - Document type (Legal Demand Letter, Complaint, Settlement Offer, etc.)
+  - Document summary (3-4 sentence overview)
+  - Plaintiff/claimant name
+  - Attorney name and law firm
+  - Case number and court name (if applicable)
+  - Filing date
+  
+- **Critical Dates & Amounts**:
+  - Response deadlines (auto-calculated if "within X days")
+  - Settlement/damages amounts
+  
+- **Legal Details**:
+  - WCAG/ADA/Section 508 violations cited
+  - Urgency level (critical/high/medium/low)
+  - Key findings (4-8 specific points)
+  - Recommended actions (4-6 prioritized items)
+  
+- **Advanced Legal Analysis** (detailed mode):
+  - Claim type classification
+  - Jurisdiction information
+  - Statute of limitations
+  - Potential legal defenses
+  - Risk assessment with reasoning
 
 ### Confidence Scores
 
 Each extracted field includes a confidence score (0.0-1.0) indicating:
-- **0.9-1.0**: Very confident
-- **0.7-0.9**: Confident
-- **0.5-0.7**: Moderately confident
+- **0.9-1.0**: Very confident (clear, explicit information)
+- **0.7-0.9**: Confident (reasonable inference)
+- **0.5-0.7**: Moderately confident (ambiguous or partial info)
 - **<0.5**: Low confidence, manual review recommended
 
 ### Extracted Entities
 
-Additional entities extracted from documents:
-- Person names
-- Organization names
-- Dates mentioned
-- Monetary amounts
+Additional entities automatically extracted:
+- **Persons**: All individual names found
+- **Organizations**: Companies, law firms, courts
+- **Dates**: All dates mentioned in original format
+- **Amounts**: All monetary values cited
+- **Legal Citations**: Statutes, regulations, case references (42 USC, WCAG, ADA Title III, etc.)
+
+### Model Comparison
+
+| Feature | Gemini 2.5 Flash | Gemini 2.5 Pro |
+|---------|------------------|----------------|
+| Speed | Fast (~2-3s) | Slower (~5-8s) |
+| Accuracy | High | Very High |
+| Cost | Lower | Higher |
+| Best For | Standard analysis, high volume | Detailed analysis, complex documents |
+| Token Limit | 1M tokens | 2M tokens |
 
 ## Support
 

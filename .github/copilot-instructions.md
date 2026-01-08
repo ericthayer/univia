@@ -3,8 +3,10 @@
 ## Project Overview
 Univia is a web accessibility compliance platform built with React 18, TypeScript, MUI v7, and Supabase. It provides WCAG auditing, demand letter analysis, and compliance checklist management.
 
-## Critical: MUI v7 Grid Syntax
-**Always use the new Grid syntax with `size` prop.** ESLint will error on the old API.
+## Critical Rules (Read First)
+
+### MUI v7 Grid Syntax
+**ESLint enforces the new Grid API.** Using the old syntax will cause build errors.
 
 ```tsx
 // ✅ Correct
@@ -14,37 +16,91 @@ Univia is a web accessibility compliance platform built with React 18, TypeScrip
   </Grid>
 </Grid>
 
-// ❌ Wrong - will fail ESLint
+// ❌ Wrong - ESLint error
 <Grid item xs={12} md={6}>
 ```
 
-See `CODING_STANDARDS.md` for full details on MUI patterns, including `CardActionArea` for clickable cards.
+### Clickable Cards
+**Always use `CardActionArea` for clickable cards** - provides keyboard nav, ARIA, and ripple effects:
+
+```tsx
+// ✅ Correct
+<Card>
+  <CardActionArea onClick={handleClick}>
+    <CardContent>{/* content */}</CardContent>
+  </CardActionArea>
+</Card>
+
+// ❌ Wrong - missing accessibility
+<Card onClick={handleClick} sx={{ cursor: 'pointer' }}>
+```
+
+See [CODING_STANDARDS.md](CODING_STANDARDS.md) for complete MUI v7 patterns.
 
 ## Architecture
 
-### Authentication Flow
-- `AuthContext` wraps the entire app (`App.tsx`)
-- Use `const { user, profile } = useAuth()` in components
-- `profile` comes from `user_profiles` table (separate from Supabase auth)
-- Auth state persists via Supabase session management
+### Three-Tier Structure
+```
+Frontend (React/MUI) ←→ Supabase Client ←→ Backend (Edge Functions + PostgreSQL)
+```
 
-### Data Layer
-- **Frontend**: Supabase client (`src/services/supabaseClient.ts`)
-- **Backend**: Two Supabase Edge Functions in `supabase/functions/`:
-  - `analyze-document`: AI-powered demand letter analysis
-  - `run-lighthouse-audit`: PageSpeed Insights integration for accessibility scoring
-- **Migrations**: SQL files in `supabase/migrations/` define schema
+**Frontend** (`src/`):
+- React 18 SPA with lazy-loaded routes via React Router v6
+- MUI v7 theming with CSS variables for light/dark mode
+- Custom hooks for validation, auth state, and data fetching
 
-### Routing
-- React Router v6 with lazy-loaded pages (`App.tsx`)
-- Route paths defined in `src/config/navigation.ts` as `ROUTE_PATHS`
-- Navigation structure also drives sidebar/header menus via `MENU_ITEMS`
+**Data Layer** (`supabase/`):
+- **Postgres**: Schema defined in timestamped migrations (`supabase/migrations/`)
+- **Edge Functions** (Deno runtime):
+  - `analyze-document`: Gemini AI integration for demand letter analysis
+  - `run-lighthouse-audit`: PageSpeed Insights API for WCAG audits
+- **Storage**: `documents` bucket for uploaded files (demand letters, PDFs)
 
-### Theme System
-- MUI v7 with CSS variables and color scheme selector (`src/theme/theme.ts`)
-- Primitive tokens in `src/theme/tokens.ts`
-- System color mode detection via `useSystemColorMode` hook
-- Always use theme tokens for colors/spacing, never hardcoded values
+**Key Pattern**: Frontend calls Edge Functions via Supabase client, not direct API calls.
+
+### Authentication & User State
+- **Context**: `AuthContext` wraps entire app in [App.tsx](src/App.tsx) - provides `user` and `profile`
+- **User vs Profile**: `user` is Supabase auth user; `profile` is custom data from `user_profiles` table
+- **Session**: Managed by Supabase - persists across page reloads
+- **Usage**: `const { user, profile } = useAuth()` in any component
+
+```tsx
+// Example: Conditional UI based on auth state
+const { user, profile } = useAuth();
+if (!user) return <LoginPrompt />;
+if (profile?.role === 'admin') return <AdminPanel />;
+```
+
+### Navigation & Routing
+**Single source of truth**: [src/config/navigation.ts](src/config/navigation.ts) defines both routes and menus.
+
+```typescript
+// Routes use ROUTE_PATHS constants
+<Route path={ROUTE_PATHS.AUDIT} element={<AccessibilityAudit />} />
+
+// Same config drives sidebar/header navigation via MENU_ITEMS
+// Controls visibility: showInHeader, showInSidebar, badge, disabled
+```
+
+All pages lazy-loaded in [App.tsx](src/App.tsx):
+```tsx
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+// Wrapped in <Suspense fallback={<PageLoader />}>
+```
+
+### Theme & Styling
+- **MUI v7**: CSS variables enable runtime theme switching (light/dark)
+- **Design tokens**: [src/theme/tokens.ts](src/theme/tokens.ts) defines primitives (colors, spacing, shadows)
+- **Theme system**: [src/theme/theme.ts](src/theme/theme.ts) configures MUI components
+- **Auto mode**: `useSystemColorMode` hook syncs with OS preference
+
+**Rule**: Never hardcode colors/spacing - use `theme.palette.*` or design tokens:
+```tsx
+// ✅ Correct
+<Box sx={{ bgcolor: 'primary.main', p: 3 }}>
+// ❌ Wrong
+<Box sx={{ backgroundColor: '#1976d2', padding: '24px' }}>
+```
 
 ## Input Validation Pattern
 **All user input must be sanitized and validated** per `INPUT_VALIDATION_GUIDE.md`.
@@ -91,17 +147,17 @@ Missing env vars will throw a clear error on startup.
 - CORS headers required for all responses
 - Deploy with `supabase functions deploy <function-name>`
 
-## Component Patterns
-
-### Lazy Loading
-All pages lazy-loaded in `App.tsx`:
+**Pattern**: Functions invoked via Supabase client from frontend:
 ```tsx
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-// Wrapped in <Suspense fallback={<PageLoader />}>
+const { data, error } = await supabase.functions.invoke('analyze-document', {
+  body: { fileContent, fileName, fileType }
+});
 ```
 
+## Component Patterns
+
 ### Layout Structure
-`AppShell` component (`src/components/layout/AppShell.tsx`) provides:
+`AppShell` component ([src/components/layout/AppShell.tsx](src/components/layout/AppShell.tsx)) provides:
 - Skip-to-main-content link for accessibility
 - Header + Sidebar navigation
 - Main content area with `id="main-content"` and `role="main"`
@@ -126,3 +182,5 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 3. **Auth context**: `profile` is separate from `user` (database vs auth)
 4. **Lazy imports**: Pages must use `lazy()` to maintain bundle size
 5. **Theme tokens**: Never hardcode colors - use `theme.palette.*` or design tokens
+6. **Edge Functions**: Call via Supabase client, not direct HTTP requests
+7. **Bundle optimization**: Manual chunks defined in [vite.config.ts](vite.config.ts) - vendor libs separated
