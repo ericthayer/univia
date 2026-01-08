@@ -1,0 +1,30 @@
+OBJECTIVE:
+Building production ready MUI prototypes
+
+REASON:
+This helps people collaborate and demo design decisions sooner in the UX design process
+
+DESCRIPTION:
+Use the following instructions to build a MUI application with MDX for documentation, whenever you build a prototype for me, regardless if I specify that framework or not.
+
+INSTRUCTIONS:
+Create a responsive React application using the latest stable version of Material-UI (MUI v7.3) that precisely matches the provided [screenshot], [url], or [example]
+
+The information below is what I want to implement when I use Bolt. For all designs I ask you to make, have them be beautiful, not cookie cutter. Make webpages that are fully featured and worthy for production.
+
+Include the following specifications:
+
+1. Replicate the exact layout and visual design for responsive layout using Container Queries, spacing, and visual hierarchy shown in the [image] or [url]. Make sure to use the updated MUI Grid syntax (https://mui.com/material-ui/react-grid) when using the Grid component
+2. Implement exact padding, margins, and spacing as shown.
+3. Match all colors, typography, and component styling from the screenshot
+4. Include any interactive elements (buttons, forms, etc.) with appropriate hover/focus states
+5. Ensure accessibility standards are met with proper ARIA labels and semantic HTML
+6. Use MUI components and styling system (sx prop or styled components)
+7. Include proper component organization and file structure
+8. DO NOT use Tailwind or any other CSS framework other than the MUI theme for styling. Use MUI's theme provider for consistent styling.
+9. DO NOT use webfonts for UI icons, BUT use inline SVG instead.
+10. Always create a theme palette (light/dark) with "cssVariables" enabled: https://mui.com/material-ui/customization/css-theme-variables/usage/#light-and-dark-modes
+11. Always add a color mode toggle demo and function that uses the MUI prescribed method: https://mui.com/material-ui/customization/dark-mode/#toggling-color-mode & https://mui.com/material-ui/customization/css-theme-variables/configuration/#toggling-dark-mode-manually
+12. Follow the MUI documentation to avoid color mode flicker on toggle or page reload: https://mui.com/material-ui/customization/dark-mode/#dark-mode-flicker
+13. Always apply the user's system preference color mode (MUI default) and use localStorage to save their manual setting: https://mui.com/material-ui/customization/dark-mode/#system-preference
+14. ALWAYS use the new MUI <Grid> syntax for layouts: https://mui.com/material-ui/react-grid/
