@@ -198,84 +198,178 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
         </Alert>
       )}
 
-      <Box>
-
-
+      <Box sx={{ position: 'relative' }}>
         {/* Advanced Options */}
-          <Box sx={{ mb: 1 }}>
-            <Button
-              size="small"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              endIcon={<Icon name={showAdvanced ? 'expand_less' : 'expand_more'} />}
-              sx={{ mb: 1 }}
-            >
-              Advanced Options
-            </Button>
-            <Collapse in={showAdvanced}>
-              <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
-                {/* Model */}
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                    AI Model
-                  </Typography>
-                  <ToggleButtonGroup
-                    value={modelPreference}
-                    exclusive
-                    onChange={(_, value) => value && setModelPreference(value)}
-                    size="small"
-                    fullWidth
-                  >
-                    <ToggleButton value="flash">
-                      <Tooltip title="Faster analysis, good for most documents">
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Icon name="bolt" style={{ fontSize: 18 }} />
-                          <span>Fast (Flash)</span>
-                        </Box>
-                      </Tooltip>
-                    </ToggleButton>
-                    <ToggleButton value="pro">
-                      <Tooltip title="More thorough analysis, better for complex legal documents">
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Icon name="psychology" style={{ fontSize: 18 }} />
-                          <span>Pro</span>
-                        </Box>
-                      </Tooltip>
-                    </ToggleButton>
-                  </ToggleButtonGroup>
-                </Box>
-                {/* Depth */}
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                    Analysis Depth
-                  </Typography>
-                  <ToggleButtonGroup
-                    value={analysisDepth}
-                    exclusive
-                    onChange={(_, value) => value && setAnalysisDepth(value)}
-                    size="small"
-                    fullWidth
-                  >
-                    <ToggleButton value="standard">
-                      <Tooltip title="Extract key information and provide recommendations">
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Icon name="speed" style={{ fontSize: 18 }} />
-                          <span>Standard</span>
-                        </Box>
-                      </Tooltip>
-                    </ToggleButton>
-                    <ToggleButton value="detailed">
-                      <Tooltip title="In-depth legal analysis with risk assessment">
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Icon name="search" style={{ fontSize: 18 }} />
-                          <span>Detailed</span>
-                        </Box>
-                      </Tooltip>
-                    </ToggleButton>
-                  </ToggleButtonGroup>
-                </Box>
+        <Box sx={{ mb: 1 }}>
+          <Button
+            size="small"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            endIcon={<Icon name={showAdvanced ? 'expand_less' : 'expand_more'} />}
+            sx={{ mb: 1 }}
+          >
+            Advanced Options
+          </Button>
+          <Collapse in={showAdvanced}>
+            <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
+              {/* Model */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                  AI Model
+                </Typography>
+                <ToggleButtonGroup
+                  value={modelPreference}
+                  exclusive
+                  onChange={(_, value) => value && setModelPreference(value)}
+                  size="small"
+                  fullWidth
+                >
+                  <ToggleButton value="flash">
+                    <Tooltip title="Faster analysis, good for most documents">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Icon name="bolt" style={{ fontSize: 18 }} />
+                        <span>Fast (Flash)</span>
+                      </Box>
+                    </Tooltip>
+                  </ToggleButton>
+                  <ToggleButton value="pro">
+                    <Tooltip title="More thorough analysis, better for complex legal documents">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Icon name="psychology" style={{ fontSize: 18 }} />
+                        <span>Pro</span>
+                      </Box>
+                    </Tooltip>
+                  </ToggleButton>
+                </ToggleButtonGroup>
               </Box>
-            </Collapse>
-          </Box>
+              {/* Depth */}
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                  Analysis Depth
+                </Typography>
+                <ToggleButtonGroup
+                  value={analysisDepth}
+                  exclusive
+                  onChange={(_, value) => value && setAnalysisDepth(value)}
+                  size="small"
+                  fullWidth
+                >
+                  <ToggleButton value="standard">
+                    <Tooltip title="Extract key information and provide recommendations">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Icon name="speed" style={{ fontSize: 18 }} />
+                        <span>Standard</span>
+                      </Box>
+                    </Tooltip>
+                  </ToggleButton>
+                  <ToggleButton value="detailed">
+                    <Tooltip title="In-depth legal analysis with risk assessment">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Icon name="search" style={{ fontSize: 18 }} />
+                        <span>Detailed</span>
+                      </Box>
+                    </Tooltip>
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+            </Box>
+          </Collapse>
+        </Box>
+        
+        {/* Upload Dropzone */}
+        <Box
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+          sx={{
+            border: '2px dashed',
+            borderColor: dragActive ? 'primary.main' : 'divider',
+            borderRadius: 3,
+            p: 6,
+            textAlign: 'center',
+            bgcolor: dragActive ? 'action.hover' : 'background.paper',
+            transition: 'all 0.2s ease',
+            cursor: 'pointer',
+            mb: 3,
+            '&:hover': {
+              borderColor: 'primary.main',
+              bgcolor: 'action.hover',
+            },
+          }}
+          onClick={() => document.getElementById('file-upload-inline')?.click()}
+        >
+            <input
+              id="file-upload-inline"
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              onChange={handleFileSelect}
+              style={{ display: 'none' }}
+            />
+    
+            {file ? (
+              <Box>
+                <Box
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: '50%',
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mx: 'auto',
+                    mb: 2,
+                  }}
+                >
+                  <Icon name={file.type === 'application/pdf' ? 'picture_as_pdf' : 'image'} style={{ fontSize: 40 }} />
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                  {file.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  {formatFileSize(file.size)}
+                </Typography>
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFile(null);
+                  }}
+                >
+                  Remove File
+                </Button>
+              </Box>
+            ) : (
+              <Box>
+                <Box
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: '50%',
+                    bgcolor: 'action.hover',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mx: 'auto',
+                    mb: 2,
+                  }}
+                >
+                  <Icon name="cloud_upload" style={{ fontSize: 48, color: '#94A3B8' }} />
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                  Drag and drop your document here
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  or click to browse your files
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Supported formats: PDF, PNG, JPG, WebP (max 10MB)
+                </Typography>
+              </Box>
+            )}
+        </Box>
   
         
       </Box>
