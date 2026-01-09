@@ -340,7 +340,6 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
               startIcon={<Icon name="close" />}
               sx={{ minWidth: 120 }}
             >
-              Cancel
             </Button>
           </>
         ) : (
