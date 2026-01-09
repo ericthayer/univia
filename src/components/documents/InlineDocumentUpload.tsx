@@ -313,7 +313,8 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
           Please select a document to analyze first
         </Alert>
       )}
-
+      
+      {/* Advanced Options */}
       <Box sx={{ mb: 3 }}>
         <Button
           size="small"
@@ -325,6 +326,7 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
         </Button>
         <Collapse in={showAdvanced}>
           <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
+            {/* Model */}
             <Box sx={{ mb: 2 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
                 AI Model
@@ -354,7 +356,7 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
                 </ToggleButton>
               </ToggleButtonGroup>
             </Box>
-
+            {/* Depth */}
             <Box>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
                 Analysis Depth
