@@ -108,11 +108,11 @@ export default function DemandLetters() {
 
         <Grid container spacing={4}>
           <Grid size={{ xs: 12, lg: 12 }}>
-            <Box sx={{ position: 'sticky', top: 24, display: 'none' }}>
+            <Box sx={{ position: 'sticky', top: 24 }}>
               <Tabs
                 value={activeTab}
                 onChange={(_, value) => setActiveTab(value)}
-                sx={{ mb: 3 }}
+                sx={{ display: 'none', mb: 3 }}
               >
                 <Tab
                   label="Upload Document"
