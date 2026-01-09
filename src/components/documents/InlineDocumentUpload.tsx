@@ -355,9 +355,6 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
           </Button>
         )}
       </Box>
-
-      {/* Disclaimer */}
-      <LegalDisclaimer variant="compact" />
       
       {/* Advanced Options */}
       <Box
