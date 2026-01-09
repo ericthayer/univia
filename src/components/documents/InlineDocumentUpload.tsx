@@ -8,7 +8,12 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   Tooltip,
-  Collapse,
+  IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Divider as MuiDivider,
 } from '@mui/material';
 import Icon from '../ui/Icon';
 import LegalDisclaimer from '../ui/LegalDisclaimer';
@@ -49,8 +54,12 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [modelPreference, setModelPreference] = useState<'flash' | 'pro'>('flash');
   const [analysisDepth, setAnalysisDepth] = useState<'standard' | 'detailed'>('standard');
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  // Changed from showAdvanced boolean to anchorEl for Menu popover pattern
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [stage, setStage] = useState<AnalysisStage>('idle');
+
+  // Menu open/close state derived from anchorEl
+  const menuOpen = Boolean(anchorEl);
 
   const acceptedTypes = [
     'application/pdf',
@@ -59,6 +68,16 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
     'image/jpg',
     'image/webp',
   ];
+
+  // Handler to open the advanced options menu
+  const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  // Handler to close the advanced options menu
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -322,84 +341,150 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
         </Alert>
       )}
 
-      {/* Advanced Options */}
+      {/* Advanced Options - Refactored to IconButton + Menu pattern */}
       <Box
         sx={{
           mb: 3,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
         }}
       >
-        <Button
-          size="small"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          endIcon={<Icon name={showAdvanced ? 'expand_less' : 'expand_more'} />}
-          sx={{ mb: 1 }}
+        {/* IconButton trigger for advanced options menu */}
+        <Tooltip title="Advanced Options">
+          <IconButton
+            onClick={handleOpenMenu}
+            aria-label="advanced options"
+            aria-controls={menuOpen ? 'advanced-options-menu' : undefined}
+            aria-haspopup="true"
+            aria-expanded={menuOpen ? 'true' : undefined}
+            sx={{
+              bgcolor: menuOpen ? 'action.selected' : 'transparent',
+              '&:hover': {
+                bgcolor: 'action.hover',
+              },
+            }}
+          >
+            <Icon name="tune" />
+          </IconButton>
+        </Tooltip>
+
+        {/* Display current settings next to the icon */}
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Icon name={modelPreference === 'flash' ? 'bolt' : 'psychology'} style={{ fontSize: 14 }} />
+            {modelPreference === 'flash' ? 'Flash' : 'Pro'}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">•</Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Icon name={analysisDepth === 'standard' ? 'speed' : 'search'} style={{ fontSize: 14 }} />
+            {analysisDepth === 'standard' ? 'Standard' : 'Detailed'}
+          </Typography>
+        </Box>
+
+        {/* Menu popover with advanced options */}
+        <Menu
+          id="advanced-options-menu"
+          anchorEl={anchorEl}
+          open={menuOpen}
+          onClose={handleCloseMenu}
+          MenuListProps={{
+            'aria-labelledby': 'advanced-options-button',
+          }}
+          transformOrigin={{ horizontal: 'left', vertical: 'top' }}
+          anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+          slotProps={{
+            paper: {
+              sx: {
+                minWidth: 320,
+                maxWidth: 400,
+              }
+            }
+          }}
         >
-          Advanced Options
-        </Button>
-        <Collapse in={showAdvanced}>
-          <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 2 }}>
-              {/* Model */}
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                  AI Model
-                </Typography>
-                <ToggleButtonGroup
-                  value={modelPreference}
-                  exclusive
-                  onChange={(_, value) => value && setModelPreference(value)}
-                  size="small"
-                  fullWidth
-                >
-                  <ToggleButton value="flash">
-                    <Tooltip title="Faster analysis, good for most documents">
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Icon name="bolt" style={{ fontSize: 18 }} />
-                        <span>Fast (Flash)</span>
-                      </Box>
-                    </Tooltip>
-                  </ToggleButton>
-                  <ToggleButton value="pro">
-                    <Tooltip title="More thorough analysis, better for complex legal documents">
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Icon name="psychology" style={{ fontSize: 18 }} />
-                        <span>Pro</span>
-                      </Box>
-                    </Tooltip>
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              </Box>
-              {/* Depth */}
-              <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                  Analysis Depth
-                </Typography>
-                <ToggleButtonGroup
-                  value={analysisDepth}
-                  exclusive
-                  onChange={(_, value) => value && setAnalysisDepth(value)}
-                  size="small"
-                  fullWidth
-                >
-                  <ToggleButton value="standard">
-                    <Tooltip title="Extract key information and provide recommendations">
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Icon name="speed" style={{ fontSize: 18 }} />
-                        <span>Standard</span>
-                      </Box>
-                    </Tooltip>
-                  </ToggleButton>
-                  <ToggleButton value="detailed">
-                    <Tooltip title="In-depth legal analysis with risk assessment">
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Icon name="search" style={{ fontSize: 18 }} />
-                        <span>Detailed</span>
-                      </Box>
-                    </Tooltip>
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              </Box>
-            </Box>          
-        </Collapse>
+          {/* Menu header */}
+          <Box sx={{ px: 2, py: 1.5 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+              Advanced Options
+            </Typography>
+          </Box>
+
+          <MuiDivider />
+
+          {/* AI Model Selection */}
+          <Box sx={{ px: 2, py: 2 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 1, display: 'block' }}>
+              AI Model
+            </Typography>
+            <ToggleButtonGroup
+              value={modelPreference}
+              exclusive
+              onChange={(_, value) => value && setModelPreference(value)}
+              size="small"
+              fullWidth
+            >
+              <ToggleButton value="flash">
+                <Tooltip title="Faster analysis, good for most documents">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Icon name="bolt" style={{ fontSize: 18 }} />
+                    <span>Fast (Flash)</span>
+                  </Box>
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="pro">
+                <Tooltip title="More thorough analysis, better for complex legal documents">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Icon name="psychology" style={{ fontSize: 18 }} />
+                    <span>Pro</span>
+                  </Box>
+                </Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
+
+          <MuiDivider />
+
+          {/* Analysis Depth Selection */}
+          <Box sx={{ px: 2, py: 2 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 1, display: 'block' }}>
+              Analysis Depth
+            </Typography>
+            <ToggleButtonGroup
+              value={analysisDepth}
+              exclusive
+              onChange={(_, value) => value && setAnalysisDepth(value)}
+              size="small"
+              fullWidth
+            >
+              <ToggleButton value="standard">
+                <Tooltip title="Extract key information and provide recommendations">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Icon name="speed" style={{ fontSize: 18 }} />
+                    <span>Standard</span>
+                  </Box>
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="detailed">
+                <Tooltip title="In-depth legal analysis with risk assessment">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Icon name="search" style={{ fontSize: 18 }} />
+                    <span>Detailed</span>
+                  </Box>
+                </Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
+
+          <MuiDivider />
+
+          {/* Close button in menu footer */}
+          <MenuItem onClick={handleCloseMenu}>
+            <ListItemIcon>
+              <Icon name="check" style={{ fontSize: 20 }} />
+            </ListItemIcon>
+            <ListItemText primary="Done" />
+          </MenuItem>
+        </Menu>
       </Box>
 
       {/* Submit Button  */}
