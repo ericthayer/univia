@@ -99,13 +99,12 @@ export default function DemandLetters() {
       <Container maxWidth="md" sx={{ pt: 1 }}>
         <Box sx={{ mb: 6 }}>
           <Typography variant="h3" component="h2" sx={{ mb: 2 }}>
-            Demand Letters
+            Analyze Demand Letters
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Upload and analyze legal demand letters with AI-powered extraction
+            Upload a PDF or image of your demand letter for AI-powered analysis. 
           </Typography>
         </Box>
-
         <Grid container spacing={4}>
           <Grid size={{ xs: 12, lg: 12 }}>
             <Box sx={{ position: 'sticky', top: 24 }}>
@@ -140,7 +139,7 @@ export default function DemandLetters() {
             </Box>
           </Grid>
 
-          <Grid size={{ xs: 12, lg: 4 }} sx={{ display: 'none' }}>
+          <Grid size={{ xs: 12, lg: 4 }} sx={{ }}>
             <Box sx={{ mb: 3, mt: 12 }}>
               <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
                 Your Demand Letters
