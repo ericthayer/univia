@@ -20,7 +20,7 @@ export default function LegalDisclaimer({ variant = 'default', sx }: LegalDiscla
         }}
       >
         <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-          <Icon name="gavel" style={{ fontSize: 40, height: '2em', width: '3em', color: 'warning.main' }} />
+          <Icon name="gavel" style={{ fontSize: 40, height: '3em', width: '3em', color: 'warning.main' }} />
           <Box>
             <Typography variant="body1" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
               Legal Disclaimer
