@@ -222,7 +222,7 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
             Advanced Options
           </Button>
           <Collapse in={showAdvanced}>
-            <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
+            <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
               {/* Model */}
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
