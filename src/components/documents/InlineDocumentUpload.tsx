@@ -372,7 +372,7 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
         {/* Display current settings next to the icon */}
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Icon name={modelPreference === 'flash' ? 'flash_on' : 'psychology'} style={{ fontSize: 14 }} />
+            <Icon name={modelPreference === 'flash' ? 'flash_on' : 'workspace_premium'} style={{ fontSize: 14 }} />
             {modelPreference === 'flash' ? 'Flash' : 'Pro'}
           </Typography>
           <Typography variant="caption" color="text.secondary">•</Typography>
@@ -434,7 +434,7 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
               <ToggleButton value="pro">
                 <Tooltip title="More thorough analysis, better for complex legal documents">
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Icon name="psychology" style={{ fontSize: 18 }} />
+                    <Icon name="workspace_premium" style={{ fontSize: 18 }} />
                     <span>Pro</span>
                   </Box>
                 </Tooltip>
