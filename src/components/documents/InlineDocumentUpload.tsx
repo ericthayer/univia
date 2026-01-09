@@ -361,8 +361,7 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
       
       {/* Advanced Options */}
       <Box
-        sx={{ 
-          position: 'absolute',
+        sx={{
           right: '1rem',
           top: '1rem',
           width: 'fit-content',
