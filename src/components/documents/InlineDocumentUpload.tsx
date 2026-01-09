@@ -314,42 +314,6 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
           Please select a document to analyze first
         </Alert>
       )}
-
-      {/* Submit Button  */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-        {uploading ? (
-          <>
-            <Button
-              variant="contained"
-              size="large"
-              fullWidth
-              disabled
-              startIcon={<Icon name="hourglass_empty" />}
-            >
-              Analyzing...
-            </Button>
-            <Button
-              variant="outlined"
-              size="large"
-              onClick={handleCancel}
-              startIcon={<Icon name="close" />}
-              sx={{ minWidth: 120 }}
-            >
-              Cancel
-            </Button>
-          </>
-        ) : (
-          <Button
-            variant="contained"
-            size="large"
-            fullWidth
-            onClick={handleUpload}
-            startIcon={<Icon name="analytics" />}
-          >
-            Analyze Document
-          </Button>
-        )}
-      </Box>
       
       {/* Advanced Options */}
       <Box sx={{ mb: 3 }}>
@@ -425,6 +389,42 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
             </Box>
           </Box>
         </Collapse>
+      </Box>
+
+      {/* Submit Button  */}
+      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+        {uploading ? (
+          <>
+            <Button
+              variant="contained"
+              size="large"
+              fullWidth
+              disabled
+              startIcon={<Icon name="hourglass_empty" />}
+            >
+              Analyzing...
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              onClick={handleCancel}
+              startIcon={<Icon name="close" />}
+              sx={{ minWidth: 120 }}
+            >
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="contained"
+            size="large"
+            fullWidth
+            onClick={handleUpload}
+            startIcon={<Icon name="analytics" />}
+          >
+            Analyze Document
+          </Button>
+        )}
       </Box>
 
       {/* Disclaimer */}
