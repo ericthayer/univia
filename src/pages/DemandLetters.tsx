@@ -106,9 +106,9 @@ export default function DemandLetters() {
           </Typography>
         </Box>
 
-        <Grid container spacing={4} sx={{ display: 'none' }}>
+        <Grid container spacing={4}>
           <Grid size={{ xs: 12, lg: 12 }}>
-            <Box sx={{ position: 'sticky', top: 24 }}>
+            <Box sx={{ position: 'sticky', top: 24, display: 'none' }}>
               <Tabs
                 value={activeTab}
                 onChange={(_, value) => setActiveTab(value)}
