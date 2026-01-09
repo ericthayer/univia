@@ -104,9 +104,6 @@ export default function DemandLetters() {
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
             Upload a PDF or image of your demand letter for AI-powered analysis.
           </Typography>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Our document analysis feature, powered by Google Gemini AI, provides intelligent analysis of accessibility-related demand letters and legal notices. The system automatically extracts key information such as plaintiff details, attorney contact information, settlement amounts, and response deadlines. More importantly, it identifies specific web accessibility violations mentioned in the letter and provides actionable recommendations to resolve them. By understanding the exact accessibility issues cited, you can prioritize remediation efforts, allocate resources effectively, and develop a strategic response plan. This AI-assisted approach helps organizations transform compliance challenges into opportunities for creating a more accessible web experience for all users.
-          </Typography>
         </Box>
         <Grid container spacing={4}>
           <Grid size={{ xs: 12, lg: 12 }}>
