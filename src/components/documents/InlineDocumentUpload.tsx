@@ -190,14 +190,6 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
 
   return (
     <>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-          Upload Demand Letter
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Upload a PDF or image of your demand letter for AI-powered analysis
-        </Typography>
-      </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
