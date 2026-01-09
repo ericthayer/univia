@@ -371,71 +371,71 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
           Advanced Options
         </Button>
         <Collapse in={showAdvanced}>
+          <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
+              {/* Model */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                  AI Model
+                </Typography>
+                <ToggleButtonGroup
+                  value={modelPreference}
+                  exclusive
+                  onChange={(_, value) => value && setModelPreference(value)}
+                  size="small"
+                  fullWidth
+                >
+                  <ToggleButton value="flash">
+                    <Tooltip title="Faster analysis, good for most documents">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Icon name="bolt" style={{ fontSize: 18 }} />
+                        <span>Fast (Flash)</span>
+                      </Box>
+                    </Tooltip>
+                  </ToggleButton>
+                  <ToggleButton value="pro">
+                    <Tooltip title="More thorough analysis, better for complex legal documents">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Icon name="psychology" style={{ fontSize: 18 }} />
+                        <span>Pro</span>
+                      </Box>
+                    </Tooltip>
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+              {/* Depth */}
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                  Analysis Depth
+                </Typography>
+                <ToggleButtonGroup
+                  value={analysisDepth}
+                  exclusive
+                  onChange={(_, value) => value && setAnalysisDepth(value)}
+                  size="small"
+                  fullWidth
+                >
+                  <ToggleButton value="standard">
+                    <Tooltip title="Extract key information and provide recommendations">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Icon name="speed" style={{ fontSize: 18 }} />
+                        <span>Standard</span>
+                      </Box>
+                    </Tooltip>
+                  </ToggleButton>
+                  <ToggleButton value="detailed">
+                    <Tooltip title="In-depth legal analysis with risk assessment">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Icon name="search" style={{ fontSize: 18 }} />
+                        <span>Detailed</span>
+                      </Box>
+                    </Tooltip>
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+            </Box>
           
         </Collapse>
 
-        <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
-            {/* Model */}
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                AI Model
-              </Typography>
-              <ToggleButtonGroup
-                value={modelPreference}
-                exclusive
-                onChange={(_, value) => value && setModelPreference(value)}
-                size="small"
-                fullWidth
-              >
-                <ToggleButton value="flash">
-                  <Tooltip title="Faster analysis, good for most documents">
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Icon name="bolt" style={{ fontSize: 18 }} />
-                      <span>Fast (Flash)</span>
-                    </Box>
-                  </Tooltip>
-                </ToggleButton>
-                <ToggleButton value="pro">
-                  <Tooltip title="More thorough analysis, better for complex legal documents">
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Icon name="psychology" style={{ fontSize: 18 }} />
-                      <span>Pro</span>
-                    </Box>
-                  </Tooltip>
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </Box>
-            {/* Depth */}
-            <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                Analysis Depth
-              </Typography>
-              <ToggleButtonGroup
-                value={analysisDepth}
-                exclusive
-                onChange={(_, value) => value && setAnalysisDepth(value)}
-                size="small"
-                fullWidth
-              >
-                <ToggleButton value="standard">
-                  <Tooltip title="Extract key information and provide recommendations">
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Icon name="speed" style={{ fontSize: 18 }} />
-                      <span>Standard</span>
-                    </Box>
-                  </Tooltip>
-                </ToggleButton>
-                <ToggleButton value="detailed">
-                  <Tooltip title="In-depth legal analysis with risk assessment">
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Icon name="search" style={{ fontSize: 18 }} />
-                      <span>Detailed</span>
-                    </Box>
-                  </Tooltip>
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </Box>
-          </Box>
       </Box>
 
       {/* Disclaimer */}
