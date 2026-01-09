@@ -330,12 +330,12 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
           size="small"
           onClick={() => setShowAdvanced(!showAdvanced)}
           endIcon={<Icon name={showAdvanced ? 'expand_less' : 'expand_more'} />}
-          sx={{ mb: 0 }}
+          sx={{ mb: 1 }}
         >
           Advanced Options
         </Button>
         <Collapse in={showAdvanced}>
-          <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
+          <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 2 }}>
               {/* Model */}
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
