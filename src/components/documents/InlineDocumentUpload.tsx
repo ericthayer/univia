@@ -357,11 +357,7 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
       </Box>
       
       {/* Advanced Options */}
-      <Box
-        sx={{
-          mb: 1,
-        }}
-      >
+      <Box>
         <Button
           size="small"
           onClick={() => setShowAdvanced(!showAdvanced)}
