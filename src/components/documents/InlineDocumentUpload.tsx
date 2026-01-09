@@ -365,14 +365,14 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
               },
             }}
           >
-            <Icon name="tune" />
+            <Icon name="settings" />
           </IconButton>
         </Tooltip>
 
         {/* Display current settings next to the icon */}
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Icon name={modelPreference === 'flash' ? 'bolt' : 'psychology'} style={{ fontSize: 14 }} />
+            <Icon name={modelPreference === 'flash' ? 'flash_on' : 'psychology'} style={{ fontSize: 14 }} />
             {modelPreference === 'flash' ? 'Flash' : 'Pro'}
           </Typography>
           <Typography variant="caption" color="text.secondary">•</Typography>
@@ -426,7 +426,7 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
               <ToggleButton value="flash">
                 <Tooltip title="Faster analysis, good for most documents">
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Icon name="bolt" style={{ fontSize: 18 }} />
+                    <Icon name="flash_on" style={{ fontSize: 18 }} />
                     <span>Fast (Flash)</span>
                   </Box>
                 </Tooltip>
@@ -480,7 +480,7 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
           {/* Close button in menu footer */}
           <MenuItem onClick={handleCloseMenu}>
             <ListItemIcon>
-              <Icon name="check" style={{ fontSize: 20 }} />
+              <Icon name="check_circle" style={{ fontSize: 20 }} />
             </ListItemIcon>
             <ListItemText primary="Done" />
           </MenuItem>
