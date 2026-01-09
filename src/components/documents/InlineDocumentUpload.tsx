@@ -190,7 +190,6 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
 
   return (
     <>
-
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           <Typography variant="body2" component="div" sx={{ whiteSpace: 'pre-wrap' }}>
@@ -199,30 +198,7 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
         </Alert>
       )}
 
-      {/* Upload Dropzone */}
-      <Box
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-        sx={{
-          border: '2px dashed',
-          borderColor: dragActive ? 'primary.main' : 'divider',
-          borderRadius: 3,
-          p: 6,
-          textAlign: 'center',
-          bgcolor: dragActive ? 'action.hover' : 'background.paper',
-          transition: 'all 0.2s ease',
-          cursor: 'pointer',
-          mb: 3,
-          '&:hover': {
-            borderColor: 'primary.main',
-            bgcolor: 'action.hover',
-          },
-        }}
-        onClick={() => document.getElementById('file-upload-inline')?.click()}
-      >
-        {/* Advanced Options */}
+      {/* Advanced Options */}
         <Box sx={{ mb: 1 }}>
           <Button
             size="small"
@@ -297,9 +273,30 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
             </Box>
           </Collapse>
         </Box>
-          
-          <Box>
-    
+
+      {/* Upload Dropzone */}
+      <Box
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+        sx={{
+          border: '2px dashed',
+          borderColor: dragActive ? 'primary.main' : 'divider',
+          borderRadius: 3,
+          p: 6,
+          textAlign: 'center',
+          bgcolor: dragActive ? 'action.hover' : 'background.paper',
+          transition: 'all 0.2s ease',
+          cursor: 'pointer',
+          mb: 3,
+          '&:hover': {
+            borderColor: 'primary.main',
+            bgcolor: 'action.hover',
+          },
+        }}
+        onClick={() => document.getElementById('file-upload-inline')?.click()}
+      >
           <input
             id="file-upload-inline"
             type="file"
@@ -371,7 +368,6 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
               </Typography>
             </Box>
           )}
-        </Box>
       </Box>
 
       {uploading && (
