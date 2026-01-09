@@ -8,7 +8,12 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   Tooltip,
-  Collapse,
+  IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Divider as MuiDivider,
 } from '@mui/material';
 import Icon from '../ui/Icon';
 import LegalDisclaimer from '../ui/LegalDisclaimer';
@@ -49,8 +54,12 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [modelPreference, setModelPreference] = useState<'flash' | 'pro'>('flash');
   const [analysisDepth, setAnalysisDepth] = useState<'standard' | 'detailed'>('standard');
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  // Changed from showAdvanced boolean to anchorEl for Menu popover pattern
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [stage, setStage] = useState<AnalysisStage>('idle');
+
+  // Menu open/close state derived from anchorEl
+  const menuOpen = Boolean(anchorEl);
 
   const acceptedTypes = [
     'application/pdf',
@@ -59,6 +68,16 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
     'image/jpg',
     'image/webp',
   ];
+
+  // Handler to open the advanced options menu
+  const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  // Handler to close the advanced options menu
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -190,15 +209,6 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
 
   return (
     <>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-          Upload Demand Letter
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Upload a PDF or image of your demand letter for AI-powered analysis
-        </Typography>
-      </Box>
-
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           <Typography variant="body2" component="div" sx={{ whiteSpace: 'pre-wrap' }}>
@@ -207,99 +217,107 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
         </Alert>
       )}
 
-      <Box
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-        sx={{
-          border: '2px dashed',
-          borderColor: dragActive ? 'primary.main' : 'divider',
-          borderRadius: 3,
-          p: 6,
-          textAlign: 'center',
-          bgcolor: dragActive ? 'action.hover' : 'background.paper',
-          transition: 'all 0.2s ease',
-          cursor: 'pointer',
-          mb: 3,
-          '&:hover': {
-            borderColor: 'primary.main',
-            bgcolor: 'action.hover',
-          },
-        }}
-        onClick={() => document.getElementById('file-upload-inline')?.click()}
-      >
-        <input
-          id="file-upload-inline"
-          type="file"
-          accept=".pdf,.png,.jpg,.jpeg,.webp"
-          onChange={handleFileSelect}
-          style={{ display: 'none' }}
-        />
-
-        {file ? (
-          <Box>
-            <Box
-              sx={{
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                bgcolor: 'primary.main',
-                color: 'primary.contrastText',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mx: 'auto',
-                mb: 2,
-              }}
-            >
-              <Icon name={file.type === 'application/pdf' ? 'picture_as_pdf' : 'image'} style={{ fontSize: 40 }} />
-            </Box>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-              {file.name}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              {formatFileSize(file.size)}
-            </Typography>
-            <Button
-              variant="text"
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                setFile(null);
-              }}
-            >
-              Remove File
-            </Button>
-          </Box>
-        ) : (
-          <Box>
-            <Box
-              sx={{
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                bgcolor: 'action.hover',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mx: 'auto',
-                mb: 2,
-              }}
-            >
-              <Icon name="cloud_upload" style={{ fontSize: 48, color: '#94A3B8' }} />
-            </Box>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-              Drag and drop your document here
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              or click to browse your files
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Supported formats: PDF, PNG, JPG, WebP (max 10MB)
-            </Typography>
-          </Box>
-        )}
+      <Box sx={{ position: 'relative' }}>
+        
+        {/* Upload Dropzone */}
+        <Box
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+          sx={{
+            border: '2px dashed',
+            borderColor: dragActive ? 'primary.main' : 'divider',
+            borderRadius: 3,
+            pt: 3,
+            px: 4,
+            pb: 4,
+            textAlign: 'center',
+            bgcolor: dragActive ? 'action.hover' : 'background.paper',
+            transition: 'all 0.2s ease',
+            cursor: 'pointer',
+            mb: 3,
+            '&:hover': {
+              borderColor: 'primary.main',
+              bgcolor: 'action.hover',
+            },
+          }}
+          onClick={() => document.getElementById('file-upload-inline')?.click()}
+        >
+            <input
+              id="file-upload-inline"
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              onChange={handleFileSelect}
+              style={{ display: 'none' }}
+            />
+    
+            {file ? (
+              <Box>
+                <Box
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: '50%',
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mx: 'auto',
+                    mb: 2,
+                  }}
+                >
+                  <Icon name={file.type === 'application/pdf' ? 'picture_as_pdf' : 'image'} style={{ fontSize: 40 }} />
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                  {file.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  {formatFileSize(file.size)}
+                </Typography>
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFile(null);
+                  }}
+                >
+                  Remove File
+                </Button>
+              </Box>
+            ) : (
+              <Box>
+                <Box
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: '50%',
+                    bgcolor: 'action.hover',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mx: 'auto',
+                    mb: 2,
+                  }}
+                >
+                  <Icon name="cloud_upload" style={{ fontSize: 48, color: '#94A3B8' }} />
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                  Drag and drop your document here
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  or click to browse your files
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Supported formats: PDF, PNG, JPG, WebP (max 10MB)
+                </Typography>
+              </Box>
+            )}
+        </Box>
+  
+        
       </Box>
 
       {uploading && (
@@ -316,86 +334,160 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
         </Box>
       )}
 
+      {/* Info Alert */}
       {showInfo && (
         <Alert severity="info" sx={{ mb: 3 }} onClose={() => setShowInfo(false)}>
           Please select a document to analyze first
         </Alert>
       )}
 
-      <Box sx={{ mb: 3 }}>
-        <Button
-          size="small"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          endIcon={<Icon name={showAdvanced ? 'expand_less' : 'expand_more'} />}
-          sx={{ mb: 1 }}
-        >
-          Advanced Options
-        </Button>
-        <Collapse in={showAdvanced}>
-          <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                AI Model
-              </Typography>
-              <ToggleButtonGroup
-                value={modelPreference}
-                exclusive
-                onChange={(_, value) => value && setModelPreference(value)}
-                size="small"
-                fullWidth
-              >
-                <ToggleButton value="flash">
-                  <Tooltip title="Faster analysis, good for most documents">
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Icon name="bolt" style={{ fontSize: 18 }} />
-                      <span>Fast (Flash)</span>
-                    </Box>
-                  </Tooltip>
-                </ToggleButton>
-                <ToggleButton value="pro">
-                  <Tooltip title="More thorough analysis, better for complex legal documents">
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Icon name="psychology" style={{ fontSize: 18 }} />
-                      <span>Pro</span>
-                    </Box>
-                  </Tooltip>
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </Box>
+      {/* Advanced Options - Refactored to IconButton + Menu pattern */}
+      <Box
+        sx={{
+          mb: 3,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
+        {/* IconButton trigger for advanced options menu */}
+        <Tooltip title="Advanced Options">
+          <IconButton
+            onClick={handleOpenMenu}
+            aria-label="advanced options"
+            aria-controls={menuOpen ? 'advanced-options-menu' : undefined}
+            aria-haspopup="true"
+            aria-expanded={menuOpen ? 'true' : undefined}
+            sx={{
+              bgcolor: menuOpen ? 'action.selected' : 'transparent',
+              '&:hover': {
+                bgcolor: 'action.hover',
+              },
+            }}
+          >
+            <Icon name="settings" />
+          </IconButton>
+        </Tooltip>
 
-            <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                Analysis Depth
-              </Typography>
-              <ToggleButtonGroup
-                value={analysisDepth}
-                exclusive
-                onChange={(_, value) => value && setAnalysisDepth(value)}
-                size="small"
-                fullWidth
-              >
-                <ToggleButton value="standard">
-                  <Tooltip title="Extract key information and provide recommendations">
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Icon name="speed" style={{ fontSize: 18 }} />
-                      <span>Standard</span>
-                    </Box>
-                  </Tooltip>
-                </ToggleButton>
-                <ToggleButton value="detailed">
-                  <Tooltip title="In-depth legal analysis with risk assessment">
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Icon name="search" style={{ fontSize: 18 }} />
-                      <span>Detailed</span>
-                    </Box>
-                  </Tooltip>
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </Box>
+        {/* Display current settings next to the icon */}
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Icon name={modelPreference === 'flash' ? 'flash_on' : 'workspace_premium'} style={{ fontSize: 14 }} />
+            {modelPreference === 'flash' ? 'Flash' : 'Pro'}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">•</Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Icon name={analysisDepth === 'standard' ? 'speed' : 'search'} style={{ fontSize: 14 }} />
+            {analysisDepth === 'standard' ? 'Standard' : 'Detailed'}
+          </Typography>
+        </Box>
+
+        {/* Menu popover with advanced options */}
+        <Menu
+          id="advanced-options-menu"
+          anchorEl={anchorEl}
+          open={menuOpen}
+          onClose={handleCloseMenu}
+          MenuListProps={{
+            'aria-labelledby': 'advanced-options-button',
+          }}
+          transformOrigin={{ horizontal: 'left', vertical: 'top' }}
+          anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+          slotProps={{
+            paper: {
+              sx: {
+                minWidth: 320,
+                maxWidth: 400,
+              }
+            }
+          }}
+        >
+          {/* Menu header */}
+          <Box sx={{ px: 2, py: 1.5 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+              Advanced Options
+            </Typography>
           </Box>
-        </Collapse>
+
+          <MuiDivider />
+
+          {/* AI Model Selection */}
+          <Box sx={{ px: 2, py: 2 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 1, display: 'block' }}>
+              AI Model
+            </Typography>
+            <ToggleButtonGroup
+              value={modelPreference}
+              exclusive
+              onChange={(_, value) => value && setModelPreference(value)}
+              size="small"
+              fullWidth
+            >
+              <ToggleButton value="flash">
+                <Tooltip title="Faster analysis, good for most documents">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Icon name="flash_on" style={{ fontSize: 18 }} />
+                    <span>Fast (Flash)</span>
+                  </Box>
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="pro">
+                <Tooltip title="More thorough analysis, better for complex legal documents">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Icon name="workspace_premium" style={{ fontSize: 18 }} />
+                    <span>Pro</span>
+                  </Box>
+                </Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
+
+          <MuiDivider />
+
+          {/* Analysis Depth Selection */}
+          <Box sx={{ px: 2, py: 2 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 1, display: 'block' }}>
+              Analysis Depth
+            </Typography>
+            <ToggleButtonGroup
+              value={analysisDepth}
+              exclusive
+              onChange={(_, value) => value && setAnalysisDepth(value)}
+              size="small"
+              fullWidth
+            >
+              <ToggleButton value="standard">
+                <Tooltip title="Extract key information and provide recommendations">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Icon name="speed" style={{ fontSize: 18 }} />
+                    <span>Standard</span>
+                  </Box>
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="detailed">
+                <Tooltip title="In-depth legal analysis with risk assessment">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Icon name="search" style={{ fontSize: 18 }} />
+                    <span>Detailed</span>
+                  </Box>
+                </Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
+
+          <MuiDivider />
+
+          {/* Close button in menu footer */}
+          <MenuItem onClick={handleCloseMenu}>
+            <ListItemIcon>
+              <Icon name="check_circle" style={{ fontSize: 20 }} />
+            </ListItemIcon>
+            <ListItemText primary="Done" />
+          </MenuItem>
+        </Menu>
       </Box>
 
+      {/* Submit Button  */}
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
         {uploading ? (
           <>
@@ -431,7 +523,12 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
         )}
       </Box>
 
+      {/* Disclaimer */}
       <LegalDisclaimer variant="compact" />
+
+                <Typography variant="body2" sx={{ mb: 2, display: 'none' }}>
+            Our document analysis feature, powered by Google Gemini AI, provides intelligent analysis of accessibility-related demand letters and legal notices. The system automatically extracts key information such as plaintiff details, attorney contact information, settlement amounts, and response deadlines. More importantly, it identifies specific web accessibility violations mentioned in the letter and provides actionable recommendations to resolve them. By understanding the exact accessibility issues cited, you can prioritize remediation efforts, allocate resources effectively, and develop a strategic response plan. This AI-assisted approach helps organizations transform compliance challenges into opportunities for creating a more accessible web experience for all users.
+          </Typography>
 
       <Box sx={{ mt: 3, p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
