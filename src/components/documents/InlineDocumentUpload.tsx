@@ -359,13 +359,6 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
       {/* Advanced Options */}
       <Box
         sx={{
-          right: '1rem',
-          top: '1rem',
-          width: 'fit-content',
-          zIndex: 2,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-end',
           mb: 1,
         }}
       >
@@ -442,6 +435,9 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
           </Box>
         </Collapse>
       </Box>
+
+      {/* Disclaimer */}
+      <LegalDisclaimer variant="compact" />
 
       <Box sx={{ mt: 3, p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
