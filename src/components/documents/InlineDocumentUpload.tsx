@@ -200,7 +200,19 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
 
       <Box sx={{ position: 'relative' }}>
         {/* Advanced Options */}
-        <Box sx={{ mb: 1 }}>
+        <Box
+          sx={{ 
+            position: 'absolute',
+            right: '1rem',
+            top: '1rem',
+            width: 'fit-content',
+            zIndex: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            mb: 1,
+          }}
+        >
           <Button
             size="small"
             onClick={() => setShowAdvanced(!showAdvanced)}
