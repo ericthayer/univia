@@ -210,7 +210,7 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
             border: '2px dashed',
             borderColor: dragActive ? 'primary.main' : 'divider',
             borderRadius: 3,
-            p: 6,
+            p: 4,
             textAlign: 'center',
             bgcolor: dragActive ? 'action.hover' : 'background.paper',
             transition: 'all 0.2s ease',
