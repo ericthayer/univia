@@ -106,7 +106,7 @@ export default function DemandLetters() {
           </Typography>
         </Box>
 
-        <Grid container spacing={4}>
+        <Grid container spacing={4} sx={{ display: 'none' }}>
           <Grid size={{ xs: 12, lg: 12 }}>
             <Box sx={{ position: 'sticky', top: 24 }}>
               <Tabs
