@@ -156,7 +156,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 variant="contained"
                 onClick={() => handleOpenAuth('signin')}
                 sx={{
-                  minHeight: { xs: 56, xxl: 44 } }
+                  flex: '1 1 15rem',
                 }
               >
                 Sign In
@@ -164,8 +164,8 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
               <Button
                 variant="outlined"
                 onClick={() => handleOpenAuth('signup')}
-                sx={{ 
-                  minHeight: { xs: 56, xxl: 44 } }
+                sx={{
+                  flex: '1 1 15rem',
                 }
               >
                 Register Mobile
