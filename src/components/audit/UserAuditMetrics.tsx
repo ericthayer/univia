@@ -152,7 +152,6 @@ export default function UserAuditMetrics({
           {!loading && metrics.totalAudits > 0 && (
             <Button
               variant="contained"
-              size="large"
               onClick={handleAuditClick}
               startIcon={<Icon name="refresh" />}
             >
