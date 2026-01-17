@@ -539,20 +539,6 @@ export default function UserAuditMetrics({
           </Box>
         )}
 
-        {/* Call to Action */}
-        {!loading && metrics.totalAudits > 0 && (
-          <Box sx={{ mt: 6, textAlign: 'center' }}>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={handleAuditClick}
-              startIcon={<Icon name="refresh" />}
-            >
-              Run New Audit
-            </Button>
-          </Box>
-        )}
-
         {/* Audit History */}
         {!loading && metrics.allAudits.length > 0 && (
           <Box sx={{ mt: 6 }}>
