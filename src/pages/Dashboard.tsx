@@ -117,8 +117,8 @@ export default function Dashboard() {
                         bgcolor: 'primary.main',
                         color: 'primary.contrastText',
                         display: 'flex',
-                        alignItems: { md: 'center' },
-                        justifyContent: { md: 'center' },
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         mb: 3,
                       }}
                     >
