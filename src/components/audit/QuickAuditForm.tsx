@@ -95,6 +95,13 @@ export default function QuickAuditForm() {
   return (
     <Box component="form" onSubmit={handleSubmit} autoComplete="on">
       <Stack gap={3}>
+        
+        {apiError && (
+          <Alert severity="error" onClose={() => setApiError('')}>
+            {apiError}
+          </Alert>
+        )}
+        
         <Box>
           <TextField
             fullWidth
@@ -166,12 +173,6 @@ export default function QuickAuditForm() {
             </Button>
           )}
         </Box>
-        
-        {apiError && (
-          <Alert severity="error" onClose={() => setApiError('')}>
-            {apiError}
-          </Alert>
-        )}
         
       </Stack>
     </Box>
