@@ -157,7 +157,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 onClick={() => handleOpenAuth('signin')}
                 sx={{
                   flex: '1 1 15rem',
-                  minHeight: 56,
+                  minHeight: { xs: 56, md: 44 },
                 }}
               >
                 Sign In
@@ -168,7 +168,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 sx={{
                   flex: '1 1 15rem',
                   
-                  minHeight: 56,
+                  minHeight: { xs: 56, md: 44 },
                 }}
               >
                 Join Univia
