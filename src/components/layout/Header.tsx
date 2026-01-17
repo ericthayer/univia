@@ -223,7 +223,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                 variant="h3"
                 component="div"
                 sx={{
-                  display: { xs: 'none', xl: 'inline' },
+                  display: { xs: 'none', xxl: 'inline' },
                   color: 'text.primary',
                 }}
               >
