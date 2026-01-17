@@ -196,9 +196,6 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                       setAuthModalMode('signup');
                       setAuthModalOpen(true);
                     }}
-                    sx={{
-                      display: 'none',
-                    }}
                   >
                     Register
                   </Button>
