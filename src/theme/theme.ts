@@ -171,6 +171,10 @@ const theme = createTheme({
           padding: '.875rem 1.5rem',
           fontSize: '1.125rem',
         },
+        sizeSmall: {
+          padding: '.875rem 1.5rem',
+          fontSize: '1.125rem',
+        },
       },
     },
     MuiCard: {
