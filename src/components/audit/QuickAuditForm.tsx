@@ -126,6 +126,9 @@ export default function QuickAuditForm() {
                   'aria-describedby': urlField.error ? 'url-error-text' : 'url-helper-text',
                 },
               }}
+              sx={{
+                height: 44,
+              }}
             />
             {(urlField.error || urlField.success) && (
               <ValidationFeedback
