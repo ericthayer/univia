@@ -138,7 +138,7 @@ export default function UserAuditMetrics({
         )}
 
 
-        <Stack direction="row" alignItems="center" flexWrap="wrap" justifyContent="space-between" paddingY={2} gap={3}>
+        <Stack direction="row" alignItems="center" flexWrap="wrap" justifyContent="space-between" gap={3}>
         
           {/* Header */}
           <Typography
@@ -163,7 +163,7 @@ export default function UserAuditMetrics({
         </Stack>
 
         {/* Main Metrics Grid */}
-        <Grid container spacing={3} sx={{ containerType: 'inline-size' }}>
+        <Grid container spacing={3} sx={{ containerType: 'inline-size', py: 4 }}>
           {/* Latest Audit Score */}
           <Grid size={{ xs: 12, md: 6, lg: 4 }}>
             <Card
