@@ -102,6 +102,7 @@ export default function Dashboard() {
       <Container maxWidth="lg" sx={{ py: 'clamp(4rem, 6dvh, 8rem)', px: '2rem !important' }}>
         
         {/* Standards Overview */}
+         {!ser && (
         <Stack gap={6}>
           <Box sx={{
             '.MuiCard-root': {
@@ -208,6 +209,7 @@ export default function Dashboard() {
             </Grid>
           </Box>
         </Stack>
+      )}
 
         {/* Quick Actions */}
         <Stack gap={6} sx={{ mt: 'clamp(5rem, 7cqh, 8rem)' }}>
