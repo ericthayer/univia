@@ -153,7 +153,6 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
           {!user && (
             <Stack gap={2} flexDirection="row" flexWrap="wrap" sx={{ px: 2 }}>
               <Button
-                fullWidth
                 variant="contained"
                 onClick={() => handleOpenAuth('signin')}
                 sx={{
@@ -163,7 +162,6 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 Sign In
               </Button>
               <Button
-                fullWidth
                 variant="outlined"
                 onClick={() => handleOpenAuth('signup')}
                 sx={{ 
