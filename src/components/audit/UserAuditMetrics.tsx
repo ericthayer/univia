@@ -145,9 +145,6 @@ export default function UserAuditMetrics({
           <Typography
             variant="h3"
             component="h2"
-            sx={{
-              mb: 4,
-            }}
           >
             Your Audit Performance
           </Typography>
