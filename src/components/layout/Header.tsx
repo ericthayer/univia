@@ -233,15 +233,15 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
               background: 'transparent',
               display: { xs: 'inline-flex', md: 'none' },
               minHeight: 44,
+              color: 'primary.main',
               textTransform: 'uppercase',
               '&:focus-visible': {
                 outline: '2px solid',
-                outlineColor: 'primary.main',
                 outlineOffset: 2,
               },
             }}
           >
-            <Box component="small" sx={{ background: 'background.paper' }}>Menu</Box>
+            <Box component="small" sx={{ background: 'primary.main' }}>Menu</Box>
           </Button>
         </Stack>
 
