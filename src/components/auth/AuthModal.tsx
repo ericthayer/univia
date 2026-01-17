@@ -91,7 +91,7 @@ export default function AuthModal({ open, onClose, initialMode = 'signin' }: Aut
       <DialogTitle>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           {mode === 'signin' ? 'Sign In' : 'Create Account'}
-          <IconButton onClick={handleClose} size="small" edge="end">
+          <IconButton onClick={handleClose} size="small">
             <Icon name="close" />
           </IconButton>
         </Box>
