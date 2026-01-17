@@ -225,6 +225,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                   display: { xs: 'none', xxl: 'inline' },
                   color: 'text.primary',
                   fontWeight: 600,
+                  mr: 1
                 }}
               >
                 Color Mode
