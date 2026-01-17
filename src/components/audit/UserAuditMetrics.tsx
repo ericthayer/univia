@@ -150,16 +150,14 @@ export default function UserAuditMetrics({
 
          {/* Call to Action */}
         {!loading && metrics.totalAudits > 0 && (
-          <Box sx={{ }}>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={handleAuditClick}
-              startIcon={<Icon name="refresh" />}
-            >
-              Run New Audit
-            </Button>
-          </Box>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={handleAuditClick}
+            startIcon={<Icon name="refresh" />}
+          >
+            Run New Audit
+          </Button>
         )}
 
         {/* Main Metrics Grid */}
