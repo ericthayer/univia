@@ -166,7 +166,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 variant="outlined"
                 onClick={() => handleOpenAuth('signup')}
                 sx={{
-                  flex: '1 1 15rem',
+                  flex: '1 1 0',
                   
                   minHeight: 44,
                 }}
