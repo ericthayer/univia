@@ -246,7 +246,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
               component="small"
               sx={{
                 bgcolor: 'primary.main',
-                borderRadius '0',
+                borderRadius: 'border',
                 py: 1,
                 px: 2,
               }}
