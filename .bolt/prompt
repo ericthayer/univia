@@ -12,7 +12,11 @@ Create a responsive React application using the latest stable version of Materia
 
 The information below is what I want to implemented for all designs I ask you to make. Make them beautiful, not cookie cutter. Make webpages that are fully featured and worthy for production.
 
-Before you start a task, or make a change—follow these instructions and rules: 
+Before you start a task, or make a change—follow these instructions and rules:
+
+- ALWAYS reference Gemini APIs when working on AI enhanced features: https://ai.google.dev/api
+
+- ALWAYS Reference the Gemini API docs for help with these core AI capabilities: Image Understanding: https://ai.google.dev/gemini-api/docs/image-understanding, Document Understanding: https://ai.google.dev/gemini-api/docs/document-processing, Grounding with Google Search: https://ai.google.dev/gemini-api/docs/google-search
 
 - ALWAYS read our Web Interface Guidelines before creating UI: https://assets.codepen.io/97621/web-interface-guidelines.instructions.md
 
@@ -24,21 +28,16 @@ Before you start a task, or make a change—follow these instructions and rules:
 
 Include the following specifications:
 
-1. Accessibility and Performance are always to be considered as first-class features and prioritized over anything else when making architecture decisions. Ensure accessibility standards are met with proper ARIA labels and semantic HTML using native interactive elements (buttons, inputs, etc.) with appropriate hover/focus/keyboard/screenreader states.
-
-2. Always use Adaptive Layout and Mobile UX best practices when applying visual design techniques. Use Container Queries, clamp() with dynamic and container based viewport units (e.g., cqw, dvh), etc., for spacing, visual hierarchy, and interaction design.
-
+1. Accessibility and Performance are ALWAYS to be considered as first-class features and prioritized over anything else when making architecture decisions. Ensure accessibility standards are met with proper ARIA labels and semantic HTML using native interactive elements (buttons, inputs, etc.) with appropriate hover/focus/keyboard/screenreader states.
+2. ALWAYS use Adaptive Layout and Mobile UX best practices when applying visual design techniques. Use Container Queries, clamp() with dynamic and container based viewport units (e.g., cqw, dvh), etc., for spacing, visual hierarchy, and interaction design.
 3. Use Progressive Enhancement to apply Modern but Accessible CSS: https://chrome.dev/css-wrapped-2025/
-
 4. Replicate the exact layout and visual design for responsive layout using Container Queries, spacing, and visual hierarchy shown in the [image] or [url]. ALWAYS use the new MUI <Grid> syntax for layouts: https://mui.com/material-ui/react-grid/
-5. Create and Implement elegant and maintainable color palettes, typography scales, and robust spacing system.
-7. Include any interactive elements (buttons, forms, etc.) with appropriate hover/focus states
-5. Ensure accessibility standards are met with proper ARIA labels and semantic HTML
-6. Use MUI components and styling system (sx prop or styled components)
-7. Include proper component organization and file structure
-8. DO NOT use Tailwind or any other CSS framework other than the MUI theme for styling. Use MUI's theme provider for consistent styling.
-9. DO NOT use webfonts for UI icons, BUT use inline SVG instead.
-10. Always create a theme palette (light/dark) with "cssVariables" enabled: https://mui.com/material-ui/customization/css-theme-variables/usage/#light-and-dark-modes
-11. Always add a color mode toggle demo and function that uses the MUI prescribed method: https://mui.com/material-ui/customization/dark-mode/#toggling-color-mode & https://mui.com/material-ui/customization/css-theme-variables/configuration/#toggling-dark-mode-manually
-12. Follow the MUI documentation to avoid color mode flicker on toggle or page reload: https://mui.com/material-ui/customization/dark-mode/#dark-mode-flicker
-13. Always apply the user's system preference color mode (MUI default) and use localStorage to save their manual setting: https://mui.com/material-ui/customization/dark-mode/#system-preference
+5. DO NOT use Tailwind or any other CSS framework other than the MUI theme for styling. Use MUI's theme provider for consistent styling.
+6. Use MUI components and styling system (sx prop or styled components). Create and Implement elegant and maintainable color palettes, typography scales, and robust spacing system.
+7. DO NOT use webfonts for UI icons, BUT use inline SVG instead.
+8. ALWAYS create a theme palette (light/dark) with "cssVariables" enabled: https://mui.com/material-ui/customization/css-theme-variables/usage/#light-and-dark-modes
+9. ALWAYS add a color mode toggle demo and function that uses the MUI prescribed method: https://mui.com/material-ui/customization/dark-mode/#toggling-color-mode & https://mui.com/material-ui/customization/css-theme-variables/configuration/#toggling-dark-mode-manually
+10. Follow the MUI documentation to avoid color mode flicker on toggle or page reload: https://mui.com/material-ui/customization/dark-mode/#dark-mode-flicker. ALWAYS apply the user's system preference color mode (MUI default) and use localStorage to save their manual setting: https://mui.com/material-ui/customization/dark-mode/#system-preference 
+11. All components extend base components—always using TypeScript-first with strict typing.
+12. Always break out any reusable components into a separate file for reuse via ES module. Include proper component organization and file structure
+13. Always provide a quick summary of what was changed after each response so we have insight into what design or development decisions were made.
