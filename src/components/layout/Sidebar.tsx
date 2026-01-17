@@ -151,7 +151,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
           <Divider sx={{ my: 2 }} />
                   
           {!user && (
-            <Stack gap={2} sx={{ px: 2 }}>
+            <Stack gap={2} flexDirection="row" flexWrap="wrap" sx={{ px: 2 }}>
               <Button
                 fullWidth
                 variant="contained"
