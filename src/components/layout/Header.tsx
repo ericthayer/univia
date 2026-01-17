@@ -219,11 +219,12 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
               }}
             >
                <Typography
-                variant="body2"
+                variant="button"
                 component="div"
                 sx={{
                   display: { xs: 'none', xxl: 'inline' },
                   color: 'text.primary',
+                  fontWeight: 550,
                 }}
               >
                 Color Mode
