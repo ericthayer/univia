@@ -109,7 +109,7 @@ export default function QuickAuditForm() {
               label="Website Address"
               placeholder="yoursite.com"
               value={urlField.value}
-              size="large"
+              size="medium"
               autoComplete="url"
               onChange={(e) => {
                 setFieldValue('url', e.target.value);
