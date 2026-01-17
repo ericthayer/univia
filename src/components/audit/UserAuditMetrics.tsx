@@ -299,6 +299,292 @@ export default function UserAuditMetrics({
             </Stack>
           </Box>
         )}
+
+        {/* Average Scores Breakdown */}
+        {!loading && metrics.totalAudits > 0 && (
+          <Box sx={{ py: 3 }}>
+            <Typography variant="h5" component="h3" sx={{ mb: 3 }}>
+              Score Breakdown
+            </Typography>
+
+            {/* Overall Averages */}
+            <Typography variant="h6" component="h4" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Icon name="analytics" style={{ fontSize: 20 }} />
+              Overall ({metrics.totalAudits} audits)
+            </Typography>
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      Accessibility
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                      {metrics.averageScores.accessibility}%
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={metrics.averageScores.accessibility}
+                    sx={{
+                      height: 8,
+                      borderRadius: 1,
+                      backgroundColor: 'action.disabled',
+                    }}
+                  />
+                </Box>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      Performance
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                      {metrics.averageScores.performance}%
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={metrics.averageScores.performance}
+                    sx={{
+                      height: 8,
+                      borderRadius: 1,
+                      backgroundColor: 'action.disabled',
+                    }}
+                  />
+                </Box>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      Best Practices
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                      {metrics.averageScores.bestPractices}%
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={metrics.averageScores.bestPractices}
+                    sx={{
+                      height: 8,
+                      borderRadius: 1,
+                      backgroundColor: 'action.disabled',
+                    }}
+                  />
+                </Box>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      SEO
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                      {metrics.averageScores.seo}%
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={metrics.averageScores.seo}
+                    sx={{
+                      height: 8,
+                      borderRadius: 1,
+                      backgroundColor: 'action.disabled',
+                    }}
+                  />
+                </Box>
+              </Grid>
+            </Grid>
+
+            {/* Device-Specific Averages */}
+            {(metrics.desktopAverages.count > 0 || metrics.mobileAverages.count > 0) && (
+              <Grid container spacing={4}>
+                {/* Desktop Averages */}
+                {metrics.desktopAverages.count > 0 && (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Typography variant="h6" component="h4" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Icon name="computer" style={{ fontSize: 20 }} />
+                      Desktop ({metrics.desktopAverages.count} audits)
+                    </Typography>
+                    <Stack spacing={2}>
+                      <Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            Accessibility
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                            {metrics.desktopAverages.accessibility}%
+                          </Typography>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={metrics.desktopAverages.accessibility}
+                          sx={{
+                            height: 8,
+                            borderRadius: 1,
+                            backgroundColor: 'action.disabled',
+                          }}
+                        />
+                      </Box>
+                      <Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            Performance
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                            {metrics.desktopAverages.performance}%
+                          </Typography>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={metrics.desktopAverages.performance}
+                          sx={{
+                            height: 8,
+                            borderRadius: 1,
+                            backgroundColor: 'action.disabled',
+                          }}
+                        />
+                      </Box>
+                      <Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            Best Practices
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                            {metrics.desktopAverages.bestPractices}%
+                          </Typography>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={metrics.desktopAverages.bestPractices}
+                          sx={{
+                            height: 8,
+                            borderRadius: 1,
+                            backgroundColor: 'action.disabled',
+                          }}
+                        />
+                      </Box>
+                      <Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            SEO
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                            {metrics.desktopAverages.seo}%
+                          </Typography>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={metrics.desktopAverages.seo}
+                          sx={{
+                            height: 8,
+                            borderRadius: 1,
+                            backgroundColor: 'action.disabled',
+                          }}
+                        />
+                      </Box>
+                    </Stack>
+                  </Grid>
+                )}
+
+                {/* Mobile Averages */}
+                {metrics.mobileAverages.count > 0 && (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Typography variant="h6" component="h4" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Icon name="smartphone" style={{ fontSize: 20 }} />
+                      Mobile ({metrics.mobileAverages.count} audits)
+                    </Typography>
+                    <Stack spacing={2}>
+                      <Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            Accessibility
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                            {metrics.mobileAverages.accessibility}%
+                          </Typography>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={metrics.mobileAverages.accessibility}
+                          sx={{
+                            height: 8,
+                            borderRadius: 1,
+                            backgroundColor: 'action.disabled',
+                          }}
+                        />
+                      </Box>
+                      <Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            Performance
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                            {metrics.mobileAverages.performance}%
+                          </Typography>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={metrics.mobileAverages.performance}
+                          sx={{
+                            height: 8,
+                            borderRadius: 1,
+                            backgroundColor: 'action.disabled',
+                          }}
+                        />
+                      </Box>
+                      <Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            Best Practices
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                            {metrics.mobileAverages.bestPractices}%
+                          </Typography>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={metrics.mobileAverages.bestPractices}
+                          sx={{
+                            height: 8,
+                            borderRadius: 1,
+                            backgroundColor: 'action.disabled',
+                          }}
+                        />
+                      </Box>
+                      <Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            SEO
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                            {metrics.mobileAverages.seo}%
+                          </Typography>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={metrics.mobileAverages.seo}
+                          sx={{
+                            height: 8,
+                            borderRadius: 1,
+                            backgroundColor: 'action.disabled',
+                          }}
+                        />
+                      </Box>
+                    </Stack>
+                  </Grid>
+                )}
+              </Grid>
+            )}
+          </Box>
+        )}
+
       </Container>
     </Box>
   );
