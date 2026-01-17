@@ -99,16 +99,16 @@ export default function Dashboard() {
         </Box>
       )}
       
-      <Container maxWidth="lg" sx={{ py: 'clamp(4rem, 6dvh, 8rem)', px: '2rem !important' }}>
         
         {/* Standards Overview */}
-         {!user && (
+        {!user && (
         <Stack gap={6}>
           <Box sx={{
             '.MuiCard-root': {
               height: '100%',
             },
           }}>
+          <Container maxWidth="lg" sx={{ py: 'clamp(4rem, 6dvh, 8rem)', px: '2rem !important' }}>
             <Typography variant="h4" component="h2" sx={{ mb: 4 }}>
               Standards Overview
             </Typography>
@@ -209,9 +209,11 @@ export default function Dashboard() {
             </Grid>
           </Box>
         </Stack>
-      )}
+      )}       
+      </Container>
 
-        {/* Quick Actions */}
+      <Container>
+       {/* Quick Actions */}
         <Stack gap={6} sx={{ mt: 'clamp(5rem, 7cqh, 8rem)' }}>
           <Box sx={{
             '.MuiCard-root': {
