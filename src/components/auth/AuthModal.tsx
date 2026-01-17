@@ -88,7 +88,7 @@ export default function AuthModal({ open, onClose, initialMode = 'signin' }: Aut
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} fullScreen={fullScreen} maxWidth="xs" sx={{ width: '1000px', }}>
+    <Dialog open={open} onClose={handleClose} fullScreen={fullScreen} maxWidth="xs" sx={{ width: '100', }}>
       <DialogTitle sx={{ pr: 2 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           {mode === 'signin' ? 'Sign In' : 'Create Account'}
@@ -105,7 +105,7 @@ export default function AuthModal({ open, onClose, initialMode = 'signin' }: Aut
             </Alert>
           )}
           
-          <Stack gap={3}>
+          <Stack gap={3} sx={{ width: '100%' }}>
             <Stack>
               {mode === 'signup' && (
                 <TextField
