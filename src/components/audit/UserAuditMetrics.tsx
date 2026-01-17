@@ -1,5 +1,7 @@
 import { Box, Card, CardContent, Container, Grid, Stack, Typography, Button, LinearProgress, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { supabase } from '../../services/supabaseClient';
 import ComplianceGauge from '../ui/ComplianceGauge';
 import AuditHistoryCard from './AuditHistoryCard';
 import StatCard from '../ui/StatCard';
@@ -63,17 +65,50 @@ export default function UserAuditMetrics({
   onAuditClick,
 }: UserAuditMetricsProps) {
   const navigate = useNavigate();
-  const { metrics, loading, error } = useUserAudits({
+  const { metrics, loading, error, refetch } = useUserAudits({
     userId,
     limit,
     enabled,
   });
+  const [pinnedAuditIds, setPinnedAuditIds] = useState<Set<string>>(new Set());
+
+  // Fetch pinned audits
+  useEffect(() => {
+    if (!userId || !enabled) return;
+
+    const fetchPinnedAudits = async () => {
+      const { data } = await supabase
+        .from('pinned_audits')
+        .select('audit_id')
+        .eq('user_id', userId);
+
+      if (data) {
+        setPinnedAuditIds(new Set(data.map(p => p.audit_id)));
+      }
+    };
+
+    fetchPinnedAudits();
+  }, [userId, enabled]);
 
   const handleAuditClick = () => {
     if (onAuditClick) {
       onAuditClick();
     } else {
       navigate('/audit');
+    }
+  };
+
+  const handlePinToggle = async () => {
+    // Refetch pinned audits after toggle
+    if (!userId) return;
+
+    const { data } = await supabase
+      .from('pinned_audits')
+      .select('audit_id')
+      .eq('user_id', userId);
+
+    if (data) {
+      setPinnedAuditIds(new Set(data.map(p => p.audit_id)));
     }
   };
 
@@ -519,12 +554,34 @@ export default function UserAuditMetrics({
         )}
 
         {/* Audit History */}
-        <AuditHistoryCard
-          key={audit.id}
-          audit={audit}
-          isPinned={pinnedAuditIds.has(audit.id)}
-          onPinToggle={loadMetrics}
-        />
+        {!loading && metrics.allAudits.length > 0 && (
+          <Box sx={{ mt: 6 }}>
+            <Typography variant="h5" component="h3" sx={{ mb: 3, fontWeight: 600 }}>
+              Recent Audits
+            </Typography>
+            <Stack spacing={2}>
+              {metrics.allAudits
+                .sort((a, b) => {
+                  // Show pinned audits first
+                  const aIsPinned = pinnedAuditIds.has(a.id);
+                  const bIsPinned = pinnedAuditIds.has(b.id);
+                  if (aIsPinned && !bIsPinned) return -1;
+                  if (!aIsPinned && bIsPinned) return 1;
+                  // Then sort by date (most recent first)
+                  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                })
+                .slice(0, 10)
+                .map(audit => (
+                  <AuditHistoryCard
+                    key={audit.id}
+                    audit={audit}
+                    isPinned={pinnedAuditIds.has(audit.id)}
+                    onPinToggle={handlePinToggle}
+                  />
+                ))}
+            </Stack>
+          </Box>
+        )}
       </Container>
     </Box>
   );

@@ -123,7 +123,7 @@ export function useUserAudits(options: UseUserAuditsOptions = {}) {
       const { data, error: fetchError } = await supabase
         .from('accessibility_audits')
         .select(
-          'id, url_scanned, performance_score, accessibility_score, best_practices_score, seo_score, device_type, created_at'
+          'id, url_scanned, performance_score, accessibility_score, best_practices_score, seo_score, device_type, created_at, audit_session_id'
         )
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
