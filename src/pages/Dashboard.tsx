@@ -112,13 +112,18 @@ export default function Dashboard() {
       {/* User Audit Metrics - Only shown when logged in */}
       {user && (
         <>
+          <UserAuditMetrics
+            userId={user.id}
+            enabled={!!user}
+            fullWidth={false}
+          />
 
           {/* Quick Actions for Signed-In Users */}
           <Box sx={{ mt: 6 }}>
             <Typography variant="h4" component="h2" sx={{ mb: 3 }}>
               Quick Tools
             </Typography>
-            <Stack gap={2}>
+            <Stack gap={3}>
               <Accordion
                 expanded={expandedPanel === 'audit'}
                 onChange={handlePanelChange('audit')}
@@ -251,12 +256,6 @@ export default function Dashboard() {
               </Accordion>
             </Stack>
           </Box>
-
-                    <UserAuditMetrics
-            userId={user.id}
-            enabled={!!user}
-            fullWidth={false}
-          />
         </>
       )}
       
