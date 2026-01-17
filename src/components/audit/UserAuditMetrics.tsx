@@ -129,7 +129,7 @@ export default function UserAuditMetrics({
         }),
       }}
     >
-      <Container {...containerProps}>
+      <Container {...containerProps} sx={{ p: 0 }}>
         {/* Error State */}
         {error && (
           <Alert severity="error" sx={{ mb: 4 }}>
@@ -273,7 +273,7 @@ export default function UserAuditMetrics({
         {/* Average Scores Breakdown */}
         {!loading && metrics.totalAudits > 0 && (
           <Box sx={{ py: 3 }}>
-            <Typography variant="h5" component="h3" sx={{ mb: 3, fontWeight: 600 }}>
+            <Typography variant="h5" component="h3" sx={{ mb: 3 }}>
               Score Breakdown
             </Typography>
 
