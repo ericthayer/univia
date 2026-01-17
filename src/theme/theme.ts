@@ -47,17 +47,17 @@ const theme = createTheme({
     },
     h3: {
       fontSize: '1.5rem',
-      fontWeight: 600,
+      fontWeight: 700,
       lineHeight: 1.4,
     },
     h4: {
       fontSize: '1.25rem',
-      fontWeight: 600,
+      fontWeight: 700,
       lineHeight: 1.4,
     },
     h5: {
       fontSize: '1.125rem',
-      fontWeight: 600,
+      fontWeight: 700,
       lineHeight: 1.5,
     },
     h6: {
