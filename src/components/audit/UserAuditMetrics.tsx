@@ -91,8 +91,6 @@ export default function UserAuditMetrics({
           bgcolor: 'background.paper',
           borderBottom: '1px solid var(--mui-palette-divider)',
         }),
-        py: 'clamp(3rem, 8dvh, 6rem)',
-        px: 'clamp(1rem, 4dvw, 4rem)',
       }}
     >
       <Container {...containerProps}>
