@@ -93,7 +93,7 @@ export default function Dashboard() {
               height: '100%',
             },
           }}>
-            <Typography variant="h4" component="h2" sx={{ mb: 4, fontWeight: 700 }}>
+            <Typography variant="h4" component="h2" sx={{ mb: 4 }}>
               Standards Overview
             </Typography>
             <Grid container spacing={3}>
