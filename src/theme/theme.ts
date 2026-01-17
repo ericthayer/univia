@@ -135,6 +135,7 @@ const theme = createTheme({
         root: {
           borderRadius: 6,
           borderWidth: 2,
+          fontSize: '1rem',
           fontWeight: 550,
           textTransform: 'none',
 
