@@ -26,7 +26,12 @@ export default function Dashboard() {
         }}
       >
         <Stack alignItems="center">
-          <Container maxWidth="lg" sx={{ pl: { xs: '2rem', lg: '1.5rem !important' }, pr: { xs: '2rem', lg: '1.5rem !important' } }}>
+          <Container
+            maxWidth="lg"
+            sx={{
+              px: 'clamp(2rem, 4cqw, 8rem) !important'
+            }}
+          >
             
             <Typography
               variant="h1"
