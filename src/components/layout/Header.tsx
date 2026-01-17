@@ -231,6 +231,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
             onClick={onMobileMenuToggle}
             sx={{
               display: { xs: 'inline-flex', md: 'none' },
+              minHeight: 44,
               textTransform: 'uppercase',
               '&:focus-visible': {
                 outline: '2px solid',
