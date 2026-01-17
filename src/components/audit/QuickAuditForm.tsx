@@ -102,7 +102,7 @@ export default function QuickAuditForm() {
           </Alert>
         )}
 
-        <Stack direction="row" alignItems="center" gap={3}>
+        <Stack direction="row" gap={3}>
           <Box>
             <TextField
               fullWidth
