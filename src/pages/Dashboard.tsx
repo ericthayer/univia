@@ -22,7 +22,7 @@ export default function Dashboard() {
           py: 'clamp(4rem, 10cqh, 10rem)',
           px: 'clamp(2rem, 8cqw, 8rem)',
           '@media (25rem < height < 54rem)': {
-            height: { '@400': 'calc(100dvh - 65px)' },
+            height: { '300': 'calc(100dvh - 65px)' },
           },
         }}
       >
