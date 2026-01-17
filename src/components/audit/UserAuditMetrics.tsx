@@ -150,7 +150,7 @@ export default function UserAuditMetrics({
 
          {/* Call to Action */}
         {!loading && metrics.totalAudits > 0 && (
-          <Box sx={{ mt: 6, textAlign: 'center' }}>
+          <Box sx={{ }}>
             <Button
               variant="contained"
               size="large"
