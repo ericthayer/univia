@@ -17,7 +17,7 @@ export default function Dashboard() {
           borderBottom: '1px solid',
           borderColor: 'divider',
           containerType: 'inline-size',
-          minHeight: { sm: '50svh' },
+          minHeight: { sm: '50dvh' },
           placeContent: 'center',
           py: 'clamp(4rem, 15cqh, 10rem)',
           px: 'clamp(2rem, 8cqw, 8rem)',
