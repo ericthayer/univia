@@ -1,12 +1,15 @@
-import { Box, Card, CardContent, Container, Grid, Stack, Typography, Button, LinearProgress, Alert } from '@mui/material';
+import { Box, Card, CardContent, Container, Grid, Stack, Typography, Button, LinearProgress, Alert, TextField, InputAdornment, IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import ComplianceGauge from '../ui/ComplianceGauge';
 import AuditHistoryCard from './AuditHistoryCard';
 import StatCard from '../ui/StatCard';
 import Icon from '../ui/Icon';
 import { useUserAudits } from '../../hooks/useUserAudits';
+import { useFormValidation } from '../../hooks/useFormValidation';
+import { useAuth } from '../../contexts/AuthContext';
+import DocumentUploadDrawer from '../documents/DocumentUploadDrawer';
 
 interface UserAuditMetricsProps {
   /**
@@ -65,12 +68,20 @@ export default function UserAuditMetrics({
   onAuditClick,
 }: UserAuditMetricsProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { metrics, loading, error, refetch } = useUserAudits({
     userId,
     limit,
     enabled,
   });
   const [pinnedAuditIds, setPinnedAuditIds] = useState<Set<string>>(new Set());
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const { getFieldState, setFieldValue, validateFieldDebounced } = useFormValidation();
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const urlField = getFieldState('url');
+  const MAX_URL_LENGTH = 2048;
 
   // Fetch pinned audits
   useEffect(() => {
@@ -95,6 +106,53 @@ export default function UserAuditMetrics({
       onAuditClick();
     } else {
       navigate('/audit');
+    }
+  };
+
+  const handleQuickAudit = async () => {
+    if (!urlField.value.trim() || urlField.error || auditLoading) return;
+
+    setAuditLoading(true);
+
+    try {
+      const fullUrl = urlField.value.startsWith('http') ? urlField.value : `https://${urlField.value}`;
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-lighthouse-audit`;
+
+      abortControllerRef.current = new AbortController();
+
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: fullUrl, user_id: user?.id || null }),
+        signal: abortControllerRef.current.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to run audit');
+      }
+
+      const result = await response.json();
+
+      if (result.session_id) {
+        navigate(`/audit/${result.session_id}`);
+      }
+    } catch (err: unknown) {
+      if (!(err instanceof Error && err.name === 'AbortError')) {
+        console.error('Audit error:', err);
+      }
+    } finally {
+      setAuditLoading(false);
+      abortControllerRef.current = null;
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleQuickAudit();
     }
   };
 
@@ -138,8 +196,8 @@ export default function UserAuditMetrics({
         )}
 
 
-        <Stack direction="row" alignItems="center" flexWrap="wrap" justifyContent="space-between" columnGap={3} rowGap={1.5}>
-        
+        <Stack direction="row" alignItems="center" flexWrap="wrap" justifyContent="space-between" columnGap={3} rowGap={2} sx={{ mb: 2 }}>
+
           {/* Header */}
           <Typography
             variant="h3"
@@ -147,19 +205,73 @@ export default function UserAuditMetrics({
           >
             Your Audit Performance
           </Typography>
-  
-           {/* Call to Action */}
-          {!loading && metrics.totalAudits > 0 && (
+
+          {/* Quick Actions */}
+          <Stack direction="row" gap={1.5} flexWrap="wrap">
+            <TextField
+              size="small"
+              placeholder="yoursite.com"
+              value={urlField.value}
+              onChange={(e) => {
+                setFieldValue('url', e.target.value);
+                validateFieldDebounced('url', e.target.value, 'url');
+              }}
+              onKeyPress={handleKeyPress}
+              disabled={auditLoading}
+              error={!!urlField.error}
+              sx={{
+                minWidth: 200,
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: 'background.paper',
+                },
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Icon name="language" style={{ fontSize: 20, color: 'var(--mui-palette-text-secondary)' }} />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={handleQuickAudit}
+                      disabled={auditLoading || !urlField.value.trim() || !!urlField.error}
+                      size="small"
+                      aria-label="Run audit"
+                      sx={{
+                        color: 'primary.main',
+                        '&:hover': {
+                          bgcolor: 'action.hover',
+                        },
+                      }}
+                    >
+                      <Icon name="search" />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
             <Button
               variant="contained"
-              onClick={handleAuditClick}
-              startIcon={<Icon name="refresh" />}
+              onClick={() => setDrawerOpen(true)}
+              sx={{
+                bgcolor: 'grey.900',
+                color: 'common.white',
+                '&:hover': {
+                  bgcolor: 'grey.800',
+                },
+              }}
             >
-              Run New Audit
+              Analyze Docs
             </Button>
-          )}
+          </Stack>
 
         </Stack>
+
+        <DocumentUploadDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+        />
 
         {/* Main Metrics Grid */}
         <Grid container spacing={3} sx={{ containerType: 'inline-size', py: 4 }}>
@@ -228,9 +340,6 @@ export default function UserAuditMetrics({
                   subtitle={metrics.totalAudits > 0 ? 'Audits completed' : 'No audits yet'}
                   color="primary.main"
                   icon={<Icon name="assessment" />}
-                  sx={{
-                    placeContent: 'center',
-                  }}
                 />
               </Grid>
 

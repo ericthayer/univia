@@ -18,6 +18,7 @@ import {
 import Icon from '../ui/Icon';
 import LegalDisclaimer from '../ui/LegalDisclaimer';
 import { DocumentAnalysis } from './DocumentUploadDialog';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface InlineDocumentUploadProps {
   onUploadComplete: (analysis: DocumentAnalysis) => void;
@@ -46,6 +47,7 @@ const STAGE_PROGRESS: Record<AnalysisStage, number> = {
 };
 
 export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumentUploadProps) {
+  const { user } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -168,6 +170,7 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
           fileType: file.type,
           modelPreference,
           analysisDepth,
+          user_id: user?.id || null,
         }),
         signal: controller.signal,
       });

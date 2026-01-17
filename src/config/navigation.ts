@@ -17,8 +17,8 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: 'dashboard',
     path: '/',
     ariaLabel: 'Go to Dashboard',
-    showInHeader: false,
-    showInSidebar: false,
+    showInHeader: true,
+    showInSidebar: true,
   },
   {
     id: 'audit',
