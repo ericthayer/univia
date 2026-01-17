@@ -88,6 +88,8 @@ export default function Dashboard() {
       </Box>
       )}
 
+    <Container maxWidth="lg" sx={{ py: 'clamp(4rem, 6dvh, 8rem)', px: '2rem !important' }}>
+
       {/* User Audit Metrics - Only shown when logged in */}
       {user && (
         <Box sx={{ my: 6 }}>
@@ -108,7 +110,6 @@ export default function Dashboard() {
               height: '100%',
             },
           }}>
-          <Container maxWidth="lg" sx={{ py: 'clamp(4rem, 6dvh, 8rem)', px: '2rem !important' }}>
             <Typography variant="h4" component="h2" sx={{ mb: 4 }}>
               Standards Overview
             </Typography>
@@ -207,12 +208,11 @@ export default function Dashboard() {
                 </Card>
               </Grid>
             </Grid>
-          </Container>
+         
           </Box>
         </Stack>
       )}       
 
-      <Container>
        {/* Quick Actions */}
         <Stack gap={6} sx={{ mt: 'clamp(5rem, 7cqh, 8rem)' }}>
           <Box sx={{
