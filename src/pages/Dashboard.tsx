@@ -102,7 +102,7 @@ export default function Dashboard() {
       <Container maxWidth="lg" sx={{ py: 'clamp(4rem, 6dvh, 8rem)', px: '2rem !important' }}>
         
         {/* Standards Overview */}
-         {!ser && (
+         {!user && (
         <Stack gap={6}>
           <Box sx={{
             '.MuiCard-root': {
