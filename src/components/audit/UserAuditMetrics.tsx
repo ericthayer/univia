@@ -215,6 +215,9 @@ export default function UserAuditMetrics({
                   subtitle={metrics.totalAudits > 0 ? 'Audits completed' : 'No audits yet'}
                   color="primary.main"
                   icon={<Icon name="assessment" />}
+                  sx={{
+                    placeContent: 'center',
+                  }}
                 />
               </Grid>
 
