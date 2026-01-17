@@ -136,6 +136,7 @@ const theme = createTheme({
           borderRadius: 6,
           borderWidth: 2,
           fontWeight: 550,
+          padding: '.875rem 1.5rem',
           textTransform: 'none',
 
           '&.Mui-disabled': {
