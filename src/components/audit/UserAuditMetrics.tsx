@@ -1,6 +1,7 @@
 import { Box, Card, CardContent, Container, Grid, Stack, Typography, Button, LinearProgress, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import ComplianceGauge from '../ui/ComplianceGauge';
+import AuditHistoryCard from './AuditHistoryCard';
 import StatCard from '../ui/StatCard';
 import Icon from '../ui/Icon';
 import { useUserAudits } from '../../hooks/useUserAudits';
@@ -516,6 +517,14 @@ export default function UserAuditMetrics({
             </Button>
           </Box>
         )}
+
+        {/* Audit History */}
+        <AuditHistoryCard
+          key={audit.id}
+          audit={audit}
+          isPinned={pinnedAuditIds.has(audit.id)}
+          onPinToggle={loadMetrics}
+        />
       </Container>
     </Box>
   );
