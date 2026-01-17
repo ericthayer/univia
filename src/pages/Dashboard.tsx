@@ -238,7 +238,6 @@ export default function Dashboard() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          mx: 'auto',
                           mb: 2,
                         }}
                       >
