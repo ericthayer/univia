@@ -88,7 +88,7 @@ export default function AuthModal({ open, onClose, initialMode = 'signin' }: Aut
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} fullScreen={fullScreen} maxWidth="xs" sx={{ width: '100%', }}>
+    <Dialog open={open} onClose={handleClose} fullScreen={fullScreen} maxWidth="xs" sx={{ width: '1000px', }}>
       <DialogTitle sx={{ pr: 2 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           {mode === 'signin' ? 'Sign In' : 'Create Account'}
