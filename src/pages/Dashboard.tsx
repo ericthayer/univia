@@ -19,7 +19,7 @@ export default function Dashboard() {
           borderBottom: '1px solid',
           borderColor: 'divider',
           containerType: 'inline-size',
-          minHeight: { sm: '50dvh' },
+          minHeight: { sm: '50vh' },
           placeContent: 'center',
           py: { xs: 10, md: 'clamp(6rem, 8cqh, 10rem)' },
           '@media (25rem < height < 54rem)': {
