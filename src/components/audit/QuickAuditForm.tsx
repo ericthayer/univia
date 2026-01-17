@@ -102,7 +102,8 @@ export default function QuickAuditForm() {
           </Alert>
         )}
 
-        <Stack direction="row" gap={3}>
+        <Stack direction="row" alignItems="center" gap={3}>
+          <Box>
             <TextField
               fullWidth
               label="Website Address"
@@ -133,6 +134,7 @@ export default function QuickAuditForm() {
                 fieldId="url"
               />
             )}
+          </Box>
   
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             {!loading && (
