@@ -214,14 +214,14 @@ export default function Dashboard() {
       )}       
 
        {/* Quick Actions */}
-        <Stack gap={6} sx={{ mt: 'clamp(5rem, 7cqh, 8rem)' }}>
+        <Stack gap={6} sx={{ py: 6 }}>
           <Box sx={{
             '.MuiCard-root': {
               height: '100%',
             },
           }}
             >
-            <Typography variant="h4" component="h2" sx={{ mb: 2, fontWeight: 700 }}>
+            <Typography variant="h4" component="h2" sx={{ mb: 2 }}>
               Quick Actions
             </Typography>
             <Grid container spacing={3}>
