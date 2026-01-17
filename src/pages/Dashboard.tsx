@@ -11,6 +11,7 @@ export default function Dashboard() {
 
   return (
     <Box>
+      
       <Box
         sx={{
           bgcolor: 'light-dark(hsl(0 0% 98.82% / 1), hsl(0 0% 6% / 1))',
@@ -85,17 +86,18 @@ export default function Dashboard() {
         </Stack>
       </Box>
 
+      {/* User Audit Metrics - Only shown when logged in */}
+      {user && (
+        <Box sx={{ mt: 6 }}>
+          <UserAuditMetrics
+            userId={user.id}
+            enabled={!!user}
+            fullWidth={false}
+          />
+        </Box>
+      )}
+      
       <Container maxWidth="lg" sx={{ py: 'clamp(4rem, 6dvh, 8rem)', px: '2rem !important' }}>
-        {/* User Audit Metrics - Only shown when logged in */}
-        {user && (
-          <Box sx={{ mt: 6 }}>
-            <UserAuditMetrics
-              userId={user.id}
-              enabled={!!user}
-              fullWidth={false}
-            />
-          </Box>
-        )}
         
         {/* Standards Overview */}
         <Stack gap={6}>
