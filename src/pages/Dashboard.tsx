@@ -1,13 +1,32 @@
-import { Box, Container, Typography, Tooltip, Button, Card, CardContent, CardActionArea, Grid, Stack } from '@mui/material';
+import { useState } from 'react';
+import { Box, Container, Typography, Tooltip, Button, Card, CardContent, CardActionArea, Grid, Stack, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../components/ui/Icon';
 import InteractiveAbbr from '../components/ui/InteractiveAbbr';
 import UserAuditMetrics from '../components/audit/UserAuditMetrics';
+import QuickAuditForm from '../components/audit/QuickAuditForm';
+import InlineDocumentUpload from '../components/documents/InlineDocumentUpload';
+import InlineAnalysisResults from '../components/documents/InlineAnalysisResults';
+import { DocumentAnalysis } from '../components/documents/DocumentUploadDialog';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [expandedPanel, setExpandedPanel] = useState<string | false>(false);
+  const [analysisResult, setAnalysisResult] = useState<DocumentAnalysis | null>(null);
+
+  const handlePanelChange = (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
+    setExpandedPanel(isExpanded ? panel : false);
+  };
+
+  const handleUploadComplete = (analysis: DocumentAnalysis) => {
+    setAnalysisResult(analysis);
+  };
+
+  const handleNewUpload = () => {
+    setAnalysisResult(null);
+  };
 
   return (
     <Box>
@@ -92,11 +111,152 @@ export default function Dashboard() {
 
       {/* User Audit Metrics - Only shown when logged in */}
       {user && (
-        <UserAuditMetrics
-          userId={user.id}
-          enabled={!!user}
-          fullWidth={false}
-        />
+        <>
+          <UserAuditMetrics
+            userId={user.id}
+            enabled={!!user}
+            fullWidth={false}
+          />
+
+          {/* Quick Actions for Signed-In Users */}
+          <Box sx={{ mt: 6 }}>
+            <Typography variant="h4" component="h2" sx={{ mb: 3 }}>
+              Quick Tools
+            </Typography>
+            <Stack gap={2}>
+              <Accordion
+                expanded={expandedPanel === 'audit'}
+                onChange={handlePanelChange('audit')}
+                sx={{
+                  '&:before': {
+                    display: 'none',
+                  },
+                  boxShadow: 'none',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: '8px !important',
+                  '&.Mui-expanded': {
+                    margin: 0,
+                  },
+                }}
+              >
+                <AccordionSummary
+                  expandIcon={<Icon name="expand_more" />}
+                  aria-controls="audit-content"
+                  id="audit-header"
+                  sx={{
+                    '&.Mui-expanded': {
+                      minHeight: 48,
+                    },
+                    '& .MuiAccordionSummary-content': {
+                      my: 2,
+                      '&.Mui-expanded': {
+                        my: 2,
+                      },
+                    },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 1,
+                        bgcolor: 'primary.main',
+                        color: 'primary.contrastText',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Icon name="search" style={{ fontSize: 20 }} />
+                    </Box>
+                    <Box>
+                      <Typography variant="h6" component="h3">
+                        Run Site Audit
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Scan your website for accessibility issues
+                      </Typography>
+                    </Box>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails sx={{ pt: 0, pb: 3 }}>
+                  <QuickAuditForm />
+                </AccordionDetails>
+              </Accordion>
+
+              <Accordion
+                expanded={expandedPanel === 'document'}
+                onChange={handlePanelChange('document')}
+                sx={{
+                  '&:before': {
+                    display: 'none',
+                  },
+                  boxShadow: 'none',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: '8px !important',
+                  '&.Mui-expanded': {
+                    margin: 0,
+                  },
+                }}
+              >
+                <AccordionSummary
+                  expandIcon={<Icon name="expand_more" />}
+                  aria-controls="document-content"
+                  id="document-header"
+                  sx={{
+                    '&.Mui-expanded': {
+                      minHeight: 48,
+                    },
+                    '& .MuiAccordionSummary-content': {
+                      my: 2,
+                      '&.Mui-expanded': {
+                        my: 2,
+                      },
+                    },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 1,
+                        bgcolor: 'primary.main',
+                        color: 'primary.contrastText',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Icon name="gavel" style={{ fontSize: 20 }} />
+                    </Box>
+                    <Box>
+                      <Typography variant="h6" component="h3">
+                        Analyze Demand Letter
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Upload and analyze ADA violation letters
+                      </Typography>
+                    </Box>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails sx={{ pt: 0, pb: 3 }}>
+                  {!analysisResult ? (
+                    <InlineDocumentUpload onUploadComplete={handleUploadComplete} />
+                  ) : (
+                    <InlineAnalysisResults
+                      analysis={analysisResult}
+                      onNewUpload={handleNewUpload}
+                    />
+                  )}
+                </AccordionDetails>
+              </Accordion>
+            </Stack>
+          </Box>
+        </>
       )}
       
         
