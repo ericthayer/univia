@@ -142,7 +142,6 @@ export default function QuickAuditForm() {
                 <Button
                   type="submit"
                   variant="contained"
-                  size="large"
                   disabled={loading || !!urlField.error}
                   startIcon={<Icon name="search" />}
                   sx={{ flexGrow: { xs: 1, sm: 0 } }}
@@ -152,7 +151,6 @@ export default function QuickAuditForm() {
                 <Button
                   type="button"
                   variant="outlined"
-                  size="large"
                   onClick={handleReset}
                   disabled={loading}
                   sx={{ flexGrow: { xs: 1, sm: 0 } }}
@@ -165,7 +163,6 @@ export default function QuickAuditForm() {
               <Button
                 type="button"
                 variant="outlined"
-                size="large"
                 onClick={handleCancel}
                 startIcon={<CircularProgress size={20} />}
                 sx={{ flexGrow: { xs: 1, sm: 0 } }}
