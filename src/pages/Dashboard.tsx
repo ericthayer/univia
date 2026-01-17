@@ -262,6 +262,7 @@ export default function Dashboard() {
         
         {/* Standards Overview */}
         {!user && (
+      <>
         <Stack gap={6}>
           <Box sx={{
             '.MuiCard-root': {
@@ -546,6 +547,7 @@ export default function Dashboard() {
             </Grid>
           </Box>
          </Stack>
+        </>
         )}    
       
       </Container>
