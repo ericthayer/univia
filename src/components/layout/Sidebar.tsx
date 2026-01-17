@@ -151,13 +151,13 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
           <Divider sx={{ my: 2 }} />
                   
           {!user && (
-            <Stack gap={2} flexDirection="" sx={{ px: 2 }}>
+            <Stack gap={2} flexDirection="row" sx={{ px: 2 }}>
               <Button
                 variant="contained"
                 onClick={() => handleOpenAuth('signin')}
                 sx={{
-                  flex: '1 1 0',
-                  minHeight: 44,
+                  flex: '1 1 15rem',
+                  minHeight: 56,
                 }}
               >
                 Sign In
@@ -166,9 +166,9 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 variant="outlined"
                 onClick={() => handleOpenAuth('signup')}
                 sx={{
-                  flex: '1 1 0',
+                  flex: '1 1 15rem',
                   
-                  minHeight: 44,
+                  minHeight: 56,
                 }}
               >
                 Join Univia
