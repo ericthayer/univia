@@ -103,7 +103,7 @@ export default function QuickAuditForm() {
         )}
 
         <Stack direction="row" gap={3}>
-          <Box>
+          <Box sx={{ flex: 1 }}>
             <TextField
               fullWidth
               label="Website Address"
