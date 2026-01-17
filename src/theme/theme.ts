@@ -237,7 +237,6 @@ const theme = createTheme({
         root: {          
           background: 'var(--mui-palette-background-default)',
           borderRadius: 'var(--mui-shape-borderRadius)',
-          minHeight: 44,
         },
       },
     },
