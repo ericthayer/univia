@@ -176,7 +176,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
         <Stack direction="row" gap={1.5} alignItems="center" sx={{ ml: 'auto' }}>           
 
           {!authLoading && (
-            <Box sx={{ display: { xxl: 'none' } }}>
+            <Box>
               {user ? (
                 <UserMenu />
               ) : (
