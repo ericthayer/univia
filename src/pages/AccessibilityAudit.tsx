@@ -642,6 +642,7 @@ export default function AccessibilityAudit() {
                     )}
 
                     {paginatedAudits.map((audit) => (
+                import AuditHistoryCard from '../components/audit/AuditHistoryCard';
                       <AuditHistoryCard
                         key={audit.id}
                         audit={audit}
