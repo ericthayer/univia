@@ -149,7 +149,7 @@ export default function AuthModal({ open, onClose, initialMode = 'signin' }: Aut
               />
             </Stack>
 
-            <Stack gap={1.5}>
+            <Stack gap={2}>
   
               <Button
                 type="submit"
