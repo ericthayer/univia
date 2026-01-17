@@ -47,17 +47,17 @@ const theme = createTheme({
     },
     h3: {
       fontSize: '1.5rem',
-      fontWeight: 600,
+      fontWeight: 700,
       lineHeight: 1.4,
     },
     h4: {
       fontSize: '1.25rem',
-      fontWeight: 600,
+      fontWeight: 700,
       lineHeight: 1.4,
     },
     h5: {
       fontSize: '1.125rem',
-      fontWeight: 600,
+      fontWeight: 700,
       lineHeight: 1.5,
     },
     h6: {
@@ -135,6 +135,7 @@ const theme = createTheme({
         root: {
           borderRadius: 6,
           borderWidth: 2,
+          fontSize: '1rem',
           fontWeight: 550,
           textTransform: 'none',
 
@@ -159,7 +160,6 @@ const theme = createTheme({
         },
         text: {
           color: 'var(--mui-palette-action-active)',
-          p: 0,
           minWidth: 'auto',
           textDecoration: 'underline !important',
           '&:hover': {
@@ -169,6 +169,9 @@ const theme = createTheme({
         sizeLarge: {
           padding: '.875rem 1.5rem',
           fontSize: '1.125rem',
+        },
+        sizeSmall: {
+          fontSize: '0.875rem',
         },
       },
     },

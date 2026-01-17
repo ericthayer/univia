@@ -138,7 +138,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                     <Icon name="contrast" style={{ fontSize: '1.25rem' }} aria-hidden />
                   </ListItemIcon>
                   <ListItemText
-                    primary={mode === 'dark' ? 'Color Mode' : 'Color Mode'}
+                    primary="Theme"
                   />
                 </ListItemButton>
               </ListItem>
@@ -147,28 +147,34 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         </nav>
 
         <Box sx={{ mt: 'auto' }}>
-          
-          <Divider sx={{ my: 2 }} />
                   
           {!user && (
-            <Stack gap={2} sx={{ px: 2 }}>
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={() => handleOpenAuth('signin')}
-                sx={{ fontSize: '1rem', minHeight: { xs: 56, xxl: 44 } }}
-              >
-                Sign In
-              </Button>
-              <Button
-                fullWidth
-                variant="outlined"
-                onClick={() => handleOpenAuth('signup')}
-                sx={{ display: 'none', fontSize: '1rem', minHeight: { xs: 56, xxl: 44 } }}
-              >
-                Register
-              </Button>
-            </Stack>
+            <>         
+              <Divider sx={{ my: 2 }} />
+              <Stack gap={2} flexDirection="row" flexWrap="wrap" sx={{ px: 2 }}>
+                <Button
+                  variant="contained"
+                  onClick={() => handleOpenAuth('signin')}
+                  sx={{
+                    flex: '1 1 15rem',
+                    minHeight: { xs: 56, md: 44 },
+                  }}
+                >
+                  Sign In
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => handleOpenAuth('signup')}
+                  sx={{
+                    flex: '1 1 15rem',
+                    
+                    minHeight: { xs: 56, md: 44 },
+                  }}
+                >
+                  Join Univia
+                </Button>
+              </Stack>
+            </>
           )}          
         </Box>
       </Box>

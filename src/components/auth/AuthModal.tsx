@@ -10,6 +10,7 @@ import {
   Typography,
   Link,
   IconButton,
+  Stack,
 } from '@mui/material';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
@@ -87,8 +88,8 @@ export default function AuthModal({ open, onClose, initialMode = 'signin' }: Aut
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} fullScreen={fullScreen} maxWidth="xs">
-      <DialogTitle>
+    <Dialog open={open} onClose={handleClose} fullScreen={fullScreen} maxWidth="xs" sx={{ width: '100' }}>
+      <DialogTitle sx={{ pr: 2 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           {mode === 'signin' ? 'Sign In' : 'Create Account'}
           <IconButton onClick={handleClose} size="small">
@@ -103,70 +104,77 @@ export default function AuthModal({ open, onClose, initialMode = 'signin' }: Aut
               {error}
             </Alert>
           )}
+          
+          <Stack gap={3}>
+            <Box>
+              {mode === 'signup' && (
+                <TextField
+                  margin="normal"
+                  required
+                  fullWidth
+                  id="fullName"
+                  label="Full Name"
+                  name="fullName"
+                  autoComplete="name"
+                  autoFocus={mode === 'signup'}
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
+              )}
+    
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="email"
+                label="Email Address"
+                name="email"
+                autoComplete="email"
+                autoFocus={mode === 'signin'}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+    
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="password"
+                label="Password"
+                type="password"
+                id="password"
+                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </Box>
 
-          {mode === 'signup' && (
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="fullName"
-              label="Full Name"
-              name="fullName"
-              autoComplete="name"
-              autoFocus={mode === 'signup'}
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-            />
-          )}
-
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="email"
-            label="Email Address"
-            name="email"
-            autoComplete="email"
-            autoFocus={mode === 'signin'}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="password"
-            label="Password"
-            type="password"
-            id="password"
-            autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3 }}
-            size="large"
-            disabled={loading}
-          >
-            {loading ? 'Loading...' : mode === 'signin' ? 'Sign In' : 'Sign Up'}
-          </Button>
-
-          <Typography variant="body2" align="center" sx={{ display: 'none' }}>
-            {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
-            <Link
-              component="button"
-              type="button"
-              onClick={toggleMode}
-              sx={{ cursor: 'pointer' }}
-            >
-              {mode === 'signin' ? 'Sign up' : 'Sign in'}
-            </Link>
-          </Typography>
+            <Stack gap={2}>
+  
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
+                disabled={loading}
+              >
+                {loading ? 'Loading...' : mode === 'signin' ? 'Sign In' : 'Sign Up'}
+              </Button>
+    
+              <Typography variant="body2" align="center">
+                {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
+                <Link
+                  component="button"
+                  type="button"
+                  onClick={toggleMode}
+                  sx={{ cursor: 'pointer' }}
+                >
+                  {mode === 'signin' ? 'Sign up' : 'Sign in'}
+                </Link>
+              </Typography>
+  
+            </Stack>
+          </Stack>
 
           {mode === 'signup' && (
             <Box sx={{ mt: 2, p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>

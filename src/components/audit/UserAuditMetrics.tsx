@@ -1,6 +1,9 @@
 import { Box, Card, CardContent, Container, Grid, Stack, Typography, Button, LinearProgress, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { supabase } from '../../services/supabaseClient';
 import ComplianceGauge from '../ui/ComplianceGauge';
+import AuditHistoryCard from './AuditHistoryCard';
 import StatCard from '../ui/StatCard';
 import Icon from '../ui/Icon';
 import { useUserAudits } from '../../hooks/useUserAudits';
@@ -62,17 +65,50 @@ export default function UserAuditMetrics({
   onAuditClick,
 }: UserAuditMetricsProps) {
   const navigate = useNavigate();
-  const { metrics, loading, error } = useUserAudits({
+  const { metrics, loading, error, refetch } = useUserAudits({
     userId,
     limit,
     enabled,
   });
+  const [pinnedAuditIds, setPinnedAuditIds] = useState<Set<string>>(new Set());
+
+  // Fetch pinned audits
+  useEffect(() => {
+    if (!userId || !enabled) return;
+
+    const fetchPinnedAudits = async () => {
+      const { data } = await supabase
+        .from('pinned_audits')
+        .select('audit_id')
+        .eq('user_id', userId);
+
+      if (data) {
+        setPinnedAuditIds(new Set(data.map(p => p.audit_id)));
+      }
+    };
+
+    fetchPinnedAudits();
+  }, [userId, enabled]);
 
   const handleAuditClick = () => {
     if (onAuditClick) {
       onAuditClick();
     } else {
       navigate('/audit');
+    }
+  };
+
+  const handlePinToggle = async () => {
+    // Refetch pinned audits after toggle
+    if (!userId) return;
+
+    const { data } = await supabase
+      .from('pinned_audits')
+      .select('audit_id')
+      .eq('user_id', userId);
+
+    if (data) {
+      setPinnedAuditIds(new Set(data.map(p => p.audit_id)));
     }
   };
 
@@ -91,11 +127,9 @@ export default function UserAuditMetrics({
           bgcolor: 'background.paper',
           borderBottom: '1px solid var(--mui-palette-divider)',
         }),
-        py: 'clamp(3rem, 8dvh, 6rem)',
-        px: 'clamp(1rem, 4dvw, 4rem)',
       }}
     >
-      <Container {...containerProps}>
+      <Container {...containerProps} sx={{ p: '0 !important' }}>
         {/* Error State */}
         {error && (
           <Alert severity="error" sx={{ mb: 4 }}>
@@ -103,22 +137,32 @@ export default function UserAuditMetrics({
           </Alert>
         )}
 
-        {/* Header */}
-        {fullWidth && (
+
+        <Stack direction="row" alignItems="center" flexWrap="wrap" justifyContent="space-between" columnGap={3} rowGap={1.5}>
+        
+          {/* Header */}
           <Typography
             variant="h3"
             component="h2"
-            sx={{
-              mb: 4,
-              fontWeight: 700,
-            }}
           >
             Your Audit Performance
           </Typography>
-        )}
+  
+           {/* Call to Action */}
+          {!loading && metrics.totalAudits > 0 && (
+            <Button
+              variant="contained"
+              onClick={handleAuditClick}
+              startIcon={<Icon name="refresh" />}
+            >
+              Run New Audit
+            </Button>
+          )}
+
+        </Stack>
 
         {/* Main Metrics Grid */}
-        <Grid container spacing={3} sx={{ containerType: 'inline-size' }}>
+        <Grid container spacing={3} sx={{ containerType: 'inline-size', py: 4 }}>
           {/* Latest Audit Score */}
           <Grid size={{ xs: 12, md: 6, lg: 4 }}>
             <Card
@@ -184,6 +228,9 @@ export default function UserAuditMetrics({
                   subtitle={metrics.totalAudits > 0 ? 'Audits completed' : 'No audits yet'}
                   color="primary.main"
                   icon={<Icon name="assessment" />}
+                  sx={{
+                    placeContent: 'center',
+                  }}
                 />
               </Grid>
 
@@ -222,11 +269,41 @@ export default function UserAuditMetrics({
             </Grid>
           </Grid>
         </Grid>
+        
+        {/* Audit History */}
+        {!loading && metrics.allAudits.length > 0 && (
+          <Box sx={{ py: 6 }}>
+            <Typography variant="h5" component="h3" sx={{ mb: 3 }}>
+              Recent Audits
+            </Typography>
+            <Stack spacing={2}>
+              {metrics.allAudits
+                .sort((a, b) => {
+                  // Show pinned audits first
+                  const aIsPinned = pinnedAuditIds.has(a.id);
+                  const bIsPinned = pinnedAuditIds.has(b.id);
+                  if (aIsPinned && !bIsPinned) return -1;
+                  if (!aIsPinned && bIsPinned) return 1;
+                  // Then sort by date (most recent first)
+                  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                })
+                .slice(0, 10)
+                .map(audit => (
+                  <AuditHistoryCard
+                    key={audit.id}
+                    audit={audit}
+                    isPinned={pinnedAuditIds.has(audit.id)}
+                    onPinToggle={handlePinToggle}
+                  />
+                ))}
+            </Stack>
+          </Box>
+        )}
 
         {/* Average Scores Breakdown */}
         {!loading && metrics.totalAudits > 0 && (
-          <Box sx={{ mt: 6 }}>
-            <Typography variant="h5" component="h3" sx={{ mb: 3, fontWeight: 600 }}>
+          <Box sx={{ py: 3 }}>
+            <Typography variant="h5" component="h3" sx={{ mb: 3 }}>
               Score Breakdown
             </Typography>
 
@@ -507,20 +584,7 @@ export default function UserAuditMetrics({
             )}
           </Box>
         )}
-
-        {/* Call to Action */}
-        {!loading && metrics.totalAudits > 0 && (
-          <Box sx={{ mt: 6, textAlign: 'center' }}>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={handleAuditClick}
-              startIcon={<Icon name="refresh" />}
-            >
-              Run New Audit
-            </Button>
-          </Box>
-        )}
+  
       </Container>
     </Box>
   );

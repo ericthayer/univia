@@ -11,23 +11,29 @@ export default function Dashboard() {
 
   return (
     <Box>
+      {/* Hero */}
+      {!user && (
       <Box
         sx={{
           bgcolor: 'light-dark(hsl(0 0% 98.82% / 1), hsl(0 0% 6% / 1))',
           borderBottom: '1px solid',
           borderColor: 'divider',
           containerType: 'inline-size',
-          minHeight: { sm: '50svh' },
+          minHeight: { sm: '50dvh' },
           placeContent: 'center',
-          py: 'clamp(4rem, 15cqh, 10rem)',
-          px: 'clamp(2rem, 8cqw, 8rem)',
-          '@media (35rem < height < 54rem)': {
-            height: { sm: 'calc(100svh - 65px)' },
+          py: { xs: 10, md: 'clamp(6rem, 8cqh, 10rem)' },
+          '@media (25rem < height < 54rem)': {
+            height: { '@300': 'calc(100dvh - 65px)' },
           },
         }}
       >
         <Stack alignItems="center">
-          <Container maxWidth="lg">
+          <Container
+            maxWidth="lg"
+            sx={{
+              px: { xs: 'clamp(2rem, 8cqw, 10rem) !important', lg: '2rem !important'},
+            }}
+          >
             
             <Typography
               variant="h1"
@@ -80,16 +86,29 @@ export default function Dashboard() {
           </Container>
         </Stack>
       </Box>
+      )}
 
-      <Container maxWidth="lg" sx={{ py: 'clamp(4rem, 6dvh, 8rem)', pl: { xs: '2rem', lg: '1.5rem !important' }, pr: { xs: '2rem', lg: '1.5rem !important' } }}>
+    <Container maxWidth="lg" sx={{ py: 'clamp(4rem, 6dvh, 8rem)', px: '2rem !important' }}>
+
+      {/* User Audit Metrics - Only shown when logged in */}
+      {user && (
+        <UserAuditMetrics
+          userId={user.id}
+          enabled={!!user}
+          fullWidth={false}
+        />
+      )}
+      
+        
         {/* Standards Overview */}
+        {!user && (
         <Stack gap={6}>
           <Box sx={{
             '.MuiCard-root': {
               height: '100%',
             },
           }}>
-            <Typography variant="h4" component="h2" sx={{ mb: 4, fontWeight: 700 }}>
+            <Typography variant="h4" component="h2" sx={{ mb: 4 }}>
               Standards Overview
             </Typography>
             <Grid container spacing={3}>
@@ -187,28 +206,20 @@ export default function Dashboard() {
                 </Card>
               </Grid>
             </Grid>
+         
           </Box>
         </Stack>
+      )}       
 
-        {/* User Audit Metrics - Only shown when logged in */}
-        {user && (
-          <Box sx={{ mt: 6 }}>
-            <UserAuditMetrics
-              userId={user.id}
-              enabled={!!user}
-              fullWidth={false}
-            />
-          </Box>
-        )}
-
-        <Stack gap={6} sx={{ mt: 'clamp(5rem, 7cqh, 8rem)' }}>
+       {/* Quick Actions */}
+        <Stack gap={6} sx={{ py: 6 }}>
           <Box sx={{
             '.MuiCard-root': {
               height: '100%',
             },
           }}
             >
-            <Typography variant="h4" component="h2" sx={{ mb: 2, fontWeight: 700 }}>
+            <Typography variant="h4" component="h2" sx={{ mb: 2 }}>
               Quick Actions
             </Typography>
             <Grid container spacing={3}>
@@ -223,7 +234,7 @@ export default function Dashboard() {
                   }}
                 >
                   <CardActionArea onClick={() => navigate('/audit')}>
-                    <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                    <CardContent sx={{ py: 4, textAlign: { tiny: 'center' } }}>
                       <Box
                         sx={{
                           width: 56,
@@ -234,7 +245,7 @@ export default function Dashboard() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          mx: 'auto',
+                          mx: { tiny: 'auto' },
                           mb: 2,
                         }}
                       >
@@ -244,7 +255,7 @@ export default function Dashboard() {
                         Run Audit
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Scan your website for accessibility issues
+                        Scan your website for accessibility issue
                       </Typography>
                     </CardContent>
                   </CardActionArea>

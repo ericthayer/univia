@@ -51,7 +51,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
         '> .MuiToolbar-root': {
           py: 1,
           pl: { xs: 1 },
-          pr: { xs: 2, sm: 2 },
+          pr: { xs: 2, sm: 1.5 },
         }
       }}
     >
@@ -111,7 +111,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                 },
               }}
             >
-              <img src={logoUniviaUrl} alt="Univia Logo" style={{ width: 100, height: 33 }} />
+              <img src={logoUniviaUrl} alt="Univia Logo" style={{ width: 85, height: 28 }} />
             </Box>
           </Button>
         </Box>
@@ -176,7 +176,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
         <Stack direction="row" gap={1.5} alignItems="center" sx={{ ml: 'auto' }}>           
 
           {!authLoading && (
-            <Box sx={{ display: { xxl: 'none' } }}>
+            <Box>
               {user ? (
                 <UserMenu />
               ) : (
@@ -195,9 +195,6 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                     onClick={() => {
                       setAuthModalMode('signup');
                       setAuthModalOpen(true);
-                    }}
-                    sx={{
-                      display: 'none',
                     }}
                   >
                     Register
@@ -221,6 +218,18 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                 },
               }}
             >
+               <Typography
+                variant="button"
+                component="div"
+                sx={{
+                  display: { xs: 'none', xxl: 'inline' },
+                  color: 'text.primary',
+                  fontWeight: 600,
+                  mr: 1
+                }}
+              >
+                Theme
+              </Typography>
               <Icon name="contrast" aria-hidden />
             </IconButton>
           </Tooltip>
@@ -233,7 +242,10 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
             variant="contained"
             onClick={onMobileMenuToggle}
             sx={{
+              background: 'transparent',
               display: { xs: 'inline-flex', md: 'none' },
+              minHeight: 44,
+              p: 0,
               textTransform: 'uppercase',
               '&:focus-visible': {
                 outline: '2px solid',
@@ -242,7 +254,17 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
               },
             }}
           >
-            Menu
+            <Box
+              component="small"
+              sx={{
+                bgcolor: 'primary.main',
+                borderRadius: 1.5,
+                py: 1,
+                px: 2,
+              }}
+            >
+                Menu
+            </Box>
           </Button>
         </Stack>
 
