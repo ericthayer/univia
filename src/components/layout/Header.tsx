@@ -228,6 +228,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-navigation"
             variant="contained"
+            size="small"
             onClick={onMobileMenuToggle}
             sx={{
               display: { xs: 'inline-flex', md: 'none' },
