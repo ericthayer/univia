@@ -385,7 +385,6 @@ export default function Dashboard() {
             <Grid container spacing={3}>
               
               {!user && (
-              <>
               <Grid size={{ xs: 12, tiny: 6, md: 3 }}>
                 <Card
                   sx={{
@@ -463,8 +462,6 @@ export default function Dashboard() {
                   </CardActionArea>
                 </Card>
               </Grid>
-              </>
-            )}
   
               <Grid size={{ xs: 12, tiny: 6, md: 3 }}>          
                 <Card
