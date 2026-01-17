@@ -166,7 +166,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 onClick={() => handleOpenAuth('signup')}
                 sx={{ fontSize: '1rem', minHeight: { xs: 56, xxl: 44 } }}
               >
-                Register
+                Register Mobile
               </Button>
             </Stack>
           )}          
