@@ -157,7 +157,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 onClick={() => handleOpenAuth('signin')}
                 sx={{
                   flex: '1 1 15rem',
-                }
+                }}
               >
                 Sign In
               </Button>
@@ -166,7 +166,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 onClick={() => handleOpenAuth('signup')}
                 sx={{
                   flex: '1 1 15rem',
-                }
+                }}
               >
                 Register Mobile
               </Button>
