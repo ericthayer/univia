@@ -368,10 +368,10 @@ export default function Dashboard() {
             </Grid>
          
           </Box>
-        </Stack>
-      )}       
+        </Stack>   
 
        {/* Quick Actions */}
+      
         <Stack gap={6} sx={{ py: 6 }}>
           <Box sx={{
             '.MuiCard-root': {
@@ -546,6 +546,8 @@ export default function Dashboard() {
             </Grid>
           </Box>
          </Stack>
+        )}    
+      
       </Container>
     </Box>
   );
