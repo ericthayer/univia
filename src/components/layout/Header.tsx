@@ -230,6 +230,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
             variant="contained"
             onClick={onMobileMenuToggle}
             sx={{
+              background: 'transparent',
               display: { xs: 'inline-flex', md: 'none' },
               minHeight: 44,
               textTransform: 'uppercase',
