@@ -171,7 +171,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                   minHeight: 44,
                 }}
               >
-                Register
+                Join Univia
               </Button>
             </Stack>
           )}          
