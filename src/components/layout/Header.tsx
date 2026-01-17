@@ -241,7 +241,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
               },
             }}
           >
-            <Box component="div" sx={{ background: 'primary.main' }}>Menu</Box>
+            <Box component="div" sx={{ bbcolor: 'primary.main' }}>Menu</Box>
           </Button>
         </Stack>
 
