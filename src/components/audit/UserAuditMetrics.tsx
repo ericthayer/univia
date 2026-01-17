@@ -102,18 +102,15 @@ export default function UserAuditMetrics({
         )}
 
         {/* Header */}
-        {!fullWidth && (
           <Typography
             variant="h3"
             component="h2"
             sx={{
               mb: 4,
-              fontWeight: 700,
             }}
           >
             Your Audit Performance
           </Typography>
-        )}
 
         {/* Main Metrics Grid */}
         <Grid container spacing={3} sx={{ containerType: 'inline-size' }}>
