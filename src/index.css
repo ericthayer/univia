@@ -20,6 +20,7 @@ body {
 
 :root {
   color-scheme: light dark;
+  overflow-y: scroll;
 }
 
 html {
