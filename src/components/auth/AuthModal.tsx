@@ -156,7 +156,7 @@ export default function AuthModal({ open, onClose, initialMode = 'signin' }: Aut
             {loading ? 'Loading...' : mode === 'signin' ? 'Sign In' : 'Sign Up'}
           </Button>
 
-          <Typography variant="body2" align="center" sx={{ display: 'none' }}>
+          <Typography variant="body2" align="center">
             {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
             <Link
               component="button"
