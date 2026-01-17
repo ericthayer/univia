@@ -138,7 +138,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                     <Icon name="contrast" style={{ fontSize: '1.25rem' }} aria-hidden />
                   </ListItemIcon>
                   <ListItemText
-                    Theme
+                    primary="Theme"
                   />
                 </ListItemButton>
               </ListItem>
