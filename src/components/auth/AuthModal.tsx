@@ -105,8 +105,8 @@ export default function AuthModal({ open, onClose, initialMode = 'signin' }: Aut
             </Alert>
           )}
           
-          <Stack gap={3} sx={{ width: '100%' }}>
-            <Stack>
+          <Stack gap={3}>
+            <Stack flex={1}>
               {mode === 'signup' && (
                 <TextField
                   margin="normal"
