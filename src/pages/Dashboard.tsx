@@ -85,7 +85,7 @@ export default function Dashboard() {
         </Stack>
       </Box>
 
-      <Container maxWidth="lg" sx={{ py: 'clamp(4rem, 6dvh, 8rem)', px: 'clamp(2rem, 6cqw, 8rem) !important', }}>
+      <Container maxWidth="lg" sx={{ py: 'clamp(4rem, 6dvh, 8rem)', px: '2cqw !important', }}>
         {/* Standards Overview */}
         <Stack gap={6}>
           <Box sx={{
