@@ -51,7 +51,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
         '> .MuiToolbar-root': {
           py: 1,
           pl: { xs: 1 },
-          pr: { xs: 2, sm: 2 },
+          pr: { xs: 2, sm: 1.5 },
         }
       }}
     >
