@@ -21,7 +21,7 @@ export default function Dashboard() {
           placeContent: 'center',
           py: 'clamp(4rem, 15cqh, 10rem)',
           px: 'clamp(2rem, 8cqw, 8rem)',
-          '@media (35rem < height < 54rem)': {
+          '@media (25rem < height < 54rem)': {
             height: { sm: 'calc(100dvh - 65px)' },
           },
         }}
