@@ -19,10 +19,10 @@ export default function Dashboard() {
           containerType: 'inline-size',
           minHeight: { sm: '50dvh' },
           placeContent: 'center',
-          py: 'clamp(4rem, 5cqh, 10rem)',
+          py: 'clamp(4rem, 15cqh, 10rem)',
           px: 'clamp(2rem, 8cqw, 8rem)',
           '@media (25rem < height < 54rem)': {
-            height: { sm: 'calc(100dvh - 65px)' },
+            height: { '@400': 'calc(100dvh - 65px)' },
           },
         }}
       >
