@@ -29,7 +29,7 @@ export default function Dashboard() {
           <Container
             maxWidth="lg"
             sx={{
-              px: 'clamp(2rem, 6cqw, 8rem) !important',
+              px: '2rem !important',
             }}
           >
             
