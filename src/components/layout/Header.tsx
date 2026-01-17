@@ -111,7 +111,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                 },
               }}
             >
-              <img src={logoUniviaUrl} alt="Univia Logo" style={{ width: 100, height: 33 }} />
+              <img src={logoUniviaUrl} alt="Univia Logo" style={{ width: 85, height: 28 }} />
             </Box>
           </Button>
         </Box>
