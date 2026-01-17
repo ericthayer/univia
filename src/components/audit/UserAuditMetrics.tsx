@@ -584,7 +584,7 @@ export default function UserAuditMetrics({
             )}
           </Box>
         )}
-
+  
       </Container>
     </Box>
   );
