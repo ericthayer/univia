@@ -106,7 +106,7 @@ export default function AuthModal({ open, onClose, initialMode = 'signin' }: Aut
           )}
           
           <Stack gap={3}>
-            <Stack flex={1}>
+            <Box>
               {mode === 'signup' && (
                 <TextField
                   margin="normal"
@@ -147,7 +147,7 @@ export default function AuthModal({ open, onClose, initialMode = 'signin' }: Aut
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-            </Stack>
+            </Box>
 
             <Stack gap={2}>
   
