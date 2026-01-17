@@ -86,6 +86,17 @@ export default function Dashboard() {
       </Box>
 
       <Container maxWidth="lg" sx={{ py: 'clamp(4rem, 6dvh, 8rem)', px: '2rem !important' }}>
+        {/* User Audit Metrics - Only shown when logged in */}
+        {user && (
+          <Box sx={{ mt: 6 }}>
+            <UserAuditMetrics
+              userId={user.id}
+              enabled={!!user}
+              fullWidth={false}
+            />
+          </Box>
+        )}
+        
         {/* Standards Overview */}
         <Stack gap={6}>
           <Box sx={{
@@ -194,17 +205,7 @@ export default function Dashboard() {
           </Box>
         </Stack>
 
-        {/* User Audit Metrics - Only shown when logged in */}
-        {user && (
-          <Box sx={{ mt: 6 }}>
-            <UserAuditMetrics
-              userId={user.id}
-              enabled={!!user}
-              fullWidth={false}
-            />
-          </Box>
-        )}
-
+        {/* Quick Actions */}
         <Stack gap={6} sx={{ mt: 'clamp(5rem, 7cqh, 8rem)' }}>
           <Box sx={{
             '.MuiCard-root': {
