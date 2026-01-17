@@ -156,7 +156,9 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 fullWidth
                 variant="contained"
                 onClick={() => handleOpenAuth('signin')}
-                sx={{ fontSize: '1rem', minHeight: { xs: 56, xxl: 44 } }}
+                sx={{
+                  minHeight: { xs: 56, xxl: 44 } }
+                }
               >
                 Sign In
               </Button>
@@ -164,7 +166,9 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 fullWidth
                 variant="outlined"
                 onClick={() => handleOpenAuth('signup')}
-                sx={{ fontSize: '1rem', minHeight: { xs: 56, xxl: 44 } }}
+                sx={{ 
+                  minHeight: { xs: 56, xxl: 44 } }
+                }
               >
                 Register Mobile
               </Button>
