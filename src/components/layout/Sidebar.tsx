@@ -149,30 +149,32 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         <Box sx={{ mt: 'auto' }}>
                   
           {!user && (
-            <Divider sx={{ my: 2 }} />
-            <Stack gap={2} flexDirection="row" flexWrap="wrap" sx={{ px: 2 }}>
-              <Button
-                variant="contained"
-                onClick={() => handleOpenAuth('signin')}
-                sx={{
-                  flex: '1 1 15rem',
-                  minHeight: { xs: 56, md: 44 },
-                }}
-              >
-                Sign In
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => handleOpenAuth('signup')}
-                sx={{
-                  flex: '1 1 15rem',
-                  
-                  minHeight: { xs: 56, md: 44 },
-                }}
-              >
-                Join Univia
-              </Button>
-            </Stack>
+            <>         
+              <Divider sx={{ my: 2 }} />
+              <Stack gap={2} flexDirection="row" flexWrap="wrap" sx={{ px: 2 }}>
+                <Button
+                  variant="contained"
+                  onClick={() => handleOpenAuth('signin')}
+                  sx={{
+                    flex: '1 1 15rem',
+                    minHeight: { xs: 56, md: 44 },
+                  }}
+                >
+                  Sign In
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => handleOpenAuth('signup')}
+                  sx={{
+                    flex: '1 1 15rem',
+                    
+                    minHeight: { xs: 56, md: 44 },
+                  }}
+                >
+                  Join Univia
+                </Button>
+              </Stack>
+            </>
           )}          
         </Box>
       </Box>
