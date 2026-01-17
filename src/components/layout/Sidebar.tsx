@@ -156,7 +156,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 variant="contained"
                 onClick={() => handleOpenAuth('signin')}
                 sx={{
-                  flex: '1 1 15rem',
+                  flex: '1 1 0',
                   minHeight: 44,
                 }}
               >
