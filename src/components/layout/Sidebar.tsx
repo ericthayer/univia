@@ -151,7 +151,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
           <Divider sx={{ my: 2 }} />
                   
           {!user && (
-            <Stack gap={2} flexDirection="row" flexWrap="" sx={{ px: 2 }}>
+            <Stack gap={2} flexDirection="row" sx={{ px: 2 }}>
               <Button
                 variant="contained"
                 onClick={() => handleOpenAuth('signin')}
