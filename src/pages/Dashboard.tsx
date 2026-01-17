@@ -382,9 +382,7 @@ export default function Dashboard() {
             <Typography variant="h4" component="h2" sx={{ mb: 2 }}>
               Quick Actions
             </Typography>
-            <Grid container spacing={3}>
-              
-              {!user && (
+            <Grid container spacing={2}>
               <Grid size={{ xs: 12, tiny: 6, md: 3 }}>
                 <Card
                   sx={{
