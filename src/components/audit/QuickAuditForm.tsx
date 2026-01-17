@@ -108,7 +108,6 @@ export default function QuickAuditForm() {
               fullWidth
               label="Website Address"
               placeholder="yoursite.com"
-              size="small"
               value={urlField.value}
               autoComplete="url"
               onChange={(e) => {
