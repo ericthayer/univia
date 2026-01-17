@@ -102,7 +102,7 @@ export default function UserAuditMetrics({
         )}
 
         {/* Header */}
-        {fullWidth && (
+        {!fullWidth && (
           <Typography
             variant="h3"
             component="h2"
