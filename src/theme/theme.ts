@@ -172,8 +172,8 @@ const theme = createTheme({
           fontSize: '1.125rem',
         },
         sizeSmall: {
-          padding: '.875rem 1.5rem',
-          fontSize: '1.125rem',
+          padding: '.5rem 1rem',
+          fontSize: '0.875rem',
         },
       },
     },
