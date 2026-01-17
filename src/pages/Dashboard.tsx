@@ -11,7 +11,7 @@ export default function Dashboard() {
 
   return (
     <Box>
-       {!user && (
+      {!user && (
       <Box
         sx={{
           bgcolor: 'light-dark(hsl(0 0% 98.82% / 1), hsl(0 0% 6% / 1))',
