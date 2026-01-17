@@ -128,7 +128,10 @@ export default function QuickAuditForm() {
                 },
               }}
               sx={{
-                flex: 1
+                flex: 1,
+                '.MuiInputBase-root': {
+                  flex: 1
+                }
               }}
             />
             {(urlField.error || urlField.success) && (
