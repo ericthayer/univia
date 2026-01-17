@@ -233,6 +233,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
               background: 'transparent',
               display: { xs: 'inline-flex', md: 'none' },
               minHeight: 44,
+              p: 0,
               textTransform: 'uppercase',
               '&:focus-visible': {
                 outline: '2px solid',
