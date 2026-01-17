@@ -11,6 +11,7 @@ export default function Dashboard() {
 
   return (
     <Box>
+      {/* Hero */}
       {!user && (
       <Box
         sx={{
@@ -89,7 +90,7 @@ export default function Dashboard() {
 
       {/* User Audit Metrics - Only shown when logged in */}
       {user && (
-        <Box sx={{ mt: 6 }}>
+        <Box sx={{ my: 6 }}>
           <UserAuditMetrics
             userId={user.id}
             enabled={!!user}
