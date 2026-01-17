@@ -171,7 +171,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                   minHeight: 44,
                 }}
               >
-                Register Mobile
+                Register Account
               </Button>
             </Stack>
           )}          
