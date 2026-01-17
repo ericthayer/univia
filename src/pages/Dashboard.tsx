@@ -27,7 +27,7 @@ export default function Dashboard() {
         }}
       >
         <Stack alignItems="center">
-          <Container maxWidth="lg" sx={{ px: 0 }}>
+          <Container maxWidth="lg" sx={{ px: '0 !important' }}>
             
             <Typography
               variant="h1"
