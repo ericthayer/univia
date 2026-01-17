@@ -248,7 +248,7 @@ export default function Dashboard() {
                         Run Audit
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Scan your website for accessibility issues
+                        Scan your website for accessibility issue
                       </Typography>
                     </CardContent>
                   </CardActionArea>
