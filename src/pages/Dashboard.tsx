@@ -123,7 +123,7 @@ export default function Dashboard() {
             <Typography variant="h4" component="h2" sx={{ mb: 3 }}>
               Quick Tools
             </Typography>
-            <Stack gap={3}>
+            <Stack gap={2}>
               <Accordion
                 expanded={expandedPanel === 'audit'}
                 onChange={handlePanelChange('audit')}
