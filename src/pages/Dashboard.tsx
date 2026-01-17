@@ -227,7 +227,7 @@ export default function Dashboard() {
                   }}
                 >
                   <CardActionArea onClick={() => navigate('/audit')}>
-                    <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                    <CardContent sx={{ py: 4 }}>
                       <Box
                         sx={{
                           width: 56,
