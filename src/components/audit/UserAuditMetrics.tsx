@@ -137,28 +137,34 @@ export default function UserAuditMetrics({
           </Alert>
         )}
 
-        {/* Header */}
-        <Typography
-          variant="h3"
-          component="h2"
-          sx={{
-            mb: 4,
-          }}
-        >
-          Your Audit Performance
-        </Typography>
 
-         {/* Call to Action */}
-        {!loading && metrics.totalAudits > 0 && (
-          <Button
-            variant="contained"
-            size="large"
-            onClick={handleAuditClick}
-            startIcon={<Icon name="refresh" />}
+        <Stack direction="row" flexWrap="wrap" justifyContent="space-between" gap={3}>
+        
+
+          {/* Header */}
+          <Typography
+            variant="h3"
+            component="h2"
+            sx={{
+              mb: 4,
+            }}
           >
-            Run New Audit
-          </Button>
-        )}
+            Your Audit Performance
+          </Typography>
+  
+           {/* Call to Action */}
+          {!loading && metrics.totalAudits > 0 && (
+            <Button
+              variant="contained"
+              size="large"
+              onClick={handleAuditClick}
+              startIcon={<Icon name="refresh" />}
+            >
+              Run New Audit
+            </Button>
+          )}
+
+        </Stack>
 
         {/* Main Metrics Grid */}
         <Grid container spacing={3} sx={{ containerType: 'inline-size' }}>
