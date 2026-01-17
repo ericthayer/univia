@@ -272,7 +272,7 @@ export default function UserAuditMetrics({
 
         {/* Average Scores Breakdown */}
         {!loading && metrics.totalAudits > 0 && (
-          <Box sx={{ py: 4 }}>
+          <Box sx={{ py: 6 }}>
             <Typography variant="h5" component="h3" sx={{ mb: 3, fontWeight: 600 }}>
               Score Breakdown
             </Typography>
