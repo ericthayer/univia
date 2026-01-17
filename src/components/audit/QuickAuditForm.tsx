@@ -128,12 +128,6 @@ export default function QuickAuditForm() {
           )}
         </Box>
 
-        {apiError && (
-          <Alert severity="error" onClose={() => setApiError('')}>
-            {apiError}
-          </Alert>
-        )}
-
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           {!loading && (
             <>
@@ -172,6 +166,13 @@ export default function QuickAuditForm() {
             </Button>
           )}
         </Box>
+        
+        {apiError && (
+          <Alert severity="error" onClose={() => setApiError('')}>
+            {apiError}
+          </Alert>
+        )}
+        
       </Stack>
     </Box>
   );
