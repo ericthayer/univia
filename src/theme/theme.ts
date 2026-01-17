@@ -160,7 +160,6 @@ const theme = createTheme({
         },
         text: {
           color: 'var(--mui-palette-action-active)',
-          p: 0,
           minWidth: 'auto',
           textDecoration: 'underline !important',
           '&:hover': {
@@ -170,6 +169,9 @@ const theme = createTheme({
         sizeLarge: {
           padding: '.875rem 1.5rem',
           fontSize: '1.125rem',
+        },
+        sizeSmall: {
+          fontSize: '0.875rem',
         },
       },
     },
