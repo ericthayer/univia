@@ -228,7 +228,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                   mr: 1
                 }}
               >
-                Color Mode
+                Theme
               </Typography>
               <Icon name="contrast" aria-hidden />
             </IconButton>
