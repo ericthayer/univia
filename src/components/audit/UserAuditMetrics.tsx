@@ -138,7 +138,7 @@ export default function UserAuditMetrics({
         )}
 
 
-        <Stack direction="row" alignItems="center" flexWrap="wrap" justifyContent="space-between" gap={3}>
+        <Stack direction="row" alignItems="center" flexWrap="wrap" justifyContent="space-between" columnGap={3} rowGap={1.5}>
         
           {/* Header */}
           <Typography
