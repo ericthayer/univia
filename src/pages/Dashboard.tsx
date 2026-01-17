@@ -23,7 +23,7 @@ export default function Dashboard() {
           placeContent: 'center',
           py: { xs: 10, md: 'clamp(6rem, 8cqh, 10rem)' },
           '@media (25rem < height < 54rem)': {
-            height: { '@300': 'calc(100dvh - 65px)' },
+            height: { '@300': 'calc(100vh - 65px)' },
           },
         }}
       >
