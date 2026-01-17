@@ -76,7 +76,6 @@ const theme = createTheme({
       fontWeight: 450,
     },
     button: {
-      fontSize: '1rem',
       textTransform: 'none',
       fontWeight: 550,
       letterSpacing: '0.01em',
