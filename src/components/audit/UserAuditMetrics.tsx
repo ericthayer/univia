@@ -148,6 +148,20 @@ export default function UserAuditMetrics({
           Your Audit Performance
         </Typography>
 
+         {/* Call to Action */}
+        {!loading && metrics.totalAudits > 0 && (
+          <Box sx={{ mt: 6, textAlign: 'center' }}>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={handleAuditClick}
+              startIcon={<Icon name="refresh" />}
+            >
+              Run New Audit
+            </Button>
+          </Box>
+        )}
+
         {/* Main Metrics Grid */}
         <Grid container spacing={3} sx={{ containerType: 'inline-size' }}>
           {/* Latest Audit Score */}
