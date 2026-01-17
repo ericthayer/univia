@@ -207,10 +207,10 @@ export default function Dashboard() {
                 </Card>
               </Grid>
             </Grid>
+          </Container>
           </Box>
         </Stack>
       )}       
-      </Container>
 
       <Container>
        {/* Quick Actions */}
