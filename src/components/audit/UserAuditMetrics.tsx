@@ -129,7 +129,7 @@ export default function UserAuditMetrics({
         }),
       }}
     >
-      <Container {...containerProps} sx={{ p: 0 }}>
+      <Container {...containerProps} sx={{ p: '0 !important' }}>
         {/* Error State */}
         {error && (
           <Alert severity="error" sx={{ mb: 4 }}>
