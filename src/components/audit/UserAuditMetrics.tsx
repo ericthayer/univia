@@ -557,7 +557,7 @@ export default function UserAuditMetrics({
 
         {/* Audit History */}
         {!loading && metrics.allAudits.length > 0 && (
-          <Box sx={{ mt: 6 }}>
+          <Box sx={{ py: 3 }}>
             <Typography variant="h5" component="h3" sx={{ mb: 3, fontWeight: 600 }}>
               Recent Audits
             </Typography>
