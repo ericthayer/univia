@@ -219,6 +219,16 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
               }}
             >
               <Icon name="contrast" aria-hidden />
+               <Typography
+                variant="h3"
+                component="div"
+                sx={{
+                  display: { xs: 'none', xl: 'inline' },
+                  color: 'text.primary',
+                }}
+              >
+                Color Mode
+              </Typography>
             </IconButton>
           </Tooltip>
 
