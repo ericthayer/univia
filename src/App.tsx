@@ -17,6 +17,7 @@ const AccountSettings = lazy(() => import('./pages/AccountSettings'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const UserManagement = lazy(() => import('./pages/admin/UserManagement'));
 const DocumentAnalysisTest = lazy(() => import('./pages/admin/DocumentAnalysisTest'));
+const GeminiStreamingDemo = lazy(() => import('./pages/admin/GeminiStreamingDemo'));
 const PatternLibrary = lazy(() => import('./pages/PatternLibrary'));
 
 const PageLoader = () => (
@@ -55,6 +56,7 @@ function App() {
               <Route path="/admin/billing" element={<UserManagement />} />
               <Route path="/admin/settings" element={<UserManagement />} />
               <Route path="/admin/test-analysis" element={<DocumentAnalysisTest />} />
+              <Route path="/admin/streaming-demo" element={<GeminiStreamingDemo />} />
             </Routes>
           </Suspense>
         </AppShell>

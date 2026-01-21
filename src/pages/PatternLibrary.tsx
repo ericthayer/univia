@@ -35,6 +35,7 @@ import Icon from '../components/ui/Icon';
 import GlassCard from '../components/ui/GlassCard';
 import StatCard from '../components/ui/StatCard';
 import ComplianceGauge from '../components/ui/ComplianceGauge';
+import { AuditSummaryCard } from '../components/audit/AuditSummaryCard';
 import packageJson from '../../package.json';
 
 export default function PatternLibrary() {
@@ -117,7 +118,7 @@ export default function PatternLibrary() {
                 </Typography>
                 <Grid container spacing={2}>
                   {Object.entries(designTokens.colors).map(([name, palette]) => (
-                    <Grid item xs={12} sm={6} md={4} lg={2} key={name}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} key={name}>
                       <Paper
                         elevation={2}
                         data-testid={`color-${name}`}
@@ -218,7 +219,7 @@ export default function PatternLibrary() {
                 </Typography>
                 <Grid container spacing={2}>
                   {Object.entries(designTokens.spacing).map(([name, value]) => (
-                    <Grid item xs={6} md={4} lg={2} key={name}>
+                    <Grid size={{ xs: 6, md: 4, lg: 2 }} key={name}>
                       <Paper elevation={1} data-testid={`spacing-${name}`} sx={{ p: 2 }}>
                         <Typography variant="subtitle2" gutterBottom>
                           {name.toUpperCase()}
@@ -247,7 +248,7 @@ export default function PatternLibrary() {
                 </Typography>
                 <Grid container spacing={3}>
                   {designTokens.shadows.map((shadow, index) => (
-                    <Grid item xs={6} md={4} lg={2} key={index}>
+                    <Grid size={{ xs: 6, md: 4, lg: 2 }} key={index}>
                       <Box
                         data-testid={`shadow-${index}`}
                         sx={{
@@ -284,7 +285,7 @@ export default function PatternLibrary() {
                   Buttons
                 </Typography>
                 <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Paper elevation={1} sx={{ p: 3 }}>
                       <Typography variant="subtitle2" gutterBottom>
                         Variants
@@ -303,7 +304,7 @@ export default function PatternLibrary() {
                     </Paper>
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Paper elevation={1} sx={{ p: 3 }}>
                       <Typography variant="subtitle2" gutterBottom>
                         Colors
@@ -325,7 +326,7 @@ export default function PatternLibrary() {
                     </Paper>
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Paper elevation={1} sx={{ p: 3 }}>
                       <Typography variant="subtitle2" gutterBottom>
                         Sizes
@@ -344,7 +345,7 @@ export default function PatternLibrary() {
                     </Paper>
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Paper elevation={1} sx={{ p: 3 }}>
                       <Typography variant="subtitle2" gutterBottom>
                         States
@@ -389,7 +390,7 @@ export default function PatternLibrary() {
                       'notifications',
                       'help',
                     ].map((icon) => (
-                      <Grid item xs={4} sm={3} md={2} lg={1} key={icon}>
+                      <Grid size={{ xs: 4, sm: 3, md: 2, lg: 1 }} key={icon}>
                         <Box
                           data-testid={`icon-${icon}`}
                           sx={{
@@ -415,7 +416,7 @@ export default function PatternLibrary() {
                   Form Inputs
                 </Typography>
                 <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Paper elevation={1} sx={{ p: 3 }}>
                       <Typography variant="subtitle2" gutterBottom>
                         Text Fields
@@ -448,7 +449,7 @@ export default function PatternLibrary() {
                     </Paper>
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Paper elevation={1} sx={{ p: 3 }}>
                       <Typography variant="subtitle2" gutterBottom>
                         Selects & Controls
@@ -526,7 +527,7 @@ export default function PatternLibrary() {
                     />
                     <Chip
                       label="Deletable"
-                      onDelete={() => {}}
+                      onDelete={() => { }}
                       data-testid="chip-deletable"
                     />
                     <Chip
@@ -578,7 +579,7 @@ export default function PatternLibrary() {
                   Cards
                 </Typography>
                 <Grid container spacing={3}>
-                  <Grid item xs={12} md={6} lg={4}>
+                  <Grid size={{ xs: 12, md: 6, lg: 4 }}>
                     <Card elevation={2} data-testid="card-basic">
                       <CardContent>
                         <Typography variant="h6" gutterBottom>
@@ -595,7 +596,7 @@ export default function PatternLibrary() {
                     </Card>
                   </Grid>
 
-                  <Grid item xs={12} md={6} lg={4}>
+                  <Grid size={{ xs: 12, md: 6, lg: 4 }}>
                     <GlassCard data-testid="card-glass">
                       <Typography variant="h6" gutterBottom>
                         Glass Card
@@ -606,13 +607,24 @@ export default function PatternLibrary() {
                     </GlassCard>
                   </Grid>
 
-                  <Grid item xs={12} md={6} lg={4}>
+                  <Grid size={{ xs: 12, md: 6, lg: 4 }}>
                     <StatCard
                       title="Stat Card"
                       value="1,234"
-                      icon="trending_up"
-                      change={12}
+                      icon={<Icon name="trending_up" />}
+                      trend={{ value: 12, isPositive: true }}
                       data-testid="card-stat"
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                    <AuditSummaryCard
+                      auditId="aud-8822"
+                      score={94}
+                      status="completed"
+                      issueCount={3}
+                      timestamp="2026-01-21 15:52"
+                      data-testid="card-audit-summary"
                     />
                   </Grid>
                 </Grid>
@@ -646,7 +658,7 @@ export default function PatternLibrary() {
                   <ToggleButtonGroup
                     value={toggleValue}
                     exclusive
-                    onChange={(e, value) => value && setToggleValue(value)}
+                    onChange={(_, value) => value && setToggleValue(value)}
                     data-testid="toggle-group"
                   >
                     <ToggleButton value="left" data-testid="toggle-left">
@@ -680,17 +692,17 @@ export default function PatternLibrary() {
                   Compliance Gauge
                 </Typography>
                 <Grid container spacing={3}>
-                  <Grid item xs={12} md={6} lg={4}>
+                  <Grid size={{ xs: 12, md: 6, lg: 4 }}>
                     <Paper elevation={1} sx={{ p: 3 }}>
                       <ComplianceGauge score={85} label="High Compliance" />
                     </Paper>
                   </Grid>
-                  <Grid item xs={12} md={6} lg={4}>
+                  <Grid size={{ xs: 12, md: 6, lg: 4 }}>
                     <Paper elevation={1} sx={{ p: 3 }}>
                       <ComplianceGauge score={60} label="Medium Compliance" />
                     </Paper>
                   </Grid>
-                  <Grid item xs={12} md={6} lg={4}>
+                  <Grid size={{ xs: 12, md: 6, lg: 4 }}>
                     <Paper elevation={1} sx={{ p: 3 }}>
                       <ComplianceGauge score={30} label="Low Compliance" />
                     </Paper>
