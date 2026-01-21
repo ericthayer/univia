@@ -12,7 +12,6 @@ import {
   Chip,
   Avatar,
   IconButton,
-  Checkbox,
   Toolbar,
   Grid,
   Select,
@@ -21,7 +20,6 @@ import {
   InputLabel,
 } from '@mui/material';
 import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
-import { LineChart, Line } from '@mui/x-charts';
 import { supabase } from '../../services/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -308,7 +306,7 @@ export default function UserManagement() {
       </Typography>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -329,7 +327,7 @@ export default function UserManagement() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -350,7 +348,7 @@ export default function UserManagement() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -363,7 +361,7 @@ export default function UserManagement() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -531,7 +529,7 @@ export default function UserManagement() {
           ) : (
             <Grid container spacing={2}>
               {filteredUsers.map((user) => (
-                <Grid item xs={12} sm={6} md={4} key={user.id}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={user.id}>
                   <Card
                     variant="outlined"
                     sx={{
