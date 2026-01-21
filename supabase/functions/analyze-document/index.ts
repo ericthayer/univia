@@ -54,8 +54,8 @@ interface DocumentAnalysis {
 }
 
 const GEMINI_MODELS = {
-  flash: 'gemini-2.5-flash',
-  pro: 'gemini-2.5-pro',
+  flash: 'gemini-3-flash-preview',
+  pro: 'gemini-3-pro-preview',
 } as const;
 
 function buildAnalysisPrompt(documentType: string, analysisDepth: 'standard' | 'detailed'): string {
@@ -195,14 +195,27 @@ async function analyzeWithGemini(
   try {
     const genAI = new GoogleGenerativeAI(geminiApiKey);
     const selectedModel = GEMINI_MODELS[modelPreference];
+    
+    // Dynamic generation configuration based on model preference
+    const generationConfig: any = {
+      temperature: 0.1,
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 4096,
+    };
+
+    // Apply thinking configuration for Pro model or if specifically requested
+    if (modelPreference === 'pro' || analysisDepth === 'detailed') {
+      generationConfig.thinkingConfig = { 
+        thinkingBudget: 16384 
+      };
+      // Budget + overhead (must be higher than budget)
+      generationConfig.maxOutputTokens = 20480; 
+    }
+
     const model = genAI.getGenerativeModel({
       model: selectedModel,
-      generationConfig: {
-        temperature: 0.1,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 4096,
-      },
+      generationConfig,
     });
 
     const prompt = buildAnalysisPrompt(fileType, analysisDepth);
