@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { TIER_CONFIG } from '../../types/auth';
+import { TIER_CONFIG } from '../../config/tierConfig';
 import Icon from '../ui/Icon';
 
 export default function UserMenu() {
