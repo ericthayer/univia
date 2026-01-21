@@ -2,8 +2,7 @@
 
 A production-ready MUI application for managing WCAG compliance, accessibility audits, and analyzing demand letters.
 
-<img width="2296" height="1275" alt="univia-v1 0 0-alpha 6" src="https://github.com/user-attachments/assets/ac1e532b-c06d-42b2-afe1-2ac752ea735f" />
-
+<img width="1320" height="679" alt="image" src="https://github.com/user-attachments/assets/ed3eaba1-cfd2-4e29-b22f-983d2ed5a516" />
 
 ## Tech Stack
 
