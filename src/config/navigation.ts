@@ -30,6 +30,15 @@ export const MENU_ITEMS: MenuItem[] = [
     showInSidebar: true,
   },
   {
+    id: 'analyze-report',
+    text: 'Analyze Report',
+    icon: 'analytics',
+    path: '/analyze-report',
+    ariaLabel: 'Analyze audit reports',
+    showInHeader: true,
+    showInSidebar: true,
+  },
+  {
     id: 'letters',
     text: 'Analyze Letter',
     icon: 'help',
@@ -74,6 +83,15 @@ export const MENU_ITEMS: MenuItem[] = [
     showInHeader: true,
     showInSidebar: true,
   },
+  {
+    id: 'streaming-demo',
+    text: 'AI Stream',
+    icon: 'bolt',
+    path: '/admin/streaming-demo',
+    ariaLabel: 'Gemini Streaming Demo',
+    showInHeader: false,
+    showInSidebar: true,
+  },
 ];
 
 export const ROUTE_PATHS = {
@@ -85,6 +103,8 @@ export const ROUTE_PATHS = {
   ACTION_PLAN: '/action-plan',
   RESOURCES: '/resources',
   HELP: '/help',
+  ANALYZE_REPORT: '/analyze-report',
+  STREAMING_DEMO: '/admin/streaming-demo',
 } as const;
 
 export function getHeaderMenuItems(): MenuItem[] {
