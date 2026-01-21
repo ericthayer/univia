@@ -10,7 +10,8 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { TIER_CONFIG, UserTier } from '../types/auth';
+import { UserTier } from '../types/auth';
+import { TIER_CONFIG } from '../config/tierConfig';
 import Icon from '../components/ui/Icon';
 
 export default function Pricing() {

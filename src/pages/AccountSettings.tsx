@@ -14,7 +14,7 @@ import {
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { TIER_CONFIG } from '../types/auth';
+import { TIER_CONFIG } from '../config/tierConfig';
 import { supabase } from '../services/supabaseClient';
 import Icon from '../components/ui/Icon';
 
