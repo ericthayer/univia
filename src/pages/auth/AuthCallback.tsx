@@ -8,14 +8,28 @@ export default function AuthCallback() {
 
   useEffect(() => {
     const handleAuthCallback = async () => {
-      const { error } = await supabase.auth.getSession();
+      try {
+        const { error } = await supabase.auth.getSession();
 
-      if (error) {
-        console.error('Error during auth callback:', error.message);
-        navigate('/signin?error=' + encodeURIComponent(error.message));
-      } else {
-        // Redirect to home or dashboard after successful session establishment
-        navigate('/');
+        if (error) {
+          console.error('AuthCallback: Error establishing session:', error.message);
+          // Check for specific error types or parameters
+          const params = new URLSearchParams(window.location.search);
+          const errorCode = params.get('error');
+          const errorDescription = params.get('error_description');
+
+          if (errorCode || errorDescription) {
+            console.error('AuthCallback: URL error params found:', { errorCode, errorDescription });
+          }
+
+          navigate('/signin?error=' + encodeURIComponent(errorDescription || error.message || 'Authentication failed. Please try again.'));
+        } else {
+          console.log('AuthCallback: Session established successfully');
+          navigate('/');
+        }
+      } catch (err) {
+        console.error('AuthCallback: Unexpected error during auth callback:', err);
+        navigate('/signin?error=' + encodeURIComponent('An unexpected error occurred during authentication.'));
       }
     };
 

@@ -113,12 +113,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithOAuth = async (provider: 'google' | 'github' | 'apple') => {
+    const callbackUrl = `${window.location.origin}/auth/callback`;
+    console.log('AuthContext: Initiating OAuth sign-in', { provider, callbackUrl });
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callbackUrl,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
       },
     });
+
+    if (error) {
+      console.error('AuthContext: OAuth sign-in error:', error.message);
+    }
 
     return { error };
   };
