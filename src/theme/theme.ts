@@ -1,6 +1,19 @@
 import { createTheme } from '@mui/material/styles';
 import { primitiveTokens } from './tokens';
 
+declare module '@mui/material/styles' {
+  interface BreakpointOverrides {
+    tiny: true;
+    xxl: true;
+  }
+}
+
+declare module '@mui/material/Grid' {
+  interface GridPropsSizeOverrides {
+    tiny: true;
+  }
+}
+
 const theme = createTheme({
   cssVariables: {
     colorSchemeSelector: 'data-color-scheme',
@@ -32,7 +45,7 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: '"DM Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    fontWeight: 475,
+    fontWeightRegular: 475,
     h1: {
       fontSize: '2.5rem',
       fontWeight: 700,

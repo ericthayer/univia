@@ -14,7 +14,7 @@ import {
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { TIER_CONFIG } from '../config/tierConfig';
+import { USER_TIERS } from '../config/tierConfig';
 import { supabase } from '../services/supabaseClient';
 import Icon from '../components/ui/Icon';
 
@@ -77,7 +77,7 @@ export default function AccountSettings() {
 
   if (!profile) return null;
 
-  const tierConfig = TIER_CONFIG[profile.tier];
+  const tierConfig = USER_TIERS[profile.tier];
   const tierColor = profile.tier === 'enterprise' ? 'secondary' : profile.tier === 'pro' ? 'primary' : 'default';
   const usagePercentage = profile.audit_limit > 0 ? (auditCount / profile.audit_limit) * 100 : 0;
 
@@ -149,7 +149,7 @@ export default function AccountSettings() {
             Features:
           </Typography>
           <Stack spacing={1}>
-            {tierConfig.features.map((feature, index) => (
+            {tierConfig.features.map((feature: string, index: number) => (
               <Box key={index} display="flex" alignItems="center" gap={1}>
                 <Icon name="check_circle" style={{ fontSize: 18, color: 'green' }} />
                 <Typography variant="body2">{feature}</Typography>

@@ -6,26 +6,9 @@ export default defineConfig({
     react()
   ],
   build: {
-    target: 'es2020',
-    minify: 'terser',
-    cssMinify: true,
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true
-      }
-    },
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-mui': ['@mui/material', '@mui/system', '@emotion/react', '@emotion/styled'],
-          'vendor-supabase': ['@supabase/supabase-js'],
-        }
-      }
-    },
-    chunkSizeWarningLimit: 500,
-    reportCompressedSize: true
+    outDir: 'dist',
+    sourcemap: true,
+    chunkSizeWarningLimit: 1000,
   },
   optimizeDeps: {
     include: [

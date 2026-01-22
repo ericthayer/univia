@@ -11,12 +11,15 @@ const AccessibilityAudit = lazy(() => import('./pages/AccessibilityAudit'));
 const AuditResults = lazy(() => import('./pages/AuditResults'));
 const DemandLetters = lazy(() => import('./pages/DemandLetters'));
 const ComplianceChecklist = lazy(() => import('./pages/ComplianceChecklist'));
+const ActionsPlan = lazy(() => import('./pages/ActionPlanBuilder'));
 const Resources = lazy(() => import('./pages/Resources'));
 const HelpCenter = lazy(() => import('./pages/HelpCenter'));
+const AnalyzeReport = lazy(() => import('./pages/AnalyzeReport'));
 const AccountSettings = lazy(() => import('./pages/AccountSettings'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const UserManagement = lazy(() => import('./pages/admin/UserManagement'));
 const DocumentAnalysisTest = lazy(() => import('./pages/admin/DocumentAnalysisTest'));
+const GeminiStreamingDemo = lazy(() => import('./pages/admin/GeminiStreamingDemo'));
 const PatternLibrary = lazy(() => import('./pages/PatternLibrary'));
 
 const PageLoader = () => (
@@ -46,8 +49,10 @@ function App() {
               <Route path={ROUTE_PATHS.AUDIT_RESULTS} element={<AuditResults />} />
               <Route path={ROUTE_PATHS.LETTERS} element={<DemandLetters />} />
               <Route path={ROUTE_PATHS.CHECKLIST} element={<ComplianceChecklist />} />
+              <Route path={ROUTE_PATHS.ACTION_PLAN} element={<ActionsPlan />} />
               <Route path={ROUTE_PATHS.RESOURCES} element={<Resources />} />
               <Route path={ROUTE_PATHS.HELP} element={<HelpCenter />} />
+              <Route path={ROUTE_PATHS.ANALYZE_REPORT} element={<AnalyzeReport />} />
               <Route path="/settings" element={<AccountSettings />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/pattern-library" element={<PatternLibrary />} />
@@ -55,6 +60,7 @@ function App() {
               <Route path="/admin/billing" element={<UserManagement />} />
               <Route path="/admin/settings" element={<UserManagement />} />
               <Route path="/admin/test-analysis" element={<DocumentAnalysisTest />} />
+              <Route path="/admin/streaming-demo" element={<GeminiStreamingDemo />} />
             </Routes>
           </Suspense>
         </AppShell>

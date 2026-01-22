@@ -11,7 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { UserTier } from '../types/auth';
-import { TIER_CONFIG } from '../config/tierConfig';
+import { USER_TIERS } from '../config/tierConfig';
 import Icon from '../components/ui/Icon';
 
 export default function Pricing() {
@@ -46,7 +46,7 @@ export default function Pricing() {
 
       <Grid container spacing={4} justifyContent="center">
         {tiers.map((tier) => {
-          const config = TIER_CONFIG[tier];
+          const config = USER_TIERS[tier];
           const isCurrentTier = profile?.tier === tier;
           const isFree = tier === 'basic';
           const isPopular = tier === 'pro';
@@ -112,7 +112,7 @@ export default function Pricing() {
                 </Box>
 
                 <Stack spacing={2} mb={4} flexGrow={1}>
-                  {config.features.map((feature, index) => (
+                  {config.features.map((feature: string, index: number) => (
                     <Box key={index} display="flex" alignItems="flex-start" gap={1}>
                       <Icon name="check_circle" style={{ fontSize: 20, color: '#2e7d32', marginTop: 2 }} />
                       <Typography variant="body2">{feature}</Typography>

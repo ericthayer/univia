@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { TIER_CONFIG } from '../../config/tierConfig';
+import { USER_TIERS } from '../../config/tierConfig';
 import Icon from '../ui/Icon';
 
 export default function UserMenu() {
@@ -53,7 +53,7 @@ export default function UserMenu() {
 
   if (!user || !profile) return null;
 
-  const tierConfig = TIER_CONFIG[profile.tier];
+  const tierConfig = USER_TIERS[profile.tier];
   const tierColor = profile.tier === 'enterprise' ? 'secondary' : profile.tier === 'pro' ? 'primary' : 'default';
 
   return (
