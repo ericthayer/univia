@@ -25,6 +25,7 @@ const SignIn = lazy(() => import('./pages/auth/SignIn'));
 const SignUp = lazy(() => import('./pages/auth/SignUp'));
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
+const AuthCallback = lazy(() => import('./pages/auth/AuthCallback'));
 
 const PageLoader = () => (
   <Box
@@ -52,6 +53,7 @@ function App() {
             <Route path={ROUTE_PATHS.SIGN_UP} element={<SignUp />} />
             <Route path={ROUTE_PATHS.FORGOT_PASSWORD} element={<ForgotPassword />} />
             <Route path={ROUTE_PATHS.RESET_PASSWORD} element={<ResetPassword />} />
+            <Route path={ROUTE_PATHS.AUTH_CALLBACK} element={<AuthCallback />} />
 
             {/* App Routes - With Shell */}
             <Route
