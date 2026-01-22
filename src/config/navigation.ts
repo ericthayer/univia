@@ -105,6 +105,10 @@ export const ROUTE_PATHS = {
   HELP: '/help',
   ANALYZE_REPORT: '/analyze-report',
   STREAMING_DEMO: '/admin/streaming-demo',
+  SIGN_IN: '/signin',
+  SIGN_UP: '/signup',
+  FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD: '/reset-password',
 } as const;
 
 export function getHeaderMenuItems(isAuthenticated: boolean = false): MenuItem[] {

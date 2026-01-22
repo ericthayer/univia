@@ -2,10 +2,9 @@ import { AppBar, Toolbar, Tooltip, IconButton, Box, Typography, Stack, Button, u
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import logoUniviaUrl from '../../assets/images/logo-univia.svg';
-import { getHeaderMenuItems } from '../../config/navigation';
+import { getHeaderMenuItems, ROUTE_PATHS, MenuItem } from '../../config/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import UserMenu from '../auth/UserMenu';
-import AuthModal from '../auth/AuthModal';
 import Icon from '../ui/Icon';
 
 interface HeaderProps {
@@ -16,8 +15,6 @@ interface HeaderProps {
 export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: HeaderProps) {
   const { mode, setMode } = useColorScheme();
   const [mounted, setMounted] = useState(false);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
@@ -128,7 +125,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
           }}
         >
           <Stack direction="row" gap={'clamp(1.5rem, 3cqw, 2dvw)'}>
-            {menuItems.map((item) => {
+            {menuItems.map((item: MenuItem) => {
               const isActive = location.pathname === item.path;
               return (
                 <Button
@@ -183,19 +180,13 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                 <Stack direction="row" gap={1.5} sx={{ display: { xs: 'none', md: 'flex' } }}>
                   <Button
                     variant="text"
-                    onClick={() => {
-                      setAuthModalMode('signin');
-                      setAuthModalOpen(true);
-                    }}
+                    onClick={() => navigate(ROUTE_PATHS.SIGN_IN)}
                   >
                     Sign In
                   </Button>
                   <Button
                     variant="contained"
-                    onClick={() => {
-                      setAuthModalMode('signup');
-                      setAuthModalOpen(true);
-                    }}
+                    onClick={() => navigate(ROUTE_PATHS.SIGN_UP)}
                   >
                     Register
                   </Button>
@@ -268,11 +259,6 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
           </Button>
         </Stack>
 
-        <AuthModal
-          open={authModalOpen}
-          onClose={() => setAuthModalOpen(false)}
-          initialMode={authModalMode}
-        />
       </Toolbar>
     </AppBar>
   );

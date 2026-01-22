@@ -14,10 +14,9 @@ import {
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getSidebarMenuItems } from '../../config/navigation';
+import { getSidebarMenuItems, ROUTE_PATHS, MenuItem } from '../../config/navigation';
 import Icon from '../ui/Icon';
 import { useAuth } from '../../contexts/AuthContext';
-import AuthModal from '../auth/AuthModal';
 
 const drawerWidth = 240;
 
@@ -33,8 +32,6 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const menuItems = getSidebarMenuItems(!!user);
   const { mode, setMode } = useColorScheme();
   const [mounted, setMounted] = useState(false);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
 
   useEffect(() => {
     setMounted(true);
@@ -51,9 +48,9 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
     onMobileClose();
   };
 
-  const handleOpenAuth = (mode: 'signin' | 'signup') => {
-    setAuthModalMode(mode);
-    setAuthModalOpen(true);
+  const handleOpenAuth = (path: string) => {
+    navigate(path);
+    onMobileClose();
   };
 
   const drawer = (
@@ -71,7 +68,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       >
         <nav aria-label="Main navigation" style={{ flex: 1 }}>
           <List sx={{ pt: 1, pb: 0 }}>
-            {menuItems.map((item) => {
+            {menuItems.map((item: MenuItem) => {
               const isActive = location.pathname === item.path;
               return (
                 <ListItem key={item.id} disablePadding sx={{ px: 2, mb: 1 }}>
@@ -154,7 +151,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
               <Stack gap={2} flexDirection="row" flexWrap="wrap" sx={{ px: 2 }}>
                 <Button
                   variant="contained"
-                  onClick={() => handleOpenAuth('signin')}
+                  onClick={() => handleOpenAuth(ROUTE_PATHS.SIGN_IN)}
                   sx={{
                     flex: '1 1 15rem',
                     minHeight: { xs: 56, md: 44 },
@@ -164,7 +161,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 </Button>
                 <Button
                   variant="outlined"
-                  onClick={() => handleOpenAuth('signup')}
+                  onClick={() => handleOpenAuth(ROUTE_PATHS.SIGN_UP)}
                   sx={{
                     flex: '1 1 15rem',
 
@@ -219,11 +216,6 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       >
         {drawer}
       </Drawer>
-      <AuthModal
-        open={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        initialMode={authModalMode}
-      />
     </>
   );
 }
