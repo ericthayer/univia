@@ -83,6 +83,8 @@ export default function UserMenu() {
             sx: {
               minWidth: 240,
               mt: 1.5,
+              ml: '-0.5rem',
+              top: '48px !important',
             },
           },
         }}
