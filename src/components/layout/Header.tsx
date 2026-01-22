@@ -2,10 +2,9 @@ import { AppBar, Toolbar, Tooltip, IconButton, Box, Typography, Stack, Button, u
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import logoUniviaUrl from '../../assets/images/logo-univia.svg';
-import { getHeaderMenuItems } from '../../config/navigation';
+import { getHeaderMenuItems, ROUTE_PATHS, MenuItem } from '../../config/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import UserMenu from '../auth/UserMenu';
-import AuthModal from '../auth/AuthModal';
 import Icon from '../ui/Icon';
 
 interface HeaderProps {
@@ -16,12 +15,10 @@ interface HeaderProps {
 export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: HeaderProps) {
   const { mode, setMode } = useColorScheme();
   const [mounted, setMounted] = useState(false);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
   const navigate = useNavigate();
   const location = useLocation();
-  const menuItems = getHeaderMenuItems();
   const { user, loading: authLoading } = useAuth();
+  const menuItems = getHeaderMenuItems(!!user);
 
   useEffect(() => {
     setMounted(true);
@@ -42,7 +39,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
       position="fixed"
       elevation={0}
       sx={{
-        zIndex: (theme) => theme.zIndex.drawer - 1,
+        zIndex: (theme) => theme.zIndex.drawer + 1,
         bgcolor: 'background.paper',
         borderColor: 'divider',
         borderRadius: 0,
@@ -105,13 +102,13 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                 display: 'flex',
                 alignItems: 'center',
                 '[data-color-scheme="dark"] &': {
-                  '> img' : {
+                  '> img': {
                     filter: 'invert(1)',
                   }
                 },
               }}
             >
-              <img src={logoUniviaUrl} alt="Univia Logo" style={{ width: 85, height: 28 }} />
+              <img src={logoUniviaUrl} alt="Univia Logo" style={{ width: 100, height: 33 }} />
             </Box>
           </Button>
         </Box>
@@ -127,8 +124,8 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
             containerType: 'inline-size',
           }}
         >
-          <Stack direction="row" gap={'clamp(1rem, 3cqw, 2dvw)'}>
-            {menuItems.map((item) => {
+          <Stack direction="row" gap={'clamp(1.5rem, 3cqw, 2dvw)'}>
+            {menuItems.map((item: MenuItem) => {
               const isActive = location.pathname === item.path;
               return (
                 <Button
@@ -139,13 +136,13 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                   aria-current={isActive ? 'page' : undefined}
                   disabled={item.disabled}
                   title={item.disabled ? 'Item Disabled' : item.text}
-                  
-                  startIcon={ 
-                  <Box className='button-icon' sx={{ display: { xs: 'none', '@800': 'flex' } }}>
-                    <Icon name={item.icon} style={{ fontSize: '1.25rem' }} aria-hidden />
+
+                  startIcon={
+                    <Box className='button-icon' sx={{ display: { xs: 'none', '@800': 'flex' } }}>
+                      <Icon name={item.icon} style={{ fontSize: '1.25rem' }} aria-hidden />
                     </Box>
                   }
-                  
+
                   sx={{
                     textTransform: 'none',
                     whiteSpace: 'nowrap',
@@ -173,7 +170,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
           </Stack>
         </Box>
 
-        <Stack direction="row" gap={1.5} alignItems="center" sx={{ ml: 'auto' }}>           
+        <Stack direction="row" gap={1.5} alignItems="center" sx={{ ml: 'auto' }}>
 
           {!authLoading && (
             <Box>
@@ -183,19 +180,13 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                 <Stack direction="row" gap={1.5} sx={{ display: { xs: 'none', md: 'flex' } }}>
                   <Button
                     variant="text"
-                    onClick={() => {
-                      setAuthModalMode('signin');
-                      setAuthModalOpen(true);
-                    }}
+                    onClick={() => navigate(ROUTE_PATHS.SIGN_IN)}
                   >
                     Sign In
                   </Button>
                   <Button
                     variant="contained"
-                    onClick={() => {
-                      setAuthModalMode('signup');
-                      setAuthModalOpen(true);
-                    }}
+                    onClick={() => navigate(ROUTE_PATHS.SIGN_UP)}
                   >
                     Register
                   </Button>
@@ -218,7 +209,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                 },
               }}
             >
-               <Typography
+              <Typography
                 variant="button"
                 component="div"
                 sx={{
@@ -263,16 +254,11 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                 px: 2,
               }}
             >
-                Menu
+              Menu
             </Box>
           </Button>
         </Stack>
 
-        <AuthModal
-          open={authModalOpen}
-          onClose={() => setAuthModalOpen(false)}
-          initialMode={authModalMode}
-        />
       </Toolbar>
     </AppBar>
   );

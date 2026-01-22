@@ -1,4 +1,4 @@
-import { Drawer, Box, Typography, IconButton, Stack, Divider } from '@mui/material';
+import { Drawer, Box, Typography, IconButton } from '@mui/material';
 import Icon from '../ui/Icon';
 import InlineDocumentUpload from './InlineDocumentUpload';
 import InlineAnalysisResults from './InlineAnalysisResults';
@@ -39,6 +39,7 @@ export default function DocumentUploadDrawer({ open, onClose }: DocumentUploadDr
         },
       }}
       sx={{
+        zIndex: (theme) => theme.zIndex.drawer + 2,
         '& .MuiDrawer-paper': {
           width: { xs: '100%', sm: 500, md: 600 },
           maxWidth: '100vw',

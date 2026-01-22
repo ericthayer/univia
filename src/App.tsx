@@ -21,6 +21,10 @@ const UserManagement = lazy(() => import('./pages/admin/UserManagement'));
 const DocumentAnalysisTest = lazy(() => import('./pages/admin/DocumentAnalysisTest'));
 const GeminiStreamingDemo = lazy(() => import('./pages/admin/GeminiStreamingDemo'));
 const PatternLibrary = lazy(() => import('./pages/PatternLibrary'));
+const SignIn = lazy(() => import('./pages/auth/SignIn'));
+const SignUp = lazy(() => import('./pages/auth/SignUp'));
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
 
 const PageLoader = () => (
   <Box
@@ -41,29 +45,43 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <AppShell>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path={ROUTE_PATHS.DASHBOARD} element={<Dashboard />} />
-              <Route path={ROUTE_PATHS.AUDIT} element={<AccessibilityAudit />} />
-              <Route path={ROUTE_PATHS.AUDIT_RESULTS} element={<AuditResults />} />
-              <Route path={ROUTE_PATHS.LETTERS} element={<DemandLetters />} />
-              <Route path={ROUTE_PATHS.CHECKLIST} element={<ComplianceChecklist />} />
-              <Route path={ROUTE_PATHS.ACTION_PLAN} element={<ActionsPlan />} />
-              <Route path={ROUTE_PATHS.RESOURCES} element={<Resources />} />
-              <Route path={ROUTE_PATHS.HELP} element={<HelpCenter />} />
-              <Route path={ROUTE_PATHS.ANALYZE_REPORT} element={<AnalyzeReport />} />
-              <Route path="/settings" element={<AccountSettings />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/pattern-library" element={<PatternLibrary />} />
-              <Route path="/admin/users" element={<UserManagement />} />
-              <Route path="/admin/billing" element={<UserManagement />} />
-              <Route path="/admin/settings" element={<UserManagement />} />
-              <Route path="/admin/test-analysis" element={<DocumentAnalysisTest />} />
-              <Route path="/admin/streaming-demo" element={<GeminiStreamingDemo />} />
-            </Routes>
-          </Suspense>
-        </AppShell>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Auth Routes - Standalone */}
+            <Route path={ROUTE_PATHS.SIGN_IN} element={<SignIn />} />
+            <Route path={ROUTE_PATHS.SIGN_UP} element={<SignUp />} />
+            <Route path={ROUTE_PATHS.FORGOT_PASSWORD} element={<ForgotPassword />} />
+            <Route path={ROUTE_PATHS.RESET_PASSWORD} element={<ResetPassword />} />
+
+            {/* App Routes - With Shell */}
+            <Route
+              path="*"
+              element={
+                <AppShell>
+                  <Routes>
+                    <Route path={ROUTE_PATHS.DASHBOARD} element={<Dashboard />} />
+                    <Route path={ROUTE_PATHS.AUDIT} element={<AccessibilityAudit />} />
+                    <Route path={ROUTE_PATHS.AUDIT_RESULTS} element={<AuditResults />} />
+                    <Route path={ROUTE_PATHS.LETTERS} element={<DemandLetters />} />
+                    <Route path={ROUTE_PATHS.CHECKLIST} element={<ComplianceChecklist />} />
+                    <Route path={ROUTE_PATHS.ACTION_PLAN} element={<ActionsPlan />} />
+                    <Route path={ROUTE_PATHS.RESOURCES} element={<Resources />} />
+                    <Route path={ROUTE_PATHS.HELP} element={<HelpCenter />} />
+                    <Route path={ROUTE_PATHS.ANALYZE_REPORT} element={<AnalyzeReport />} />
+                    <Route path="/settings" element={<AccountSettings />} />
+                    <Route path="/pricing" element={<Pricing />} />
+                    <Route path="/pattern-library" element={<PatternLibrary />} />
+                    <Route path="/admin/users" element={<UserManagement />} />
+                    <Route path="/admin/billing" element={<UserManagement />} />
+                    <Route path="/admin/settings" element={<UserManagement />} />
+                    <Route path="/admin/test-analysis" element={<DocumentAnalysisTest />} />
+                    <Route path="/admin/streaming-demo" element={<GeminiStreamingDemo />} />
+                  </Routes>
+                </AppShell>
+              }
+            />
+          </Routes>
+        </Suspense>
       </Router>
     </AuthProvider>
   );
