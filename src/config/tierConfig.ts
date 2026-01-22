@@ -1,6 +1,6 @@
 import { UserTier, TierFeatures } from '../types/auth';
 
-const USER_TIERS: Record<UserTier, TierFeatures> = {
+export const USER_TIERS: Record<UserTier, TierFeatures> = {
   basic: {
     name: 'Basic',
     price: '$0',
@@ -53,6 +53,3 @@ const USER_TIERS: Record<UserTier, TierFeatures> = {
     teamMembers: 100,
   }
 };
-
-export { USER_TIERS };
-export default USER_TIERS;
