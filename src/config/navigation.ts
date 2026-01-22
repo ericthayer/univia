@@ -14,7 +14,7 @@ export const MENU_ITEMS: MenuItem[] = [
   {
     id: 'dashboard',
     text: 'Dashboard',
-    icon: 'dashboard',
+    icon: 'home',
     path: '/',
     ariaLabel: 'Go to Dashboard',
     showInHeader: true,
@@ -35,8 +35,8 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: 'analytics',
     path: '/analyze-report',
     ariaLabel: 'Analyze audit reports',
-    showInHeader: true,
-    showInSidebar: true,
+    showInHeader: false,
+    showInSidebar: false,
   },
   {
     id: 'letters',
@@ -71,8 +71,8 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: 'link',
     path: '/resources',
     ariaLabel: 'View accessibility resources',
-    showInHeader: true,
-    showInSidebar: true,
+    showInHeader: false,
+    showInSidebar: false,
   },
   {
     id: 'help',
@@ -80,8 +80,8 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: 'volunteer_activism',
     path: '/help',
     ariaLabel: 'Get help and support',
-    showInHeader: true,
-    showInSidebar: true,
+    showInHeader: false,
+    showInSidebar: false,
   },
   {
     id: 'streaming-demo',
@@ -90,7 +90,7 @@ export const MENU_ITEMS: MenuItem[] = [
     path: '/admin/streaming-demo',
     ariaLabel: 'Gemini Streaming Demo',
     showInHeader: false,
-    showInSidebar: true,
+    showInSidebar: false,
   },
 ];
 
@@ -107,12 +107,32 @@ export const ROUTE_PATHS = {
   STREAMING_DEMO: '/admin/streaming-demo',
 } as const;
 
-export function getHeaderMenuItems(): MenuItem[] {
-  return MENU_ITEMS.filter(item => item.showInHeader);
+export function getHeaderMenuItems(isAuthenticated: boolean = false): MenuItem[] {
+  return MENU_ITEMS.filter(item => item.showInHeader).map(item => {
+    if (item.id === 'dashboard') {
+      return {
+        ...item,
+        text: isAuthenticated ? 'Dashboard' : 'Home',
+        icon: isAuthenticated ? 'space_dashboard' : 'home',
+        ariaLabel: isAuthenticated ? 'Go to Dashboard' : 'Go to Home',
+      };
+    }
+    return item;
+  });
 }
 
-export function getSidebarMenuItems(): MenuItem[] {
-  return MENU_ITEMS.filter(item => item.showInSidebar);
+export function getSidebarMenuItems(isAuthenticated: boolean = false): MenuItem[] {
+  return MENU_ITEMS.filter(item => item.showInSidebar).map(item => {
+    if (item.id === 'dashboard') {
+      return {
+        ...item,
+        text: isAuthenticated ? 'Dashboard' : 'Home',
+        icon: isAuthenticated ? 'space_dashboard' : 'home',
+        ariaLabel: isAuthenticated ? 'Go to Dashboard' : 'Go to Home',
+      };
+    }
+    return item;
+  });
 }
 
 export function getMenuItemByPath(path: string): MenuItem | undefined {

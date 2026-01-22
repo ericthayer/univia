@@ -20,8 +20,8 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
   const navigate = useNavigate();
   const location = useLocation();
-  const menuItems = getHeaderMenuItems();
   const { user, loading: authLoading } = useAuth();
+  const menuItems = getHeaderMenuItems(!!user);
 
   useEffect(() => {
     setMounted(true);
@@ -105,13 +105,13 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                 display: 'flex',
                 alignItems: 'center',
                 '[data-color-scheme="dark"] &': {
-                  '> img' : {
+                  '> img': {
                     filter: 'invert(1)',
                   }
                 },
               }}
             >
-              <img src={logoUniviaUrl} alt="Univia Logo" style={{ width: 85, height: 28 }} />
+              <img src={logoUniviaUrl} alt="Univia Logo" style={{ width: 100, height: 33 }} />
             </Box>
           </Button>
         </Box>
@@ -127,7 +127,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
             containerType: 'inline-size',
           }}
         >
-          <Stack direction="row" gap={'clamp(1rem, 3cqw, 2dvw)'}>
+          <Stack direction="row" gap={'clamp(1.5rem, 3cqw, 2dvw)'}>
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
@@ -139,13 +139,13 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                   aria-current={isActive ? 'page' : undefined}
                   disabled={item.disabled}
                   title={item.disabled ? 'Item Disabled' : item.text}
-                  
-                  startIcon={ 
-                  <Box className='button-icon' sx={{ display: { xs: 'none', '@800': 'flex' } }}>
-                    <Icon name={item.icon} style={{ fontSize: '1.25rem' }} aria-hidden />
+
+                  startIcon={
+                    <Box className='button-icon' sx={{ display: { xs: 'none', '@800': 'flex' } }}>
+                      <Icon name={item.icon} style={{ fontSize: '1.25rem' }} aria-hidden />
                     </Box>
                   }
-                  
+
                   sx={{
                     textTransform: 'none',
                     whiteSpace: 'nowrap',
@@ -173,7 +173,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
           </Stack>
         </Box>
 
-        <Stack direction="row" gap={1.5} alignItems="center" sx={{ ml: 'auto' }}>           
+        <Stack direction="row" gap={1.5} alignItems="center" sx={{ ml: 'auto' }}>
 
           {!authLoading && (
             <Box>
@@ -218,7 +218,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                 },
               }}
             >
-               <Typography
+              <Typography
                 variant="button"
                 component="div"
                 sx={{
@@ -263,7 +263,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                 px: 2,
               }}
             >
-                Menu
+              Menu
             </Box>
           </Button>
         </Stack>

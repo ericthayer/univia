@@ -29,10 +29,10 @@ interface SidebarProps {
 export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const menuItems = getSidebarMenuItems();
+  const { user } = useAuth();
+  const menuItems = getSidebarMenuItems(!!user);
   const { mode, setMode } = useColorScheme();
   const [mounted, setMounted] = useState(false);
-  const { user } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
 
@@ -60,11 +60,11 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
     <>
       <Toolbar />
       <Box
-        sx={{ 
-          overflow: 'auto', 
-          py: 2, display: 'flex', 
-          flexDirection: 'column', 
-          height: '100%', 
+        sx={{
+          overflow: 'auto',
+          py: 2, display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
           pr: 'env(safe-area-inset-right)',
           pl: 'env(safe-area-inset-left)',
         }}
@@ -147,9 +147,9 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         </nav>
 
         <Box sx={{ mt: 'auto' }}>
-                  
+
           {!user && (
-            <>         
+            <>
               <Divider sx={{ my: 2 }} />
               <Stack gap={2} flexDirection="row" flexWrap="wrap" sx={{ px: 2 }}>
                 <Button
@@ -167,7 +167,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                   onClick={() => handleOpenAuth('signup')}
                   sx={{
                     flex: '1 1 15rem',
-                    
+
                     minHeight: { xs: 56, md: 44 },
                   }}
                 >
@@ -175,7 +175,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 </Button>
               </Stack>
             </>
-          )}          
+          )}
         </Box>
       </Box>
     </>
