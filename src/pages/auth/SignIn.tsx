@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -26,6 +26,16 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false);
   const { signIn, signInWithOAuth } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      setError(decodeURIComponent(errorParam));
+      // Clean up the URL
+      navigate(window.location.pathname, { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
