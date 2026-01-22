@@ -8,28 +8,43 @@ export default function AuthCallback() {
 
   useEffect(() => {
     const handleAuthCallback = async () => {
+      console.log('AuthCallback: Processing callback...', { hash: window.location.hash ? 'present' : 'absent' });
+
       try {
-        const { error } = await supabase.auth.getSession();
+        // Give the listener in AuthContext a moment to potentially pick it up first, 
+        // or just try to get it here. 
+        const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) {
-          console.error('AuthCallback: Error establishing session:', error.message);
-          // Check for specific error types or parameters
+          console.error('AuthCallback: Error getting session:', error.message);
           const params = new URLSearchParams(window.location.search);
-          const errorCode = params.get('error');
           const errorDescription = params.get('error_description');
+          navigate('/signin?error=' + encodeURIComponent(errorDescription || error.message || 'Authentication failed.'));
+          return;
+        }
 
-          if (errorCode || errorDescription) {
-            console.error('AuthCallback: URL error params found:', { errorCode, errorDescription });
+        if (session) {
+          console.log('AuthCallback: Session found, redirecting...');
+          navigate('/');
+        } else {
+          // If no session yet but we have a hash, wait a tiny bit and retry once
+          if (window.location.hash.includes('access_token')) {
+            console.log('AuthCallback: Access token found in hash but session not ready, retrying in 500ms...');
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const { data: { session: retrySession } } = await supabase.auth.getSession();
+            if (retrySession) {
+              console.log('AuthCallback: Session found on retry');
+              navigate('/');
+              return;
+            }
           }
 
-          navigate('/signin?error=' + encodeURIComponent(errorDescription || error.message || 'Authentication failed. Please try again.'));
-        } else {
-          console.log('AuthCallback: Session established successfully');
-          navigate('/');
+          console.error('AuthCallback: No session established after callback');
+          navigate('/signin?error=' + encodeURIComponent('Could not establish session. Please try signing in again.'));
         }
       } catch (err) {
-        console.error('AuthCallback: Unexpected error during auth callback:', err);
-        navigate('/signin?error=' + encodeURIComponent('An unexpected error occurred during authentication.'));
+        console.error('AuthCallback: Unexpected error:', err);
+        navigate('/signin?error=' + encodeURIComponent('An unexpected error occurred.'));
       }
     };
 
