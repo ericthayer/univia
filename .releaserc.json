@@ -1,6 +1,6 @@
 {
   "branches": ["main"],
-  "repositoryUrl": "https://github.com/your-username/your-repo",
+  "repositoryUrl": "https://github.com/ericthayer/univia",
   "plugins": [
     [
       "@semantic-release/commit-analyzer",
