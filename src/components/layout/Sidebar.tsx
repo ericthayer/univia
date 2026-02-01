@@ -44,13 +44,15 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   };
 
   const handleNavigation = (path: string) => {
-    navigate(path);
     onMobileClose();
+    // Small delay to ensure drawer starts closing before navigation
+    setTimeout(() => navigate(path), 50);
   };
 
   const handleOpenAuth = (path: string) => {
-    navigate(path);
     onMobileClose();
+    // Small delay to ensure drawer starts closing before navigation
+    setTimeout(() => navigate(path), 50);
   };
 
   const drawer = (
