@@ -1,0 +1,33 @@
+{
+  "$schema": "https://raw.githubusercontent.com/ericthayer/agents-config/main/schemas/agents-project.schema.json",
+  "version": "1.0.0",
+  "project": {
+    "name": "univia",
+    "framework": "react",
+    "styling": "mui",
+    "database": "supabase"
+  },
+  "agents": [
+    "copilot",
+    "gemini"
+  ],
+  "features": {
+    "gemini": true,
+    "storybook": false,
+    "threejs": false
+  },
+  "rules": {
+    "include": [
+      "accessibility",
+      "component-architecture",
+      "spec-driven-development",
+      "web-performance",
+      "mui",
+      "supabase",
+      "gemini",
+      "web-performance"
+    ],
+    "exclude": []
+  },
+  "overrides": {}
+}
