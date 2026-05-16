@@ -1,5 +1,5 @@
 import { Button, Menu, MenuItem, Divider } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -9,11 +9,14 @@ interface AdminMenuProps {
 
 export default function AdminMenu({ size = 'medium' }: AdminMenuProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const menuPaperRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const open = Boolean(anchorEl);
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
+    setAnchorEl((current) => (current ? null : event.currentTarget));
   };
 
   const handleClose = () => {
@@ -25,6 +28,32 @@ export default function AdminMenu({ size = 'medium' }: AdminMenuProps) {
     handleClose();
   };
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const handleDocumentPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+
+      if (menuPaperRef.current?.contains(target)) {
+        return;
+      }
+
+      if (triggerRef.current?.contains(target)) {
+        return;
+      }
+
+      handleClose();
+    };
+
+    document.addEventListener('mousedown', handleDocumentPointerDown, true);
+
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentPointerDown, true);
+    };
+  }, [open]);
+
   if (!profile?.is_admin) {
     return null;
   }
@@ -32,6 +61,8 @@ export default function AdminMenu({ size = 'medium' }: AdminMenuProps) {
   return (
     <>
       <Button
+        id="admin-menu-button"
+        ref={triggerRef}
         onClick={handleMenuClick}
         size={size}
         sx={{
@@ -81,10 +112,16 @@ export default function AdminMenu({ size = 'medium' }: AdminMenuProps) {
 
       <Menu
         anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
+        open={open}
         onClose={handleClose}
+        hideBackdrop
+        disableScrollLock
+        MenuListProps={{
+          'aria-labelledby': 'admin-menu-button',
+        }}
         slotProps={{
           paper: {
+            ref: menuPaperRef,
             sx: {
               mt: 1,
               minWidth: 200,

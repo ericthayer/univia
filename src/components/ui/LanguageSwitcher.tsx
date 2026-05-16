@@ -1,5 +1,5 @@
 import { Button, Menu, MenuItem } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface LanguageSwitcherProps {
   size?: 'small' | 'medium';
@@ -7,10 +7,13 @@ interface LanguageSwitcherProps {
 
 export default function LanguageSwitcher({ size = 'medium' }: LanguageSwitcherProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const menuPaperRef = useRef<HTMLDivElement | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState('English');
+  const open = Boolean(anchorEl);
 
   const handleLanguageClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
+    setAnchorEl((current) => (current ? null : event.currentTarget));
   };
 
   const handleLanguageSelect = (language: string) => {
@@ -22,11 +25,39 @@ export default function LanguageSwitcher({ size = 'medium' }: LanguageSwitcherPr
     setAnchorEl(null);
   };
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const handleDocumentPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+
+      if (menuPaperRef.current?.contains(target)) {
+        return;
+      }
+
+      if (triggerRef.current?.contains(target)) {
+        return;
+      }
+
+      handleClose();
+    };
+
+    document.addEventListener('mousedown', handleDocumentPointerDown, true);
+
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentPointerDown, true);
+    };
+  }, [open]);
+
   const languages = ['English', 'Spanish', 'French', 'German', 'Portuguese', 'Chinese'];
 
   return (
     <>
       <Button
+        id="language-menu-button"
+        ref={triggerRef}
         onClick={handleLanguageClick}
         size={size}
         sx={{
@@ -77,10 +108,16 @@ export default function LanguageSwitcher({ size = 'medium' }: LanguageSwitcherPr
 
       <Menu
         anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
+        open={open}
         onClose={handleClose}
+        hideBackdrop
+        disableScrollLock
+        MenuListProps={{
+          'aria-labelledby': 'language-menu-button',
+        }}
         slotProps={{
           paper: {
+            ref: menuPaperRef,
             sx: {
               mt: 1,
               minWidth: 150,

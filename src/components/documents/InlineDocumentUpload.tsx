@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Box,
   Button,
@@ -58,6 +58,8 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
   const [analysisDepth, setAnalysisDepth] = useState<'standard' | 'detailed'>('standard');
   // Changed from showAdvanced boolean to anchorEl for Menu popover pattern
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const menuPaperRef = useRef<HTMLDivElement | null>(null);
   const [stage, setStage] = useState<AnalysisStage>('idle');
 
   // Menu open/close state derived from anchorEl
@@ -73,13 +75,39 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
 
   // Handler to open the advanced options menu
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
+    setAnchorEl((current) => (current ? null : event.currentTarget));
   };
 
   // Handler to close the advanced options menu
   const handleCloseMenu = () => {
     setAnchorEl(null);
   };
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    const handleDocumentPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+
+      if (menuPaperRef.current?.contains(target)) {
+        return;
+      }
+
+      if (triggerRef.current?.contains(target)) {
+        return;
+      }
+
+      handleCloseMenu();
+    };
+
+    document.addEventListener('mousedown', handleDocumentPointerDown, true);
+
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentPointerDown, true);
+    };
+  }, [menuOpen]);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -356,6 +384,8 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
         {/* IconButton trigger for advanced options menu */}
         <Tooltip title="Advanced Options">
           <IconButton
+            id="advanced-options-button"
+            ref={triggerRef}
             onClick={handleOpenMenu}
             aria-label="advanced options"
             aria-controls={menuOpen ? 'advanced-options-menu' : undefined}
@@ -391,6 +421,8 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
           anchorEl={anchorEl}
           open={menuOpen}
           onClose={handleCloseMenu}
+          hideBackdrop
+          disableScrollLock
           MenuListProps={{
             'aria-labelledby': 'advanced-options-button',
           }}
@@ -398,6 +430,7 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
           anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
           slotProps={{
             paper: {
+              ref: menuPaperRef,
               sx: {
                 minWidth: 320,
                 maxWidth: 400,
