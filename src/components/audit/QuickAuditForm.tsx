@@ -23,6 +23,7 @@ export default function QuickAuditForm() {
 
   const urlField = getFieldState('url');
   const MAX_URL_LENGTH = 2048;
+  const urlIsValid = urlField.value.trim().length > 0 && !urlField.error;
 
   const handleReset = () => {
     setFieldValue('url', '');
@@ -134,11 +135,14 @@ export default function QuickAuditForm() {
                 }
               }}
             />
-            {(urlField.error || urlField.success) && (
+            {(urlField.error || (urlField.isDirty && urlField.isTouched && urlIsValid)) && (
               <ValidationFeedback
                 error={urlField.error}
-                success={urlField.success}
-                fieldId="url"
+                isValid={urlIsValid}
+                isDirty={urlField.isDirty}
+                isTouched={urlField.isTouched}
+                showCharacterCount={false}
+                label="URL"
               />
             )}
           </Box>

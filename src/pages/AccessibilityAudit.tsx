@@ -60,7 +60,7 @@ export default function AccessibilityAudit() {
     try {
       let query = supabase
         .from('accessibility_audits')
-        .select('id, url_scanned, accessibility_score, performance_score, best_practices_score, seo_score, device_type, audit_session_id, created_at, user_id')
+        .select('id, business_id, url_scanned, accessibility_score, performance_score, best_practices_score, seo_score, device_type, audit_session_id, created_at, user_id')
         .order('created_at', { ascending: false });
 
       if (user) {

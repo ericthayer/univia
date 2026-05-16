@@ -45,7 +45,7 @@ export default function AuditResults() {
     try {
       const { data: auditsData } = await supabase
         .from('accessibility_audits')
-        .select('id, url_scanned, accessibility_score, performance_score, best_practices_score, seo_score, screenshot_url, device_type, created_at')
+        .select('id, business_id, url_scanned, accessibility_score, performance_score, best_practices_score, seo_score, screenshot_url, device_type, created_at')
         .eq('audit_session_id', id);
 
       if (auditsData && auditsData.length > 0) {
@@ -58,7 +58,7 @@ export default function AuditResults() {
         if (mobile) {
           const { data: mobileViolationsData } = await supabase
             .from('violations')
-            .select('id, title, description, severity, wcag_guideline, affected_selector, remediation_steps, audit_id, element_screenshot_url, compliance_level, impact')
+            .select('id, title, description, severity, wcag_guideline, affected_selector, remediation_steps, audit_id, element_screenshot_url, compliance_level, impact, created_at')
             .eq('audit_id', mobile.id)
             .order('severity', { ascending: false });
           setMobileViolations(mobileViolationsData || []);
@@ -67,7 +67,7 @@ export default function AuditResults() {
         if (desktop) {
           const { data: desktopViolationsData } = await supabase
             .from('violations')
-            .select('id, title, description, severity, wcag_guideline, affected_selector, remediation_steps, audit_id, element_screenshot_url, compliance_level, impact')
+            .select('id, title, description, severity, wcag_guideline, affected_selector, remediation_steps, audit_id, element_screenshot_url, compliance_level, impact, created_at')
             .eq('audit_id', desktop.id)
             .order('severity', { ascending: false });
           setDesktopViolations(desktopViolationsData || []);
