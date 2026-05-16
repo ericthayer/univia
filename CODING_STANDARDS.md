@@ -95,6 +95,16 @@
 
 ## Additional Standards
 
+### Conventional Commits (Release Automation)
+
+- PR titles must follow Conventional Commit format (for example: `feat: add WCAG summary card`).
+- Semantic versioning is derived from commit/PR title type:
+  - `feat` -> minor release
+  - `fix`, `perf`, `revert` -> patch release
+  - `docs`, `style`, `chore`, `refactor`, `test`, `build`, `ci` -> no release
+- Breaking changes must include a `BREAKING CHANGE:` note in the commit body to trigger a major release.
+- `CHANGELOG.md` and version metadata are generated and committed automatically by semantic-release; do not manually craft release commits.
+
 ### Theme System
 
 - Always use theme tokens for colors, spacing, and typography
