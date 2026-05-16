@@ -91,3 +91,4 @@ This project follows WCAG 2.1 Level AA standards:
    - other commit types do not publish a release
 - `CHANGELOG.md` and version metadata are updated and committed automatically by semantic-release.
 - PR titles are validated for Conventional Commit format in CI.
+- Pull requests to `main` run a release preview dry-run and publish the predicted next version in the workflow summary.
