@@ -13,7 +13,7 @@ import {
   IconButton,
   InputAdornment,
 } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { USER_TIERS } from '../config/tierConfig';
@@ -36,19 +36,7 @@ export default function AccountSettings() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [auditCount, setAuditCount] = useState(0);
 
-  useEffect(() => {
-    if (!user) {
-      navigate('/');
-      return;
-    }
-
-    if (profile) {
-      setFullName(profile.full_name);
-      fetchAuditCount();
-    }
-  }, [user, profile, navigate]);
-
-  const fetchAuditCount = async () => {
+  const fetchAuditCount = useCallback(async () => {
     if (!user) return;
 
     const { count, error } = await supabase
@@ -59,7 +47,19 @@ export default function AccountSettings() {
     if (!error && count !== null) {
       setAuditCount(count);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/');
+      return;
+    }
+
+    if (profile) {
+      setFullName(profile.full_name);
+      fetchAuditCount();
+    }
+  }, [user, profile, navigate, fetchAuditCount]);
 
   const handleSave = async () => {
     if (!profile) return;

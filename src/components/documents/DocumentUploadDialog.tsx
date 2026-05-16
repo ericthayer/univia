@@ -96,6 +96,14 @@ const STAGE_PROGRESS: Record<AnalysisStage, number> = {
   error: 0,
 };
 
+const ACCEPTED_TYPES = [
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/webp',
+] as const;
+
 export default function DocumentUploadDialog({
   open,
   onClose,
@@ -110,14 +118,6 @@ export default function DocumentUploadDialog({
   const [analysisDepth, setAnalysisDepth] = useState<'standard' | 'detailed'>('standard');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [stage, setStage] = useState<AnalysisStage>('idle');
-
-  const acceptedTypes = [
-    'application/pdf',
-    'image/png',
-    'image/jpeg',
-    'image/jpg',
-    'image/webp',
-  ];
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -136,7 +136,7 @@ export default function DocumentUploadDialog({
     setError(null);
 
     const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && acceptedTypes.includes(droppedFile.type)) {
+    if (droppedFile && ACCEPTED_TYPES.includes(droppedFile.type as (typeof ACCEPTED_TYPES)[number])) {
       setFile(droppedFile);
     } else {
       setError('Please upload a PDF or image file (PNG, JPG, WebP)');
@@ -146,7 +146,7 @@ export default function DocumentUploadDialog({
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
     const selectedFile = e.target.files?.[0];
-    if (selectedFile && acceptedTypes.includes(selectedFile.type)) {
+    if (selectedFile && ACCEPTED_TYPES.includes(selectedFile.type as (typeof ACCEPTED_TYPES)[number])) {
       setFile(selectedFile);
     } else if (selectedFile) {
       setError('Please upload a PDF or image file (PNG, JPG, WebP)');

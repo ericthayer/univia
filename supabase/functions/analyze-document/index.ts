@@ -197,7 +197,13 @@ async function analyzeWithGemini(
     const selectedModel = GEMINI_MODELS[modelPreference];
     
     // Dynamic generation configuration based on model preference
-    const generationConfig: any = {
+    const generationConfig: {
+      temperature: number;
+      topK: number;
+      topP: number;
+      maxOutputTokens: number;
+      thinkingConfig?: { thinkingBudget: number };
+    } = {
       temperature: 0.1,
       topK: 40,
       topP: 0.95,
@@ -384,7 +390,7 @@ function extractEntities(text: string): {
 
   const datePatterns = [
     /\b([A-Z][a-z]+\s+\d{1,2},?\s+\d{4})\b/g,
-    /\b(\d{1,2}[\\/\-]\d{1,2}[\\/\-]\d{2,4})\b/g,
+    /\b(\d{1,2}[\\/-]\d{1,2}[\\/-]\d{2,4})\b/g,
   ];
 
   const amountPatterns = [
@@ -544,7 +550,7 @@ function analyzeDocumentWithRegex(text: string, fileName: string): DocumentAnaly
   const datePatterns = [
     /respond\s+(?:by|before|within)[:\s]+([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i,
     /deadline[:\s]+([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i,
-    /(\d{1,2})[\\/\-](\d{1,2})[\\/\-](\d{2,4})/,
+    /(\d{1,2})[\\/-](\d{1,2})[\\/-](\d{2,4})/,
     /within\s+(\d+)\s+days/i,
   ];
 

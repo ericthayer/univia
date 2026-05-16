@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -64,18 +64,11 @@ export default function UserManagement() {
   const [tierFilter, setTierFilter] = useState<string>('all');
   const { profile } = useAuth();
 
-  useEffect(() => {
-    if (profile?.is_admin) {
-      loadUsers();
-      loadMetrics();
-    }
-  }, [profile]);
+  const generateMockTrend = useCallback(() => {
+    return Array.from({ length: 7 }, () => Math.floor(Math.random() * 100));
+  }, []);
 
-  useEffect(() => {
-    filterUsers();
-  }, [searchQuery, users, statusFilter, tierFilter]);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     const { data, error } = await supabase
       .from('user_profiles')
       .select('*')
@@ -99,9 +92,9 @@ export default function UserManagement() {
     }));
 
     setUsers(usersWithTrend);
-  };
+  }, [generateMockTrend]);
 
-  const loadMetrics = async () => {
+  const loadMetrics = useCallback(async () => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -129,9 +122,9 @@ export default function UserManagement() {
       total_revenue: 1287500,
       revenue_change: 3,
     });
-  };
+  }, []);
 
-  const filterUsers = () => {
+  const filterUsers = useCallback(() => {
     let filtered = users;
 
     if (searchQuery) {
@@ -151,11 +144,18 @@ export default function UserManagement() {
     }
 
     setFilteredUsers(filtered);
-  };
+  }, [users, searchQuery, statusFilter, tierFilter]);
 
-  const generateMockTrend = () => {
-    return Array.from({ length: 7 }, () => Math.floor(Math.random() * 100));
-  };
+  useEffect(() => {
+    if (profile?.is_admin) {
+      loadUsers();
+      loadMetrics();
+    }
+  }, [profile, loadUsers, loadMetrics]);
+
+  useEffect(() => {
+    filterUsers();
+  }, [filterUsers]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

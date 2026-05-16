@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -29,10 +29,6 @@ export default function Resources() {
     loadResources();
   }, []);
 
-  useEffect(() => {
-    filterResources();
-  }, [searchTerm, typeFilter, resources]);
-
   const loadResources = async () => {
     try {
       const { data } = await supabase
@@ -50,7 +46,7 @@ export default function Resources() {
     }
   };
 
-  const filterResources = () => {
+  const filterResources = useCallback(() => {
     let filtered = resources;
 
     if (typeFilter !== 'all') {
@@ -67,7 +63,11 @@ export default function Resources() {
     }
 
     setFilteredResources(filtered);
-  };
+  }, [resources, searchTerm, typeFilter]);
+
+  useEffect(() => {
+    filterResources();
+  }, [filterResources]);
 
   const getTypeIcon = (type: string) => {
     switch (type) {

@@ -1,6 +1,18 @@
 import { useState, useCallback } from 'react';
 import { geminiService } from '../services/gemini.service';
 
+type GeminiInlineDataPart = { inlineData: { data: string; mimeType: string } };
+type GeminiTextPart = { text: string };
+type GeminiPart = GeminiTextPart | GeminiInlineDataPart;
+
+interface GeminiGenerationConfig {
+  temperature: number;
+  topP: number;
+  topK: number;
+  maxOutputTokens: number;
+  thinkingConfig?: { thinkingBudget: number };
+}
+
 interface UseGeminiOptions {
   modelName?: string;
   useThinking?: boolean;
@@ -32,7 +44,7 @@ export const useGemini = ({
     try {
       const client = geminiService.getClient();
       
-      const generationConfig: any = {
+      const generationConfig: GeminiGenerationConfig = {
         temperature: 0.7,
         topP: 0.95,
         topK: 40,
@@ -51,7 +63,7 @@ export const useGemini = ({
       });
 
       // Prepare parts for multimodal support
-      let parts: any[] = [{ text: prompt }];
+      let parts: GeminiPart[] = [{ text: prompt }];
       
       if (files && files.length > 0) {
         const fileParts = await Promise.all(
@@ -75,13 +87,13 @@ export const useGemini = ({
       setIsStreaming(false);
       return fullText;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorObj = err instanceof Error ? err : new Error(String(err));
       setError(errorObj);
       setIsLoading(false);
       setIsStreaming(false);
       if (onError) onError(errorObj);
-      console.error("Gemini API Error:", err);
+      console.error("Gemini API Error:", errorObj);
       throw errorObj;
     }
   }, [modelName, useThinking, thinkingBudget, onError]);
@@ -100,8 +112,8 @@ export const useGemini = ({
 /**
  * Internal helper to avoid exposing too many static methods if not needed.
  */
-async function GeminiService_Helper_fileToGenerativePart(file: File) {
-  return new Promise((resolve, reject) => {
+async function GeminiService_Helper_fileToGenerativePart(file: File): Promise<GeminiInlineDataPart> {
+  return new Promise<GeminiInlineDataPart>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = (reader.result as string).split(',')[1];

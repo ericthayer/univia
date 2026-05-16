@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -23,17 +23,17 @@ export default function ChecklistView({ checklistId, onBack, onEdit }: Checklist
   const [checklist, setChecklist] = useState<CustomChecklist | null>(null);
   const [items, setItems] = useState<CustomChecklistItem[]>([]);
 
-  useEffect(() => {
-    loadChecklist();
-  }, [checklistId]);
-
-  const loadChecklist = () => {
+  const loadChecklist = useCallback(() => {
     const data = getChecklist(checklistId);
     if (data) {
       setChecklist(data.checklist);
       setItems(data.items.sort((a, b) => a.order_index - b.order_index));
     }
-  };
+  }, [checklistId, getChecklist]);
+
+  useEffect(() => {
+    loadChecklist();
+  }, [loadChecklist]);
 
   if (!checklist) {
     return (
@@ -152,7 +152,7 @@ export default function ChecklistView({ checklistId, onBack, onEdit }: Checklist
           items.map((item) => (
             <ChecklistItemCard
               key={item.id}
-              item={item}
+              checklistItem={item}
               checklistId={checklistId}
               onUpdate={loadChecklist}
             />

@@ -14,34 +14,36 @@ import type { CustomChecklistItem } from '../../types';
 import Icon from '../ui/Icon';
 
 interface ChecklistItemCardProps {
-  item: CustomChecklistItem;
+  checklistItem: CustomChecklistItem;
   checklistId: string;
   onUpdate: () => void;
 }
 
-export default function ChecklistItemCard({ item, checklistId, onUpdate }: ChecklistItemCardProps) {
+type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+
+export default function ChecklistItemCard({ checklistItem, checklistId, onUpdate }: ChecklistItemCardProps) {
   const { toggleItemComplete, updateItem } = useLocalStorageChecklists();
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [editedNotes, setEditedNotes] = useState(item.notes || '');
+  const [editedNotes, setEditedNotes] = useState(checklistItem.notes || '');
 
   const handleToggle = () => {
-    toggleItemComplete(checklistId, item.id);
+    toggleItemComplete(checklistId, checklistItem.id);
     onUpdate();
   };
 
   const handleSaveNotes = () => {
-    updateItem(checklistId, item.id, { notes: editedNotes });
+    updateItem(checklistId, checklistItem.id, { notes: editedNotes });
     setEditing(false);
     onUpdate();
   };
 
   const handleCancelEdit = () => {
-    setEditedNotes(item.notes || '');
+    setEditedNotes(checklistItem.notes || '');
     setEditing(false);
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: string): ChipColor => {
     switch (priority) {
       case 'high':
         return 'error';
@@ -54,22 +56,22 @@ export default function ChecklistItemCard({ item, checklistId, onUpdate }: Check
     }
   };
 
-  const isOverdue = item.due_date && !item.completed && new Date(item.due_date) < new Date();
+  const isOverdue = checklistItem.due_date && !checklistItem.completed && new Date(checklistItem.due_date) < new Date();
 
   return (
     <Box
       sx={{
         p: 2,
-        bgcolor: item.completed ? 'success.50' : 'background.paper',
+        bgcolor: checklistItem.completed ? 'success.50' : 'background.paper',
         borderRadius: 2,
         border: 1,
-        borderColor: item.completed ? 'success.main' : isOverdue ? 'error.main' : 'divider',
+        borderColor: checklistItem.completed ? 'success.main' : isOverdue ? 'error.main' : 'divider',
         transition: 'all 0.2s ease',
       }}
     >
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
         <Checkbox
-          checked={item.completed}
+          checked={checklistItem.completed}
           onChange={handleToggle}
           sx={{ mt: -0.5 }}
         />
@@ -81,16 +83,16 @@ export default function ChecklistItemCard({ item, checklistId, onUpdate }: Check
               sx={{
                 fontWeight: 600,
                 flex: 1,
-                textDecoration: item.completed ? 'line-through' : 'none',
-                opacity: item.completed ? 0.6 : 1,
+                textDecoration: checklistItem.completed ? 'line-through' : 'none',
+                opacity: checklistItem.completed ? 0.6 : 1,
               }}
             >
-              {item.title}
+              {checklistItem.title}
             </Typography>
 
             <Chip
-              label={item.priority}
-              color={getPriorityColor(item.priority) as any}
+              label={checklistItem.priority}
+              color={getPriorityColor(checklistItem.priority)}
               size="small"
             />
 
@@ -104,31 +106,31 @@ export default function ChecklistItemCard({ item, checklistId, onUpdate }: Check
             )}
           </Box>
 
-          {item.description && (
+          {checklistItem.description && (
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              {item.description}
+              {checklistItem.description}
             </Typography>
           )}
 
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
-            {item.due_date && (
+            {checklistItem.due_date && (
               <Chip
                 icon={<Icon name="event" style={{ fontSize: 14 }} />}
-                label={`Due: ${new Date(item.due_date).toLocaleDateString()}`}
+                label={`Due: ${new Date(checklistItem.due_date).toLocaleDateString()}`}
                 size="small"
                 variant="outlined"
               />
             )}
-            {item.assigned_to && (
+            {checklistItem.assigned_to && (
               <Chip
                 icon={<Icon name="person" style={{ fontSize: 14 }} />}
-                label={item.assigned_to}
+                label={checklistItem.assigned_to}
                 size="small"
                 variant="outlined"
               />
             )}
-            {item.compliance_standards && item.compliance_standards.length > 0 && (
-              item.compliance_standards.map((standard) => (
+            {checklistItem.compliance_standards && checklistItem.compliance_standards.length > 0 && (
+              checklistItem.compliance_standards.map((standard) => (
                 <Chip
                   key={standard}
                   label={standard}
@@ -139,7 +141,7 @@ export default function ChecklistItemCard({ item, checklistId, onUpdate }: Check
             )}
           </Box>
 
-          {(item.notes || editing) && (
+          {(checklistItem.notes || editing) && (
             <Box sx={{ mt: 2 }}>
               {editing ? (
                 <Box>
@@ -175,14 +177,14 @@ export default function ChecklistItemCard({ item, checklistId, onUpdate }: Check
                     Notes
                   </Typography>
                   <Typography variant="body2">
-                    {item.notes || 'Click to add notes...'}
+                    {checklistItem.notes || 'Click to add notes...'}
                   </Typography>
                 </Box>
               )}
             </Box>
           )}
 
-          {!item.notes && !editing && (
+          {!checklistItem.notes && !editing && (
             <Button
               size="small"
               startIcon={<Icon name="note_add" />}
@@ -206,11 +208,11 @@ export default function ChecklistItemCard({ item, checklistId, onUpdate }: Check
       <Collapse in={expanded}>
         <Box sx={{ pl: 7, pt: 2 }}>
           <Typography variant="caption" color="text.secondary">
-            <strong>Order:</strong> #{item.order_index + 1}
+            <strong>Order:</strong> #{checklistItem.order_index + 1}
           </Typography>
-          {item.compliance_standards && item.compliance_standards.length > 0 && (
+          {checklistItem.compliance_standards && checklistItem.compliance_standards.length > 0 && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-              <strong>Standards:</strong> {item.compliance_standards.join(', ')}
+              <strong>Standards:</strong> {checklistItem.compliance_standards.join(', ')}
             </Typography>
           )}
         </Box>

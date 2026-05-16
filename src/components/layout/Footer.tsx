@@ -1,8 +1,7 @@
-import { Box, Button, Container, Stack, Typography } from '@mui/material';
+import { Box, Button, Container, Stack } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LegalDialog from './LegalDialog';
-import AdminMenu from '../admin/AdminMenu';
 import packageJson from '../../../package.json';
 
 export default function Footer() {

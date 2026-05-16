@@ -30,6 +30,7 @@ import {
   RadioGroup,
   Switch,
 } from '@mui/material';
+import type { TypographyProps } from '@mui/material';
 import { useState } from 'react';
 import Icon from '../components/ui/Icon';
 import GlassCard from '../components/ui/GlassCard';
@@ -195,7 +196,7 @@ export default function PatternLibrary() {
                       sx={{ p: 2 }}
                     >
                       <Typography
-                        variant={variant as any}
+                        variant={variant as TypographyProps['variant']}
                         sx={{ mb: 1 }}
                         data-variant={variant}
                       >

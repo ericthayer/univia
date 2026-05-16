@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -29,7 +29,7 @@ import ValidationFeedback from '../components/validation/ValidationFeedback';
 
 export default function AccessibilityAudit() {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { getFieldState, setFieldValue, validateFieldDebounced } = useFormValidation();
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
@@ -49,18 +49,11 @@ export default function AccessibilityAudit() {
   const urlField = getFieldState('url');
   const MAX_URL_LENGTH = 2048;
 
-  useEffect(() => {
-    if (!loadingRef.current) {
-      loadingRef.current = true;
-      loadMetrics();
-    }
-  }, [user]);
-
-  const loadMetrics = async () => {
+  const loadMetrics = useCallback(async () => {
     try {
       let query = supabase
         .from('accessibility_audits')
-        .select('id, url_scanned, accessibility_score, performance_score, best_practices_score, seo_score, device_type, audit_session_id, created_at, user_id')
+        .select('id, business_id, url_scanned, accessibility_score, performance_score, best_practices_score, seo_score, device_type, audit_session_id, created_at, user_id')
         .order('created_at', { ascending: false });
 
       if (user) {
@@ -110,7 +103,14 @@ export default function AccessibilityAudit() {
       setMetricsLoading(false);
       loadingRef.current = false;
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (!loadingRef.current) {
+      loadingRef.current = true;
+      loadMetrics();
+    }
+  }, [loadMetrics]);
 
   const handleReset = () => {
     setFieldValue('url', '');

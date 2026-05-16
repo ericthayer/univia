@@ -69,7 +69,7 @@ export default function UserAuditMetrics({
 }: UserAuditMetricsProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { metrics, loading, error, refetch } = useUserAudits({
+  const { metrics, loading, error } = useUserAudits({
     userId,
     limit,
     enabled,
@@ -81,7 +81,6 @@ export default function UserAuditMetrics({
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const urlField = getFieldState('url');
-  const MAX_URL_LENGTH = 2048;
 
   // Fetch pinned audits
   useEffect(() => {
@@ -170,11 +169,7 @@ export default function UserAuditMetrics({
     }
   };
 
-  const containerProps = fullWidth
-    ? {}
-    : {
-        maxWidth: 'lg',
-      };
+  const containerMaxWidth = fullWidth ? false : 'lg';
 
   return (
     <Box
@@ -187,7 +182,7 @@ export default function UserAuditMetrics({
         }),
       }}
     >
-      <Container {...containerProps} sx={{ p: '0 !important' }}>
+      <Container maxWidth={containerMaxWidth} sx={{ p: '0 !important' }}>
         {/* Error State */}
         {error && (
           <Alert severity="error" sx={{ mb: 4 }}>

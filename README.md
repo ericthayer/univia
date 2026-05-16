@@ -81,3 +81,14 @@ This project follows WCAG 2.1 Level AA standards:
 - Keyboard navigation support
 - Color contrast compliance
 - Screen reader compatibility
+
+## Release Automation
+
+- Releases are automated with semantic-release when code lands on `main`.
+- Version bumps follow Conventional Commits:
+   - `feat` -> minor
+   - `fix`, `perf`, `revert` -> patch
+   - other commit types do not publish a release
+- `CHANGELOG.md` and version metadata are updated and committed automatically by semantic-release.
+- PR titles are validated for Conventional Commit format in CI.
+- Pull requests to `main` run a release preview dry-run and publish the predicted next version in the workflow summary.

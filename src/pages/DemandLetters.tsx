@@ -19,6 +19,8 @@ import InlineDocumentUpload from '../components/documents/InlineDocumentUpload';
 import InlineAnalysisResults from '../components/documents/InlineAnalysisResults';
 import Icon from '../components/ui/Icon';
 
+type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+
 export default function DemandLetters() {
   const [letters, setLetters] = useState<DemandLetter[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +46,7 @@ export default function DemandLetters() {
     }
   };
 
-  const getRiskColor = (risk?: string) => {
+  const getRiskColor = (risk?: string): ChipColor => {
     switch (risk) {
       case 'critical':
         return 'error';
@@ -59,7 +61,7 @@ export default function DemandLetters() {
     }
   };
 
-  const getStatusColor = (status?: string) => {
+  const getStatusColor = (status?: string): ChipColor => {
     switch (status) {
       case 'pending':
         return 'warning';
@@ -199,12 +201,12 @@ export default function DemandLetters() {
                             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
                               <Chip
                                 label={letter.status?.toUpperCase() || 'PENDING'}
-                                color={getStatusColor(letter.status) as any}
+                                color={getStatusColor(letter.status)}
                                 size="small"
                               />
                               <Chip
                                 label={`${letter.risk_level?.toUpperCase() || 'MEDIUM'} RISK`}
-                                color={getRiskColor(letter.risk_level) as any}
+                                color={getRiskColor(letter.risk_level)}
                                 size="small"
                               />
                               {daysLeft !== null && daysLeft <= 30 && (
