@@ -14,10 +14,6 @@ export function useWCAGProgress() {
   const [progress, setProgress] = useState<ChecklistProgress>({});
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadProgress();
-  }, []);
-
   const loadProgress = useCallback(() => {
     try {
       const savedProgress = localStorage.getItem(WCAG_PROGRESS_KEY);
@@ -30,6 +26,10 @@ export function useWCAGProgress() {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    loadProgress();
+  }, [loadProgress]);
 
   const saveProgress = useCallback((newProgress: ChecklistProgress) => {
     try {

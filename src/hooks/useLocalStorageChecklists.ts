@@ -14,10 +14,6 @@ export function useLocalStorageChecklists() {
   const [checklistItems, setChecklistItems] = useState<Record<string, CustomChecklistItem[]>>({});
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadFromStorage();
-  }, []);
-
   const loadFromStorage = useCallback(() => {
     try {
       const checklistsData = localStorage.getItem(CHECKLISTS_KEY);
@@ -36,6 +32,10 @@ export function useLocalStorageChecklists() {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    loadFromStorage();
+  }, [loadFromStorage]);
 
   const saveToStorage = useCallback((
     updatedChecklists: CustomChecklist[],

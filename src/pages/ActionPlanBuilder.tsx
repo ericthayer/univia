@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -80,15 +80,7 @@ export default function ActionPlanBuilder() {
     notes: '',
   });
 
-  useEffect(() => {
-    if (user) {
-      loadData();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -112,7 +104,15 @@ export default function ActionPlanBuilder() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    } else {
+      setLoading(false);
+    }
+  }, [user, loadData]);
 
   const handleCreateFromViolation = (violation: AuditViolation) => {
     setFormData({

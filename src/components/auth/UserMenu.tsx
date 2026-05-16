@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   IconButton,
   Menu,
@@ -31,7 +31,7 @@ export default function UserMenu() {
   const suppressTriggerTimeoutRef = useRef<number | null>(null);
   const routeCloseTimeoutRef = useRef<number | null>(null);
 
-  const armTriggerSuppression = () => {
+  const armTriggerSuppression = useCallback(() => {
     suppressTriggerClickRef.current = true;
 
     if (suppressTriggerTimeoutRef.current !== null) {
@@ -42,7 +42,7 @@ export default function UserMenu() {
       suppressTriggerClickRef.current = false;
       suppressTriggerTimeoutRef.current = null;
     }, 250);
-  };
+  }, []);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     if (suppressTriggerClickRef.current) {
@@ -52,14 +52,15 @@ export default function UserMenu() {
     setAnchorEl((current) => (current ? null : event.currentTarget));
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     armTriggerSuppression();
 
     flushSync(() => {
       setAnchorEl(null);
     });
-  };
+  }, [armTriggerSuppression]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (anchorEl && !anchorEl.isConnected) {
       setAnchorEl(null);
@@ -85,7 +86,7 @@ export default function UserMenu() {
     }
 
     previousLocationSignatureRef.current = locationSignature;
-  }, [locationSignature]);
+  }, [locationSignature, armTriggerSuppression]);
 
   useEffect(() => {
     return () => {
@@ -123,7 +124,7 @@ export default function UserMenu() {
     return () => {
       document.removeEventListener('mousedown', handleDocumentPointerDown, true);
     };
-  }, [open]);
+  }, [open, handleClose]);
 
   const handleSettings = () => {
     handleClose();

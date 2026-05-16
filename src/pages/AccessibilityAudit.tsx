@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -49,14 +49,7 @@ export default function AccessibilityAudit() {
   const urlField = getFieldState('url');
   const MAX_URL_LENGTH = 2048;
 
-  useEffect(() => {
-    if (!loadingRef.current) {
-      loadingRef.current = true;
-      loadMetrics();
-    }
-  }, [user]);
-
-  const loadMetrics = async () => {
+  const loadMetrics = useCallback(async () => {
     try {
       let query = supabase
         .from('accessibility_audits')
@@ -110,7 +103,14 @@ export default function AccessibilityAudit() {
       setMetricsLoading(false);
       loadingRef.current = false;
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (!loadingRef.current) {
+      loadingRef.current = true;
+      loadMetrics();
+    }
+  }, [loadMetrics]);
 
   const handleReset = () => {
     setFieldValue('url', '');

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -34,14 +34,7 @@ export default function AuditResults() {
   const [severityTab, setSeverityTab] = useState(0);
   const loadingRef = useRef(false);
 
-  useEffect(() => {
-    if (id && !loadingRef.current) {
-      loadingRef.current = true;
-      loadAuditResults();
-    }
-  }, [id]);
-
-  const loadAuditResults = async () => {
+  const loadAuditResults = useCallback(async () => {
     try {
       const { data: auditsData } = await supabase
         .from('accessibility_audits')
@@ -79,7 +72,14 @@ export default function AuditResults() {
       setLoading(false);
       loadingRef.current = false;
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id && !loadingRef.current) {
+      loadingRef.current = true;
+      loadAuditResults();
+    }
+  }, [id, loadAuditResults]);
 
   const currentAudit = deviceTab === 0 ? mobileAudit : desktopAudit;
   const currentViolations = deviceTab === 0 ? mobileViolations : desktopViolations;

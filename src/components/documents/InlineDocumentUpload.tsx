@@ -46,6 +46,14 @@ const STAGE_PROGRESS: Record<AnalysisStage, number> = {
   error: 0,
 };
 
+const ACCEPTED_TYPES = [
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/webp',
+] as const;
+
 export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumentUploadProps) {
   const { user } = useAuth();
   const [file, setFile] = useState<File | null>(null);
@@ -64,14 +72,6 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
 
   // Menu open/close state derived from anchorEl
   const menuOpen = Boolean(anchorEl);
-
-  const acceptedTypes = [
-    'application/pdf',
-    'image/png',
-    'image/jpeg',
-    'image/jpg',
-    'image/webp',
-  ];
 
   // Handler to open the advanced options menu
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -127,7 +127,7 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
     setShowInfo(false);
 
     const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && acceptedTypes.includes(droppedFile.type)) {
+    if (droppedFile && ACCEPTED_TYPES.includes(droppedFile.type as (typeof ACCEPTED_TYPES)[number])) {
       setFile(droppedFile);
     } else {
       setError('Please upload a PDF or image file (PNG, JPG, WebP)');
@@ -138,7 +138,7 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
     setError(null);
     setShowInfo(false);
     const selectedFile = e.target.files?.[0];
-    if (selectedFile && acceptedTypes.includes(selectedFile.type)) {
+    if (selectedFile && ACCEPTED_TYPES.includes(selectedFile.type as (typeof ACCEPTED_TYPES)[number])) {
       setFile(selectedFile);
     } else if (selectedFile) {
       setError('Please upload a PDF or image file (PNG, JPG, WebP)');

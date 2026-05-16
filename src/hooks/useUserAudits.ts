@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { AccessibilityAudit } from '../types';
 
@@ -70,23 +70,7 @@ export function useUserAudits(options: UseUserAuditsOptions = {}) {
   const [error, setError] = useState<string | null>(null);
   const loadingRef = useRef(false);
 
-  useEffect(() => {
-    if (!enabled || !userId) {
-      setLoading(false);
-      return;
-    }
-
-    if (!loadingRef.current) {
-      loadingRef.current = true;
-      fetchUserAudits();
-    }
-
-    return () => {
-      loadingRef.current = false;
-    };
-  }, [userId, enabled, limit]);
-
-  const fetchUserAudits = async () => {
+  const fetchUserAudits = useCallback(async () => {
     try {
       setError(null);
 
@@ -245,7 +229,23 @@ export function useUserAudits(options: UseUserAuditsOptions = {}) {
       setLoading(false);
       loadingRef.current = false;
     }
-  };
+  }, [limit, userId]);
+
+  useEffect(() => {
+    if (!enabled || !userId) {
+      setLoading(false);
+      return;
+    }
+
+    if (!loadingRef.current) {
+      loadingRef.current = true;
+      fetchUserAudits();
+    }
+
+    return () => {
+      loadingRef.current = false;
+    };
+  }, [userId, enabled, fetchUserAudits]);
 
   const refetch = async () => {
     loadingRef.current = false;
