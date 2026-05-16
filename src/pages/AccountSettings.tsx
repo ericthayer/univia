@@ -10,6 +10,8 @@ import {
   Divider,
   Alert,
   LinearProgress,
+  IconButton,
+  InputAdornment,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -17,14 +19,21 @@ import { useAuth } from '../contexts/AuthContext';
 import { USER_TIERS } from '../config/tierConfig';
 import { supabase } from '../services/supabaseClient';
 import Icon from '../components/ui/Icon';
+import { validatePasswordChange } from '../utils/validation';
 
 export default function AccountSettings() {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, updatePassword } = useAuth();
   const navigate = useNavigate();
   const [fullName, setFullName] = useState('');
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [auditCount, setAuditCount] = useState(0);
 
   useEffect(() => {
@@ -73,6 +82,30 @@ export default function AccountSettings() {
     }
 
     setSaving(false);
+  };
+
+  const handlePasswordUpdate = async () => {
+    setPasswordError(null);
+    setPasswordSuccess(false);
+
+    const validationError = validatePasswordChange(newPassword, confirmNewPassword);
+    if (validationError) {
+      setPasswordError(validationError);
+      return;
+    }
+
+    setPasswordSaving(true);
+
+    const { error } = await updatePassword(newPassword);
+    if (error) {
+      setPasswordError(error.message);
+    } else {
+      setPasswordSuccess(true);
+      setNewPassword('');
+      setConfirmNewPassword('');
+    }
+
+    setPasswordSaving(false);
   };
 
   if (!profile) return null;
@@ -128,6 +161,71 @@ export default function AccountSettings() {
                 disabled={saving || fullName === profile.full_name}
               >
                 {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </Box>
+          </Stack>
+        </Paper>
+
+        <Paper sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Security
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Update your account password.
+          </Typography>
+
+          {passwordSuccess && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              Password updated successfully
+            </Alert>
+          )}
+
+          {passwordError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {passwordError}
+            </Alert>
+          )}
+
+          <Stack spacing={2}>
+            <TextField
+              fullWidth
+              label="New Password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                      size="small"
+                    >
+                      <Icon name={showPassword ? 'expand_less' : 'expand_more'} />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            <TextField
+              fullWidth
+              label="Confirm New Password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              value={confirmNewPassword}
+              onChange={(e) => setConfirmNewPassword(e.target.value)}
+            />
+
+            <Box>
+              <Button
+                variant="contained"
+                onClick={handlePasswordUpdate}
+                disabled={passwordSaving || !newPassword || !confirmNewPassword}
+              >
+                {passwordSaving ? 'Updating...' : 'Update Password'}
               </Button>
             </Box>
           </Stack>
