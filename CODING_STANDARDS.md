@@ -103,7 +103,8 @@
   - `fix`, `perf`, `revert` -> patch release
   - `docs`, `style`, `chore`, `refactor`, `test`, `build`, `ci` -> no release
 - Breaking changes must include a `BREAKING CHANGE:` note in the commit body to trigger a major release.
-- `CHANGELOG.md` and version metadata are generated and committed automatically by semantic-release; do not manually craft release commits.
+- Releases are managed by Release Please through a release PR workflow.
+- `CHANGELOG.md` and version metadata are generated automatically in the Release Please PR; do not manually craft direct release commits to `main`.
 
 ### Theme System
 

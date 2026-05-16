@@ -84,13 +84,12 @@ This project follows WCAG 2.1 Level AA standards:
 
 ## Release Automation
 
-- Releases are automated with semantic-release when code lands on `main`.
+- Release Please runs on pushes to `main` and manages releases through a dedicated release PR.
 - Version bumps follow Conventional Commits:
    - `feat` -> minor
    - `fix`, `perf`, `revert` -> patch
    - `refactor`, `docs`, `ci`, `chore`, `style`, `test`, `build` -> no release by default
    - other commit types do not publish a release by default
    - any commit type with a `BREAKING CHANGE:` note publishes a major release
-- `CHANGELOG.md` and version metadata are updated and committed automatically by semantic-release.
+- `CHANGELOG.md` and version metadata are updated automatically in the Release Please PR (not by direct pushes to `main`).
 - PR titles are validated for Conventional Commit format in CI.
-- Pull requests to `main` run a release preview dry-run and publish the predicted next version in the workflow summary.
