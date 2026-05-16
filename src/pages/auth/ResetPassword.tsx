@@ -14,6 +14,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import Icon from '../../components/ui/Icon';
 import logoUniviaUrl from '../../assets/images/logo-univia.svg';
+import { validatePasswordChange } from '../../utils/validation';
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
@@ -29,13 +30,9 @@ export default function ResetPassword() {
     e.preventDefault();
     setError(null);
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    const validationError = validatePasswordChange(password, confirmPassword);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   IconButton,
   Menu,
@@ -18,17 +18,45 @@ import Icon from '../ui/Icon';
 
 export default function UserMenu() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const menuPaperRef = useRef<HTMLDivElement | null>(null);
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const open = Boolean(anchorEl);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
+    setAnchorEl((current) => (current ? null : event.currentTarget));
   };
 
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const handleDocumentPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+
+      if (menuPaperRef.current?.contains(target)) {
+        return;
+      }
+
+      if (triggerRef.current?.contains(target)) {
+        return;
+      }
+
+      handleClose();
+    };
+
+    document.addEventListener('mousedown', handleDocumentPointerDown, true);
+
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentPointerDown, true);
+    };
+  }, [open]);
 
   const handleSettings = () => {
     navigate('/settings');
@@ -60,6 +88,8 @@ export default function UserMenu() {
     <>
       <Tooltip title="User Menu">
         <IconButton
+          id="user-menu-button"
+          ref={triggerRef}
           color="primary"
           onClick={handleClick}
           aria-controls={open ? 'user-menu' : undefined}
@@ -74,17 +104,21 @@ export default function UserMenu() {
         id="user-menu"
         open={open}
         onClose={handleClose}
-        onClick={handleClose}
+        hideBackdrop
+        disableScrollLock
+        MenuListProps={{
+          'aria-labelledby': 'user-menu-button',
+        }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         slotProps={{
           paper: {
+            ref: menuPaperRef,
             elevation: 3,
             sx: {
               minWidth: 240,
               mt: 1.5,
               ml: '-0.5rem',
-              top: '48px !important',
             },
           },
         }}
