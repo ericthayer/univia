@@ -93,7 +93,9 @@ describe('UserMenu interactions', () => {
       expect(screen.queryByText('Account Settings')).not.toBeInTheDocument();
     });
 
-    expect(mockNavigate).toHaveBeenCalledWith('/settings');
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/settings');
+    });
   });
 
   it('closes when the anchor element becomes detached from the document', async () => {
