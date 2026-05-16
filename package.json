@@ -12,7 +12,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
-    "size-check": "npm run build && node scripts/check-bundle-size.js"
+    "size-check": "npm run build && node scripts/check-bundle-size.js",
+    "release": "semantic-release",
+    "release:dry-run": "semantic-release --dry-run --no-ci"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
@@ -28,6 +30,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
+    "@semantic-release/commit-analyzer": "^11.1.0",
+    "@semantic-release/github": "^9.2.6",
+    "@semantic-release/release-notes-generator": "^12.1.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -41,6 +46,7 @@
     "globals": "^15.9.0",
     "jsdom": "^26.1.0",
     "rollup-plugin-visualizer": "^6.0.5",
+    "semantic-release": "^22.0.12",
     "terser": "^5.44.1",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.3.0",

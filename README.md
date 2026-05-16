@@ -84,12 +84,13 @@ This project follows WCAG 2.1 Level AA standards:
 
 ## Release Automation
 
-- Release Please runs on pushes to `main` and manages releases through a dedicated release PR.
+- Semantic Release runs on pushes to `main` and can be manually executed with workflow dispatch.
 - Version bumps follow Conventional Commits:
    - `feat` -> minor
    - `fix`, `perf`, `revert` -> patch
    - `refactor`, `docs`, `ci`, `chore`, `style`, `test`, `build` -> no release by default
    - other commit types do not publish a release by default
    - any commit type with a `BREAKING CHANGE:` note publishes a major release
-- `CHANGELOG.md` and version metadata are updated automatically in the Release Please PR (not by direct pushes to `main` branch).
-- PR titles are validated for Conventional Commit format in CI.
+- Releases are published as GitHub tags and GitHub Releases (no npm publish).
+- PR titles are validated for Conventional Commit format in CI. Use squash merge so the PR title becomes the commit message on `main`.
+- Local preview command: `npm run release:dry-run`
