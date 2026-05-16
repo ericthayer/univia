@@ -96,16 +96,20 @@ export default function AccountSettings() {
 
     setPasswordSaving(true);
 
-    const { error } = await updatePassword(newPassword);
-    if (error) {
-      setPasswordError(error.message);
-    } else {
-      setPasswordSuccess(true);
-      setNewPassword('');
-      setConfirmNewPassword('');
+    try {
+      const { error } = await updatePassword(newPassword);
+      if (error) {
+        setPasswordError(error.message);
+      } else {
+        setPasswordSuccess(true);
+        setNewPassword('');
+        setConfirmNewPassword('');
+      }
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : 'Failed to update password');
+    } finally {
+      setPasswordSaving(false);
     }
-
-    setPasswordSaving(false);
   };
 
   if (!profile) return null;
