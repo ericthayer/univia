@@ -88,8 +88,9 @@ This project follows WCAG 2.1 Level AA standards:
 - Version bumps follow Conventional Commits:
    - `feat` -> minor
    - `fix`, `perf`, `revert` -> patch
-   - `refactor`, `docs`, `ci`, `chore`, `style` -> no release
-   - other commit types do not publish a release
+   - `refactor`, `docs`, `ci`, `chore`, `style`, `test`, `build` -> no release by default
+   - other commit types do not publish a release by default
+   - any commit type with a `BREAKING CHANGE:` note publishes a major release
 - `CHANGELOG.md` and version metadata are updated and committed automatically by semantic-release.
 - PR titles are validated for Conventional Commit format in CI.
 - Pull requests to `main` run a release preview dry-run and publish the predicted next version in the workflow summary.
