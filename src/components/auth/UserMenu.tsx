@@ -12,7 +12,8 @@ import {
   Tooltip,
 } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { flushSync } from 'react-dom';
 import { USER_TIERS } from '../../config/tierConfig';
 import Icon from '../ui/Icon';
 
@@ -21,16 +22,82 @@ export default function UserMenu() {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const menuPaperRef = useRef<HTMLDivElement | null>(null);
   const { user, profile, signOut } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
   const open = Boolean(anchorEl);
+  const locationSignature = `${location.pathname}${location.search}${location.hash}`;
+  const previousLocationSignatureRef = useRef(locationSignature);
+  const suppressTriggerClickRef = useRef(false);
+  const suppressTriggerTimeoutRef = useRef<number | null>(null);
+  const routeCloseTimeoutRef = useRef<number | null>(null);
+
+  const armTriggerSuppression = () => {
+    suppressTriggerClickRef.current = true;
+
+    if (suppressTriggerTimeoutRef.current !== null) {
+      clearTimeout(suppressTriggerTimeoutRef.current);
+    }
+
+    suppressTriggerTimeoutRef.current = window.setTimeout(() => {
+      suppressTriggerClickRef.current = false;
+      suppressTriggerTimeoutRef.current = null;
+    }, 250);
+  };
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (suppressTriggerClickRef.current) {
+      return;
+    }
+
     setAnchorEl((current) => (current ? null : event.currentTarget));
   };
 
   const handleClose = () => {
-    setAnchorEl(null);
+    armTriggerSuppression();
+
+    flushSync(() => {
+      setAnchorEl(null);
+    });
   };
+
+  useEffect(() => {
+    if (anchorEl && !anchorEl.isConnected) {
+      setAnchorEl(null);
+    }
+  });
+
+  useEffect(() => {
+    const locationChanged = previousLocationSignatureRef.current !== locationSignature;
+
+    if (locationChanged) {
+      armTriggerSuppression();
+      setAnchorEl(null);
+
+      if (routeCloseTimeoutRef.current !== null) {
+        clearTimeout(routeCloseTimeoutRef.current);
+      }
+
+      // Guard against browser click sequencing that can reopen the trigger right after navigation.
+      routeCloseTimeoutRef.current = window.setTimeout(() => {
+        setAnchorEl(null);
+        routeCloseTimeoutRef.current = null;
+      }, 150);
+    }
+
+    previousLocationSignatureRef.current = locationSignature;
+  }, [locationSignature]);
+
+  useEffect(() => {
+    return () => {
+      if (suppressTriggerTimeoutRef.current !== null) {
+        clearTimeout(suppressTriggerTimeoutRef.current);
+      }
+
+      if (routeCloseTimeoutRef.current !== null) {
+        clearTimeout(routeCloseTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) {
@@ -59,13 +126,17 @@ export default function UserMenu() {
   }, [open]);
 
   const handleSettings = () => {
-    navigate('/settings');
     handleClose();
+    setTimeout(() => {
+      navigate('/settings');
+    }, 0);
   };
 
   const handleUpgrade = () => {
-    navigate('/pricing');
     handleClose();
+    setTimeout(() => {
+      navigate('/pricing');
+    }, 0);
   };
 
   const handleSignOut = async () => {
@@ -75,8 +146,10 @@ export default function UserMenu() {
   };
 
   const handleAdminNavigation = (path: string) => {
-    navigate(path);
     handleClose();
+    setTimeout(() => {
+      navigate(path);
+    }, 0);
   };
 
   if (!user || !profile) return null;
@@ -112,6 +185,13 @@ export default function UserMenu() {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         slotProps={{
+          root: {
+            sx: {
+              '&[aria-hidden="true"]': {
+                pointerEvents: 'none',
+              },
+            },
+          },
           paper: {
             ref: menuPaperRef,
             elevation: 3,
