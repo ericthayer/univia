@@ -49,7 +49,7 @@ export default function SignIn() {
       } else {
         navigate('/');
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -61,7 +61,7 @@ export default function SignIn() {
     try {
       const { error } = await signInWithOAuth(provider);
       if (error) setError(error.message);
-    } catch (err) {
+    } catch {
       setError(`Failed to sign in with ${provider}`);
     }
   };

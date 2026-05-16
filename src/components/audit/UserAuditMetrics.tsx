@@ -69,7 +69,7 @@ export default function UserAuditMetrics({
 }: UserAuditMetricsProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { metrics, loading, error, refetch } = useUserAudits({
+  const { metrics, loading, error } = useUserAudits({
     userId,
     limit,
     enabled,
@@ -81,7 +81,6 @@ export default function UserAuditMetrics({
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const urlField = getFieldState('url');
-  const MAX_URL_LENGTH = 2048;
 
   // Fetch pinned audits
   useEffect(() => {

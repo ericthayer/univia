@@ -26,7 +26,7 @@ interface ChecklistBuilderProps {
   checklistId?: string | null;
 }
 
-interface ItemFormData extends Omit<CustomChecklistItem, 'id' | 'checklist_id'> {}
+type ItemFormData = Omit<CustomChecklistItem, 'id' | 'checklist_id'>;
 
 export default function ChecklistBuilder({ open, onClose, checklistId }: ChecklistBuilderProps) {
   const { createChecklist, updateChecklist, getChecklist } = useLocalStorageChecklists();
@@ -79,7 +79,11 @@ export default function ChecklistBuilder({ open, onClose, checklistId }: Checkli
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const handleItemChange = (index: number, field: keyof ItemFormData, value: any) => {
+  const handleItemChange = (
+    index: number,
+    field: keyof ItemFormData,
+    value: ItemFormData[keyof ItemFormData]
+  ) => {
     const updatedItems = [...items];
     updatedItems[index] = {
       ...updatedItems[index],

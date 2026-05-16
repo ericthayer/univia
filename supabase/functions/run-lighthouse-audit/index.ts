@@ -1,6 +1,8 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
+type SupabaseClient = ReturnType<typeof createClient>;
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -17,7 +19,7 @@ async function runSingleAudit(
   url: string,
   deviceType: 'mobile' | 'desktop',
   sessionId: string,
-  supabase: any,
+  supabase: SupabaseClient,
   businessId?: string,
   userId?: string | null
 ) {

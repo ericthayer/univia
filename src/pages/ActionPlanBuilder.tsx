@@ -48,6 +48,8 @@ interface AuditViolation {
   wcag_guideline: string;
 }
 
+type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+
 export default function ActionPlanBuilder() {
   const { user } = useAuth();
   const [actionPlans, setActionPlans] = useState<ActionPlan[]>([]);
@@ -212,7 +214,7 @@ export default function ActionPlanBuilder() {
     });
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: string): ChipColor => {
     switch (priority) {
       case 'critical':
         return 'error';
@@ -227,7 +229,7 @@ export default function ActionPlanBuilder() {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): ChipColor => {
     switch (status) {
       case 'completed':
         return 'success';
@@ -254,7 +256,7 @@ export default function ActionPlanBuilder() {
       renderCell: (params) => (
         <Chip
           label={params.value.toUpperCase()}
-          color={getPriorityColor(params.value) as any}
+          color={getPriorityColor(params.value)}
           size="small"
         />
       ),
@@ -266,7 +268,7 @@ export default function ActionPlanBuilder() {
       renderCell: (params) => (
         <Chip
           label={params.value.replace('_', ' ').toUpperCase()}
-          color={getStatusColor(params.value) as any}
+          color={getStatusColor(params.value)}
           size="small"
         />
       ),
@@ -481,7 +483,7 @@ export default function ActionPlanBuilder() {
                     <InputLabel>Priority</InputLabel>
                     <Select
                       value={formData.priority}
-                      onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
+                      onChange={(e) => setFormData({ ...formData, priority: e.target.value as ActionPlan['priority'] })}
                       label="Priority"
                     >
                       <MenuItem value="low">Low</MenuItem>
@@ -496,7 +498,7 @@ export default function ActionPlanBuilder() {
                     <InputLabel>Status</InputLabel>
                     <Select
                       value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as ActionPlan['status'] })}
                       label="Status"
                     >
                       <MenuItem value="not_started">Not Started</MenuItem>

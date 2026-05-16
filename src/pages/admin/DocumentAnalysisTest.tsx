@@ -142,7 +142,7 @@ export default function DocumentAnalysisTest() {
       </Box>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
               Upload Test Document
@@ -234,7 +234,7 @@ export default function DocumentAnalysisTest() {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>

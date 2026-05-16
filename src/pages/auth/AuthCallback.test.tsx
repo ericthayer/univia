@@ -23,6 +23,8 @@ vi.mock('../../services/supabaseClient', () => ({
 import AuthCallback from './AuthCallback';
 import { supabase } from '../../services/supabaseClient';
 
+type GetSessionResult = Awaited<ReturnType<typeof supabase.auth.getSession>>;
+
 describe('AuthCallback', () => {
   beforeEach(() => {
     mockNavigate.mockReset();
@@ -38,7 +40,7 @@ describe('AuthCallback', () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: { session: { user: { id: 'u1' } } },
       error: null,
-    } as any);
+    } as GetSessionResult);
 
     render(<AuthCallback />);
 
@@ -53,7 +55,7 @@ describe('AuthCallback', () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: { session: null },
       error: { message: 'oauth failed' },
-    } as any);
+    } as GetSessionResult);
 
     window.history.replaceState({}, '', '/auth/callback?error_description=Provider%20denied');
 
@@ -68,7 +70,7 @@ describe('AuthCallback', () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: { session: null },
       error: null,
-    } as any);
+    } as GetSessionResult);
 
     render(<AuthCallback />);
 

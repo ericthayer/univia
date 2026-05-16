@@ -152,7 +152,7 @@ export default function ChecklistView({ checklistId, onBack, onEdit }: Checklist
           items.map((item) => (
             <ChecklistItemCard
               key={item.id}
-              item={item}
+              checklistItem={item}
               checklistId={checklistId}
               onUpdate={loadChecklist}
             />

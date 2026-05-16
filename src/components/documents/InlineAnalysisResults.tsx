@@ -11,7 +11,6 @@ import {
   ListItemText,
   Paper,
   Button,
-  LinearProgress,
   Tooltip,
   Collapse,
   IconButton,

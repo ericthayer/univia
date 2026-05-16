@@ -21,6 +21,7 @@ import { useWCAGProgress } from '../hooks/useWCAGProgress';
 import Icon from '../components/ui/Icon';
 
 type ChecklistMode = 'wcag' | 'custom';
+type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
 
 export default function ComplianceChecklist() {
   const { progress, loading, toggleItem, updateNotes } = useWCAGProgress();
@@ -48,7 +49,7 @@ export default function ComplianceChecklist() {
     };
   };
 
-  const getLevelColor = (level: string) => {
+  const getLevelColor = (level: string): ChipColor => {
     switch (level) {
       case 'A':
         return 'error';
@@ -218,7 +219,7 @@ export default function ComplianceChecklist() {
                           </Typography>
                           <Chip
                             label={item.level}
-                            color={getLevelColor(item.level) as any}
+                            color={getLevelColor(item.level)}
                             size="small"
                           />
                         </Box>

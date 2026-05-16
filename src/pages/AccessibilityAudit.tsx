@@ -29,7 +29,7 @@ import ValidationFeedback from '../components/validation/ValidationFeedback';
 
 export default function AccessibilityAudit() {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { getFieldState, setFieldValue, validateFieldDebounced } = useFormValidation();
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');

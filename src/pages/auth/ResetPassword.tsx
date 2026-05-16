@@ -46,7 +46,7 @@ export default function ResetPassword() {
         setSuccess(true);
         setTimeout(() => navigate('/signin'), 3000);
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);

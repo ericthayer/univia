@@ -6,10 +6,12 @@ interface ViolationCardProps {
   violation: Violation;
 }
 
+type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+
 export default function ViolationCard({ violation }: ViolationCardProps) {
   const [expanded, setExpanded] = useState(false);
 
-  const getSeverityColor = (severity: string) => {
+  const getSeverityColor = (severity: string): ChipColor => {
     switch (severity) {
       case 'critical':
         return 'error';
@@ -41,7 +43,7 @@ export default function ViolationCard({ violation }: ViolationCardProps) {
           </Typography>
           <Chip
             label={violation.severity.toUpperCase()}
-            color={getSeverityColor(violation.severity) as any}
+            color={getSeverityColor(violation.severity)}
             size="small"
             sx={{ ml: 2, fontWeight: 600 }}
           />
@@ -108,11 +110,11 @@ export default function ViolationCard({ violation }: ViolationCardProps) {
                       stepText = step;
                     }
                   } else if (typeof step === 'object' && step !== null) {
-                    const obj = step as any;
-                    if (obj.value) {
-                      stepText = String(obj.value);
-                    } else if (obj.url) {
-                      stepText = String(obj.url);
+                    const obj = step as Record<string, unknown>;
+                    if (typeof obj.value === 'string') {
+                      stepText = obj.value;
+                    } else if (typeof obj.url === 'string') {
+                      stepText = obj.url;
                     } else {
                       stepText = JSON.stringify(obj, null, 2);
                     }

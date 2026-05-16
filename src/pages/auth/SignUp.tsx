@@ -40,7 +40,7 @@ export default function SignUp() {
       } else {
         navigate('/');
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -52,7 +52,7 @@ export default function SignUp() {
     try {
       const { error } = await signInWithOAuth(provider);
       if (error) setError(error.message);
-    } catch (err) {
+    } catch {
       setError(`Failed to sign up with ${provider}`);
     }
   };
