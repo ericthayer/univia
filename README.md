@@ -91,4 +91,5 @@ This project follows WCAG 2.1 Level AA standards:
    - `refactor`, `docs`, `ci`, `chore`, `style`, `test`, `build` -> no release by default
    - other commit types do not publish a release by default
    - any commit type with a `BREAKING CHANGE:` note publishes a major release
+- `CHANGELOG.md` and version metadata are updated automatically in the Release Please PR (not by direct pushes to `main`).
 - PR titles are validated for Conventional Commit format in CI.
