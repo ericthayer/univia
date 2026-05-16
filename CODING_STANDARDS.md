@@ -103,8 +103,9 @@
   - `fix`, `perf`, `revert` -> patch release
   - `docs`, `style`, `chore`, `refactor`, `test`, `build`, `ci` -> no release
 - Breaking changes must include a `BREAKING CHANGE:` note in the commit body to trigger a major release.
-- Releases are managed by Release Please through a release PR workflow.
-- `CHANGELOG.md` and version metadata are generated automatically in the Release Please PR; do not manually craft direct release commits to `main`.
+- Releases are managed by semantic-release on pushes to `main`.
+- Releases publish Git tags and GitHub Releases (no npm publish).
+- Keep squash merge enabled so semantic PR titles map directly to the merged commit message.
 
 ### Theme System
 
