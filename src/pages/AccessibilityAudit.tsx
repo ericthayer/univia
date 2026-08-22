@@ -23,13 +23,15 @@ import { AccessibilityAudit as AuditType } from '../types';
 import ComplianceGauge from '../components/ui/ComplianceGauge';
 import AuditHistoryCard from '../components/audit/AuditHistoryCard';
 import { useAuth } from '../contexts/AuthContext';
+import { ensureSession } from '../services/session';
+import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from '../services/supabaseFunctions';
 import Icon from '../components/ui/Icon';
 import { useFormValidation } from '../hooks/useFormValidation';
 import ValidationFeedback from '../components/validation/ValidationFeedback';
 
 export default function AccessibilityAudit() {
   const navigate = useNavigate();
-  const { user, session } = useAuth();
+  const { user } = useAuth();
   const { getFieldState, setFieldValue, validateFieldDebounced } = useFormValidation();
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
@@ -70,7 +72,9 @@ export default function AccessibilityAudit() {
           setPinnedAuditIds(new Set(pinnedData.map(p => p.audit_id)));
         }
       } else {
-        query = query.is('user_id', null).limit(MAX_AUDITS_TO_LOAD * 2);
+        setAudits([]);
+        setAllAuditsForAverage([]);
+        return;
       }
 
       const { data: allAudits } = await query;
@@ -144,24 +148,22 @@ export default function AccessibilityAudit() {
         return;
       }
 
-      if (!session?.access_token) {
-        setApiError('Please sign in before running an audit');
+      const currentSession = await ensureSession();
+      if (!currentSession?.access_token) {
+        setApiError('Unable to establish a secure session. Please try again.');
         setLoading(false);
         return;
       }
 
       const fullUrl = urlField.value.startsWith('http') ? urlField.value : `https://${urlField.value}`;
 
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-lighthouse-audit`;
+      const functionUrl = getSupabaseFunctionUrl('run-lighthouse-audit');
 
       abortControllerRef.current = new AbortController();
 
       const response = await fetch(functionUrl, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: getSupabaseFunctionHeaders(currentSession.access_token),
         body: JSON.stringify({ url: fullUrl }),
         signal: abortControllerRef.current.signal,
       });

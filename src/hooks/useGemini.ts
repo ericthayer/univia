@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { requestAccessibilityAnalysis } from '../services/accessibilityAnalysis.service';
+import { ensureSession } from '../services/session';
 
 /**
  * Requests accessibility analysis through the authenticated server boundary.
@@ -18,9 +19,10 @@ export const useGemini = () => {
     setResponse('');
 
     try {
+      const currentSession = await ensureSession();
       const analysis = await requestAccessibilityAnalysis({
         content: prompt,
-        accessToken: session?.access_token ?? null,
+        accessToken: currentSession?.access_token ?? null,
       });
       setResponse(analysis);
       return analysis;
@@ -31,7 +33,7 @@ export const useGemini = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [session?.access_token]);
+  }, []);
 
   return {
     generate,

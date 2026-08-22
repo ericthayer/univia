@@ -34,6 +34,21 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
   }
 
   if (!user) {
+    return <Navigate to={ROUTE_PATHS.DASHBOARD} replace state={{ from: location }} />;
+  }
+
+  return <>{children}</>;
+}
+
+export function RegisteredRoute({ children }: RouteGuardProps) {
+  const { loading, user } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return <RouteLoadingFallback />;
+  }
+
+  if (!user || user.is_anonymous) {
     return <Navigate to={ROUTE_PATHS.SIGN_IN} replace state={{ from: location }} />;
   }
 
@@ -48,7 +63,7 @@ export function AdminRoute({ children }: RouteGuardProps) {
     return <RouteLoadingFallback />;
   }
 
-  if (!user) {
+  if (!user || user.is_anonymous) {
     return <Navigate to={ROUTE_PATHS.SIGN_IN} replace state={{ from: location }} />;
   }
 

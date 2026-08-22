@@ -2,6 +2,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { GoogleGenerativeAI } from 'npm:@google/generative-ai@0.21.0';
 import { authenticateRequest } from '../_shared/auth.ts';
+import { getSupabaseKey } from '../_shared/supabase-keys.ts';
 import { validateDocumentRequest } from '../_shared/document-validation.ts';
 import { validateDocumentAnalysis, type DocumentAnalysis } from '../_shared/analysis-validation.ts';
 import {
@@ -727,7 +728,13 @@ Deno.serve(async (req: Request) => {
     } = validation.value;
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseKey = getSupabaseKey('SUPABASE_SECRET_KEYS');
+    if (!supabaseKey) {
+      return new Response(JSON.stringify({ error: 'Analysis service unavailable' }), {
+        status: 503,
+        headers: responseHeaders,
+      });
+    }
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const isPDF = fileType === 'application/pdf';

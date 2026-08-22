@@ -17,8 +17,8 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
   const [mounted, setMounted] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, loading: authLoading } = useAuth();
-  const menuItems = getHeaderMenuItems(!!user);
+  const { isRegistered, loading: authLoading } = useAuth();
+  const menuItems = getHeaderMenuItems(isRegistered);
 
   useEffect(() => {
     setMounted(true);
@@ -174,7 +174,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
 
           {!authLoading && (
             <Box>
-              {user ? (
+              {isRegistered ? (
                 <UserMenu />
               ) : (
                 <Stack direction="row" gap={1.5} sx={{ display: { xs: 'none', md: 'flex' } }}>

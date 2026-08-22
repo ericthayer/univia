@@ -29,10 +29,11 @@ describe('requestAccessibilityAnalysis', () => {
       expect.stringContaining('/functions/v1/generate-accessibility-analysis'),
       expect.objectContaining({
         method: 'POST',
-        headers: {
+        headers: expect.objectContaining({
           Authorization: 'Bearer session-token',
           'Content-Type': 'application/json',
-        },
+          apikey: expect.stringMatching(/^sb_publishable_/),
+        }),
         body: JSON.stringify({ content: 'Audit finding' }),
       }),
     );

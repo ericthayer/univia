@@ -18,7 +18,8 @@ import {
 import Icon from '../ui/Icon';
 import LegalDisclaimer from '../ui/LegalDisclaimer';
 import { DocumentAnalysis } from './DocumentUploadDialog';
-import { useAuth } from '../../contexts/AuthContext';
+import { ensureSession } from '../../services/session';
+import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from '../../services/supabaseFunctions';
 
 interface InlineDocumentUploadProps {
   onUploadComplete: (analysis: DocumentAnalysis) => void;
@@ -55,7 +56,6 @@ const ACCEPTED_TYPES = [
 ] as const;
 
 export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumentUploadProps) {
-  const { session } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -160,8 +160,9 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
       setShowInfo(true);
       return;
     }
-    if (!session?.access_token) {
-      setError('Please sign in before analyzing a document');
+    const currentSession = await ensureSession();
+    if (!currentSession?.access_token) {
+      setError('Unable to establish a secure session. Please try again.');
       return;
     }
 
@@ -186,16 +187,13 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
 
       setStage('processing');
 
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-document`;
+      const apiUrl = getSupabaseFunctionUrl('analyze-document');
 
       setStage('extracting');
 
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: getSupabaseFunctionHeaders(currentSession.access_token),
         body: JSON.stringify({
           fileContent: base64Content,
           fileName: file.name,

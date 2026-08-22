@@ -8,7 +8,8 @@ import StatCard from '../ui/StatCard';
 import Icon from '../ui/Icon';
 import { useUserAudits } from '../../hooks/useUserAudits';
 import { useFormValidation } from '../../hooks/useFormValidation';
-import { useAuth } from '../../contexts/AuthContext';
+import { ensureSession } from '../../services/session';
+import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from '../../services/supabaseFunctions';
 import DocumentUploadDrawer from '../documents/DocumentUploadDrawer';
 
 interface UserAuditMetricsProps {
@@ -68,7 +69,6 @@ export default function UserAuditMetrics({
   onAuditClick,
 }: UserAuditMetricsProps) {
   const navigate = useNavigate();
-  const { session } = useAuth();
   const { metrics, loading, error } = useUserAudits({
     userId,
     limit,
@@ -110,22 +110,21 @@ export default function UserAuditMetrics({
 
   const handleQuickAudit = async () => {
     if (!urlField.value.trim() || urlField.error || auditLoading) return;
-    if (!session?.access_token) return;
+
+    const currentSession = await ensureSession();
+    if (!currentSession?.access_token) return;
 
     setAuditLoading(true);
 
     try {
       const fullUrl = urlField.value.startsWith('http') ? urlField.value : `https://${urlField.value}`;
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-lighthouse-audit`;
+      const functionUrl = getSupabaseFunctionUrl('run-lighthouse-audit');
 
       abortControllerRef.current = new AbortController();
 
       const response = await fetch(functionUrl, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: getSupabaseFunctionHeaders(currentSession.access_token),
         body: JSON.stringify({ url: fullUrl }),
         signal: abortControllerRef.current.signal,
       });

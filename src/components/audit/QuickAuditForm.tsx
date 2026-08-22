@@ -8,14 +8,14 @@ import {
   Stack,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { ensureSession } from '../../services/session';
+import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from '../../services/supabaseFunctions';
 import { useFormValidation } from '../../hooks/useFormValidation';
 import ValidationFeedback from '../validation/ValidationFeedback';
 import Icon from '../ui/Icon';
 
 export default function QuickAuditForm() {
   const navigate = useNavigate();
-  const { session } = useAuth();
   const { getFieldState, setFieldValue, validateFieldDebounced } = useFormValidation();
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
@@ -57,24 +57,22 @@ export default function QuickAuditForm() {
         return;
       }
 
-      if (!session?.access_token) {
-        setApiError('Please sign in before running an audit');
+      const currentSession = await ensureSession();
+      if (!currentSession?.access_token) {
+        setApiError('Unable to establish a secure session. Please try again.');
         setLoading(false);
         return;
       }
 
       const fullUrl = urlField.value.startsWith('http') ? urlField.value : `https://${urlField.value}`;
 
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-lighthouse-audit`;
+      const functionUrl = getSupabaseFunctionUrl('run-lighthouse-audit');
 
       abortControllerRef.current = new AbortController();
 
       const response = await fetch(functionUrl, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: getSupabaseFunctionHeaders(currentSession.access_token),
         body: JSON.stringify({ url: fullUrl }),
         signal: abortControllerRef.current.signal,
       });

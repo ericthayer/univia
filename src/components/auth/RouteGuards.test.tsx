@@ -8,7 +8,7 @@ vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
 }));
 
-import { AdminRoute, ProtectedRoute } from './RouteGuards';
+import { AdminRoute, ProtectedRoute, RegisteredRoute } from './RouteGuards';
 
 function LocationProbe() {
   const location = useLocation();
@@ -22,6 +22,7 @@ function renderGuard(element: React.ReactNode, auth: Record<string, unknown>) {
     <MemoryRouter initialEntries={["/protected"]}>
       <Routes>
         <Route path="/protected" element={element} />
+        <Route path="/" element={<LocationProbe />} />
         <Route path="/signin" element={<LocationProbe />} />
         <Route path="/forbidden" element={<LocationProbe />} />
       </Routes>
@@ -42,7 +43,7 @@ describe('ProtectedRoute', () => {
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
 
-  it('redirects unauthenticated users to sign-in', () => {
+  it('redirects unauthenticated users to the public home page', () => {
     renderGuard(
       <ProtectedRoute>
         <p>Protected content</p>
@@ -51,7 +52,7 @@ describe('ProtectedRoute', () => {
     );
 
     expect(screen.queryByText('Protected content')).not.toBeInTheDocument();
-    expect(screen.getByTestId('location')).toHaveTextContent('/signin');
+    expect(screen.getByTestId('location')).toHaveTextContent('/');
   });
 
   it('renders content for an authenticated user', () => {
@@ -110,5 +111,30 @@ describe('AdminRoute', () => {
     );
 
     expect(screen.getByText('Admin content')).toBeInTheDocument();
+  });
+});
+
+describe('RegisteredRoute', () => {
+  it('redirects an anonymous user to sign-in', () => {
+    renderGuard(
+      <RegisteredRoute>
+        <p>Registered content</p>
+      </RegisteredRoute>,
+      { loading: false, user: { id: 'guest-1', is_anonymous: true } },
+    );
+
+    expect(screen.queryByText('Registered content')).not.toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('/signin');
+  });
+
+  it('renders content for a registered user', () => {
+    renderGuard(
+      <RegisteredRoute>
+        <p>Registered content</p>
+      </RegisteredRoute>,
+      { loading: false, user: { id: 'user-1', is_anonymous: false } },
+    );
+
+    expect(screen.getByText('Registered content')).toBeInTheDocument();
   });
 });

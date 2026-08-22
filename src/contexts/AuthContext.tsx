@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '../services/supabaseClient';
+import { ensureSession } from '../services/session';
 import { UserProfile } from '../types/auth';
 
 interface AuthContextType {
@@ -16,6 +17,8 @@ interface AuthContextType {
   updatePassword: (password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  isAnonymous: boolean;
+  isRegistered: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshProfile = async () => {
-    if (!user) {
+    if (!user || user.is_anonymous) {
       return;
     }
 
@@ -54,55 +57,72 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      (async () => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setProfileLoading(Boolean(session?.user));
+    let mounted = true;
 
-        if (session?.user) {
-          const profileData = await fetchUserProfile(session.user.id);
-          setProfile(profileData);
-        } else {
-          setProfile(null);
-        }
+    const applySession = async (nextSession: Session | null) => {
+      if (!mounted) return;
 
-        setProfileLoading(false);
-        setLoading(false);
-      })();
-    });
+      const nextUser = nextSession?.user ?? null;
+      const isRegisteredUser = Boolean(nextUser && !nextUser.is_anonymous);
+      setSession(nextSession);
+      setUser(nextUser);
+      setProfileLoading(isRegisteredUser);
+
+      if (isRegisteredUser && nextUser) {
+        const profileData = await fetchUserProfile(nextUser.id);
+        if (mounted) setProfile(profileData);
+      } else if (mounted) {
+        setProfile(null);
+      }
+
+      if (mounted) setProfileLoading(false);
+    };
+
+    const initializeSession = async () => {
+      try {
+        const currentSession = await ensureSession({
+          allowAnonymous: !['/signin', '/signup', '/forgot-password', '/reset-password', '/auth/callback']
+            .includes(window.location.pathname),
+        });
+        await applySession(currentSession);
+      } catch (error) {
+        console.error('Error initializing authentication session:', error);
+        await applySession(null);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    void initializeSession();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      (async () => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setProfileLoading(Boolean(session?.user));
-
-        if (session?.user) {
-          const profileData = await fetchUserProfile(session.user.id);
-          setProfile(profileData);
-        } else {
-          setProfile(null);
-        }
-        setProfileLoading(false);
-      })();
+      void applySession(session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      void subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-      },
-    });
+    const { error } = user?.is_anonymous
+      ? await supabase.auth.updateUser({
+          email,
+          password,
+          data: { full_name: fullName },
+        })
+      : await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+            },
+          },
+        });
 
     if (!error) {
       await refreshProfile();
@@ -128,16 +148,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const callbackUrl = `${window.location.origin}/auth/callback`;
     console.log('AuthContext: Initiating OAuth sign-in', { provider, callbackUrl });
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: callbackUrl,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        },
+    const oauthOptions = {
+      redirectTo: callbackUrl,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
       },
-    });
+    };
+
+    const { error } = user?.is_anonymous
+      ? await supabase.auth.linkIdentity({ provider, options: oauthOptions })
+      : await supabase.auth.signInWithOAuth({
+        provider,
+        options: oauthOptions,
+      });
 
     if (error) {
       console.error('AuthContext: OAuth sign-in error:', error.message);
@@ -164,9 +188,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    setUser(null);
-    setProfile(null);
-    setSession(null);
+    try {
+      const guestSession = await ensureSession();
+      setSession(guestSession);
+      setUser(guestSession?.user ?? null);
+      setProfile(null);
+    } catch (error) {
+      console.error('Error creating guest session after sign out:', error);
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+    }
   };
 
   return (
@@ -184,6 +216,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updatePassword,
         signOut,
         refreshProfile,
+        isAnonymous: Boolean(user?.is_anonymous),
+        isRegistered: Boolean(user && !user.is_anonymous),
       }}
     >
       {children}

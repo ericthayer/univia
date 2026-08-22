@@ -5,7 +5,7 @@ import AppShell from './components/layout/AppShell';
 import { useSystemColorMode } from './hooks/useSystemColorMode';
 import { ROUTE_PATHS } from './config/navigation';
 import { AuthProvider } from './contexts/AuthContext';
-import { AdminRoute, ProtectedRoute } from './components/auth/RouteGuards';
+import { AdminRoute, ProtectedRoute, RegisteredRoute } from './components/auth/RouteGuards';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const AccessibilityAudit = lazy(() => import('./pages/AccessibilityAudit'));
@@ -64,11 +64,7 @@ function App() {
                   <Routes>
                     <Route
                       path={ROUTE_PATHS.DASHBOARD}
-                      element={
-                        <ProtectedRoute>
-                          <Dashboard />
-                        </ProtectedRoute>
-                      }
+                      element={<Dashboard />}
                     />
                     <Route
                       path={ROUTE_PATHS.AUDIT}
@@ -97,17 +93,17 @@ function App() {
                     <Route
                       path={ROUTE_PATHS.CHECKLIST}
                       element={
-                        <ProtectedRoute>
+                        <RegisteredRoute>
                           <ComplianceChecklist />
-                        </ProtectedRoute>
+                        </RegisteredRoute>
                       }
                     />
                     <Route
                       path={ROUTE_PATHS.ACTION_PLAN}
                       element={
-                        <ProtectedRoute>
+                        <RegisteredRoute>
                           <ActionsPlan />
-                        </ProtectedRoute>
+                        </RegisteredRoute>
                       }
                     />
                     <Route path={ROUTE_PATHS.RESOURCES} element={<Resources />} />
@@ -123,9 +119,9 @@ function App() {
                     <Route
                       path="/settings"
                       element={
-                        <ProtectedRoute>
+                        <RegisteredRoute>
                           <AccountSettings />
-                        </ProtectedRoute>
+                        </RegisteredRoute>
                       }
                     />
                     <Route path="/pricing" element={<Pricing />} />

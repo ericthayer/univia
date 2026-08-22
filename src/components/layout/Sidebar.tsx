@@ -28,8 +28,8 @@ interface SidebarProps {
 export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
-  const menuItems = getSidebarMenuItems(!!user);
+  const { isRegistered } = useAuth();
+  const menuItems = getSidebarMenuItems(isRegistered);
   const { mode, setMode } = useColorScheme();
   const [mounted, setMounted] = useState(false);
 
@@ -147,7 +147,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
 
         <Box sx={{ mt: 'auto' }}>
 
-          {!user && (
+          {!isRegistered && (
             <>
               <Divider sx={{ my: 2 }} />
               <Stack gap={2} flexDirection="row" flexWrap="wrap" sx={{ px: 2 }}>

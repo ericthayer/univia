@@ -2,6 +2,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { authenticateRequest } from '../_shared/auth.ts';
 import { resolvesToPublicIps, validateAuditRequest } from '../_shared/audit-validation.ts';
+import { getSupabaseKey } from '../_shared/supabase-keys.ts';
 import {
   createRequestId,
   getAllowedOrigins,
@@ -314,7 +315,13 @@ Deno.serve(async (req: Request) => {
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseKey = getSupabaseKey('SUPABASE_SECRET_KEYS');
+    if (!supabaseKey) {
+      return new Response(JSON.stringify({ error: 'Audit service unavailable' }), {
+        status: 503,
+        headers: responseHeaders,
+      });
+    }
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     if (business_id) {

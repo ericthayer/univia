@@ -1,5 +1,6 @@
 import { createClient, type User } from 'npm:@supabase/supabase-js@2';
 import { extractBearerToken } from './auth-utils.ts';
+import { getSupabaseKey } from './supabase-keys.ts';
 
 export interface AuthenticatedRequest {
   token: string;
@@ -9,13 +10,13 @@ export interface AuthenticatedRequest {
 export async function authenticateRequest(req: Request): Promise<AuthenticatedRequest | null> {
   const token = extractBearerToken(req.headers.get('Authorization'));
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  const supabasePublishableKey = getSupabaseKey('SUPABASE_PUBLISHABLE_KEYS');
 
-  if (!token || !supabaseUrl || !supabaseAnonKey) {
+  if (!token || !supabaseUrl || !supabasePublishableKey) {
     return null;
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  const supabase = createClient(supabaseUrl, supabasePublishableKey, {
     auth: {
       autoRefreshToken: false,
       detectSessionInUrl: false,

@@ -1,3 +1,5 @@
+import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from './supabaseFunctions';
+
 const MAX_REPORT_LENGTH = 50_000;
 const ANALYSIS_FUNCTION = 'generate-accessibility-analysis';
 
@@ -31,13 +33,10 @@ export async function requestAccessibilityAnalysis({
   let response: Response;
   try {
     response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${ANALYSIS_FUNCTION}`,
+      getSupabaseFunctionUrl(ANALYSIS_FUNCTION),
       {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
+        headers: getSupabaseFunctionHeaders(accessToken),
         body: JSON.stringify({ content }),
         signal,
       },

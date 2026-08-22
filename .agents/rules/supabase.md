@@ -14,7 +14,7 @@ Guidelines for client initialization, authentication state management, and asset
 **INSTRUCTIONS:**
 
 ### Environment Configuration
-- **Standard Naming**: Use `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `.env` files.
+- **Standard Naming**: Use `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in `.env` files. Publishable keys are browser-safe; never expose a Supabase secret key to Vite.
 - **Validation**: Ensure these variables are present and valid before initializing the client to prevent silent runtime failures.
 
 ### Client Management
