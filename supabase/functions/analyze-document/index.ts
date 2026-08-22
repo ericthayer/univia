@@ -735,20 +735,11 @@ Deno.serve(async (req: Request) => {
 
     let analysis: DocumentAnalysis;
     let aiModel = 'regex-enhanced-v2';
-    let analysisMethod = 'regex';
-
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     const hasGeminiKey = geminiApiKey && geminiApiKey !== 'your_gemini_api_key_here';
 
-    console.log(`[DEBUG] Processing ${fileName} (${fileType})`);
-    console.log(`[DEBUG] Gemini API Key configured: ${hasGeminiKey ? 'Yes' : 'No'}`);
-    console.log(`[DEBUG] Model preference: ${modelPreference}`);
-    console.log(`[DEBUG] Analysis depth: ${analysisDepth}`);
-    console.log(`[DEBUG] File content length: ${fileContent.length}`);
-
     if (isImage || isPDF) {
       if (hasGeminiKey) {
-        console.log(`[DEBUG] Attempting Gemini analysis for ${isPDF ? 'PDF' : 'image'}...`);
         const geminiResult = await analyzeWithGemini(
           fileContent,
           fileType,
@@ -760,7 +751,6 @@ Deno.serve(async (req: Request) => {
         if (geminiResult) {
           analysis = geminiResult;
           aiModel = GEMINI_MODELS[modelPreference];
-          analysisMethod = isPDF ? 'gemini-pdf' : 'gemini-vision';
           console.log('[SUCCESS] Gemini analysis completed');
         } else {
           console.log('[WARN] Gemini analysis failed');
@@ -770,13 +760,10 @@ Deno.serve(async (req: Request) => {
             if (extractedText.length > 100) {
               console.log('[INFO] Falling back to regex analysis for PDF text');
               analysis = analyzeDocumentWithRegex(extractedText, fileName);
-              analysisMethod = 'regex-pdf';
             } else {
               return new Response(
                 JSON.stringify({
-                  error: 'PDF analysis failed. The PDF may be image-based or encrypted.',
-                  errorType: 'AI_ANALYSIS_FAILED',
-                  hint: 'Try converting the PDF to an image (PNG/JPG) for better results, or ensure the PDF contains searchable text.'
+                  error: 'Unable to analyze document'
                 }),
                 {
                   status: 500,
@@ -787,10 +774,7 @@ Deno.serve(async (req: Request) => {
           } else {
             return new Response(
               JSON.stringify({
-                error: 'Image analysis failed. Gemini API may be unavailable. Please try again.',
-                errorType: 'AI_ANALYSIS_FAILED',
-                retryable: true,
-                hint: 'Check if your Gemini API key is valid and has proper permissions'
+                  error: 'Unable to analyze document'
               }),
               {
                 status: 500,
@@ -805,12 +789,10 @@ Deno.serve(async (req: Request) => {
           if (extractedText.length > 100) {
             console.log('[INFO] Using regex analysis for PDF (no Gemini key)');
             analysis = analyzeDocumentWithRegex(extractedText, fileName);
-            analysisMethod = 'regex-pdf';
           } else {
             return new Response(
               JSON.stringify({
-                error: 'PDF analysis requires AI configuration for image-based PDFs. Please contact your administrator or convert the PDF to an image.',
-                errorType: 'AI_NOT_CONFIGURED'
+                  error: 'Unable to analyze document'
               }),
               {
                 status: 503,
@@ -822,8 +804,7 @@ Deno.serve(async (req: Request) => {
           console.log('[ERROR] No Gemini API key configured - cannot analyze images');
           return new Response(
             JSON.stringify({
-              error: 'Image analysis requires AI configuration. Please contact your administrator to enable this feature.',
-              errorType: 'AI_NOT_CONFIGURED'
+              error: 'Unable to analyze document'
             }),
             {
               status: 503,
@@ -844,12 +825,9 @@ Deno.serve(async (req: Request) => {
       if (geminiResult) {
         analysis = geminiResult;
         aiModel = GEMINI_MODELS[modelPreference];
-        analysisMethod = 'gemini-text';
-        console.log('[SUCCESS] Gemini text analysis completed');
       } else {
         const extractedText = extractTextFromContent(fileContent);
         analysis = analyzeDocumentWithRegex(extractedText, fileName);
-        analysisMethod = 'regex';
         console.log('[INFO] Using regex analysis (Gemini not available)');
       }
     }
@@ -896,15 +874,6 @@ Deno.serve(async (req: Request) => {
         success: true,
         letter_id: letterData?.id,
         analysis,
-        debug: {
-          analysisMethod,
-          aiModel,
-          hasGeminiKey,
-          fileType,
-          modelPreference,
-          analysisDepth,
-          timestamp: new Date().toISOString(),
-        }
       }),
       {
         headers: responseHeaders,
@@ -917,8 +886,6 @@ Deno.serve(async (req: Request) => {
     return new Response(
       JSON.stringify({
         error: 'Unable to analyze document',
-        errorType: 'INTERNAL_ERROR',
-        retryable: true
       }),
       {
         status: 500,
