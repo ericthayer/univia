@@ -34,10 +34,7 @@ export default function AnalyzeReport() {
   const handleAnalyze = useCallback(async () => {
     if (!prompt.trim()) return;
 
-    // Using a system prefix in the prompt since the client-side hook generate doesn't take systemInstruction yet
-    const structuredPrompt = `System: You are an expert web accessibility auditor. Analyze the following report and provide actionable insights, categorized by WCAG 2.2 level (A, AA, AAA).\n\nContent: ${prompt}`;
-
-    await generate(structuredPrompt);
+    await generate(prompt);
   }, [prompt, generate]);
 
   const handleClear = useCallback(() => {
@@ -124,7 +121,7 @@ export default function AnalyzeReport() {
                 startIcon={isLoading || isStreaming ? <LinearProgress sx={{ width: 20 }} color="inherit" /> : <Icon name="auto_awesome" />}
                 sx={{ minWidth: 160 }}
               >
-                {isLoading ? 'Connecting...' : isStreaming ? 'Analyzing...' : 'Run Analysis'}
+                {isLoading ? 'Analyzing...' : 'Run Analysis'}
               </Button>
             </Stack>
           </CardContent>
@@ -139,9 +136,9 @@ export default function AnalyzeReport() {
             <Stack spacing={2}>
               <Box>
                 <Typography variant="subtitle2" color="primary.main" gutterBottom>
-                  {isLoading ? 'Connecting to Gemini...' : 'Generating Insights (Streaming)...'}
+                  Analyzing report securely...
                 </Typography>
-                <LinearProgress variant={isLoading ? "indeterminate" : "determinate"} value={isStreaming ? 100 : undefined} />
+                <LinearProgress />
               </Box>
             </Stack>
           </Paper>

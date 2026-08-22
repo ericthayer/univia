@@ -1,130 +1,45 @@
-import { useState, useCallback } from 'react';
-import { geminiService } from '../services/gemini.service';
-
-type GeminiInlineDataPart = { inlineData: { data: string; mimeType: string } };
-type GeminiTextPart = { text: string };
-type GeminiPart = GeminiTextPart | GeminiInlineDataPart;
-
-interface GeminiGenerationConfig {
-  temperature: number;
-  topP: number;
-  topK: number;
-  maxOutputTokens: number;
-  thinkingConfig?: { thinkingBudget: number };
-}
-
-interface UseGeminiOptions {
-  modelName?: string;
-  useThinking?: boolean;
-  thinkingBudget?: number;
-  onError?: (error: Error) => void;
-}
+import { useCallback, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { requestAccessibilityAnalysis } from '../services/accessibilityAnalysis.service';
 
 /**
- * Hook for using Google Gemini in components.
- * Supports text, images, and streaming responses according to Univia's strict standards.
+ * Requests accessibility analysis through the authenticated server boundary.
+ * The browser never receives a Gemini client or provider credential.
  */
-export const useGemini = ({
-  modelName = "gemini-1.5-pro", // Univia's default stable pro model
-  useThinking = false,
-  thinkingBudget = 16384,
-  onError,
-}: UseGeminiOptions = {}) => {
+export const useGemini = () => {
+  const { session } = useAuth();
   const [response, setResponse] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const generate = useCallback(async (prompt: string, files?: File[]) => {
+  const generate = useCallback(async (prompt: string) => {
     setIsLoading(true);
-    setIsStreaming(false);
     setError(null);
     setResponse('');
 
     try {
-      const client = geminiService.getClient();
-      
-      const generationConfig: GeminiGenerationConfig = {
-        temperature: 0.7,
-        topP: 0.95,
-        topK: 40,
-        maxOutputTokens: 8192,
-      };
-
-      // Support for Gemini 3 reasoning features if enabled
-      if (useThinking) {
-        generationConfig.thinkingConfig = { thinkingBudget };
-        generationConfig.maxOutputTokens = thinkingBudget + 4096;
-      }
-
-      const model = client.getGenerativeModel({
-        model: modelName,
-        generationConfig,
+      const analysis = await requestAccessibilityAnalysis({
+        content: prompt,
+        accessToken: session?.access_token ?? null,
       });
-
-      // Prepare parts for multimodal support
-      let parts: GeminiPart[] = [{ text: prompt }];
-      
-      if (files && files.length > 0) {
-        const fileParts = await Promise.all(
-          files.map(file => GeminiService_Helper_fileToGenerativePart(file))
-        );
-        parts = [...fileParts, ...parts];
-      }
-
-      const result = await model.generateContentStream(parts);
-      
-      setIsLoading(false);
-      setIsStreaming(true);
-
-      let fullText = '';
-      for await (const chunk of result.stream) {
-        const chunkText = chunk.text();
-        fullText += chunkText;
-        setResponse(prev => prev + chunkText);
-      }
-
-      setIsStreaming(false);
-      return fullText;
-
+      setResponse(analysis);
+      return analysis;
     } catch (err: unknown) {
-      const errorObj = err instanceof Error ? err : new Error(String(err));
-      setError(errorObj);
+      const errorObject = err instanceof Error ? err : new Error('Analysis service unavailable');
+      setError(errorObject);
+      throw errorObject;
+    } finally {
       setIsLoading(false);
-      setIsStreaming(false);
-      if (onError) onError(errorObj);
-      console.error("Gemini API Error:", errorObj);
-      throw errorObj;
     }
-  }, [modelName, useThinking, thinkingBudget, onError]);
+  }, [session?.access_token]);
 
   return {
     generate,
     response,
     isLoading,
-    isStreaming,
+    isStreaming: false,
     error,
-    attribution: "Powered by Google Gemini",
-    isReady: geminiService.isReady(),
+    attribution: 'Powered by Google Gemini (server protected)',
+    isReady: Boolean(session?.access_token),
   };
 };
-
-/**
- * Internal helper to avoid exposing too many static methods if not needed.
- */
-async function GeminiService_Helper_fileToGenerativePart(file: File): Promise<GeminiInlineDataPart> {
-  return new Promise<GeminiInlineDataPart>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = (reader.result as string).split(',')[1];
-      resolve({
-        inlineData: {
-          data: base64,
-          mimeType: file.type,
-        },
-      });
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}

@@ -17,8 +17,8 @@ import Icon from '../../components/ui/Icon';
 
 /**
  * GeminiStreamingDemo
- * A premium demonstration page for real-time streaming AI interactions
- * using the useGemini hook.
+ * A demonstration page for authenticated accessibility analysis
+ * using the server-backed useGemini hook.
  */
 const GeminiStreamingDemo: React.FC = () => {
   const [promptInput, setPromptInput] = useState('');
@@ -32,10 +32,7 @@ const GeminiStreamingDemo: React.FC = () => {
     error,
     attribution,
     isReady,
-  } = useGemini({
-    modelName: 'gemini-1.5-pro',
-    useThinking: true,
-  });
+  } = useGemini();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,17 +58,16 @@ const GeminiStreamingDemo: React.FC = () => {
             color: 'text.primary'
           }}
         >
-          Gemini Streaming Demo
+          Accessibility Analysis Demo
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 660 }}>
-          Experience the power of real-time AI generation. This demo uses the <code>useGemini</code> hook
-          with streaming enabled for a smoother, ultra-responsive experience.
+          Submit accessibility observations through the authenticated server analysis boundary.
         </Typography>
       </Box>
 
       {!isReady && (
         <Alert severity="warning" variant="outlined" sx={{ mb: 4 }}>
-          Gemini API is not configured. Please add <code>VITE_GEMINI_API_KEY</code> to your <code>.env</code> file.
+          Sign in with an active session to use the protected analysis service.
         </Alert>
       )}
 
@@ -121,7 +117,7 @@ const GeminiStreamingDemo: React.FC = () => {
                   minWidth: 160,
                 }}
               >
-                {isLoading ? 'Connecting...' : isStreaming ? 'Streaming...' : 'Generate Stream'}
+                {isLoading ? 'Analyzing...' : 'Run Analysis'}
               </Button>
             </Box>
           </form>
