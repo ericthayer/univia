@@ -1,6 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { GoogleGenerativeAI } from 'npm:@google/generative-ai@0.21.0';
+import { authenticateRequest } from '../_shared/auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,7 +14,6 @@ interface AnalysisRequest {
   fileName: string;
   fileType: string;
   business_id?: string;
-  user_id?: string | null;
   modelPreference?: 'flash' | 'pro';
   analysisDepth?: 'standard' | 'detailed';
 }
@@ -732,7 +732,22 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
+    const auth = await authenticateRequest(req);
+    if (!auth) {
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -742,7 +757,6 @@ Deno.serve(async (req: Request) => {
       fileName,
       fileType,
       business_id,
-      user_id,
       modelPreference = 'flash',
       analysisDepth = 'standard'
     }: AnalysisRequest = await req.json();
@@ -892,7 +906,7 @@ Deno.serve(async (req: Request) => {
       .from('demand_letters')
       .insert({
         business_id: business_id || null,
-        user_id: user_id || null,
+        user_id: auth.user.id,
         file_name: fileName,
         file_size: Math.round(fileContent.length * 0.75),
         upload_date: new Date().toISOString(),
@@ -938,10 +952,12 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (error) {
-    console.error('Analysis error:', error);
+    console.error('Analysis request failed', {
+      errorType: error instanceof Error ? error.name : 'UnknownError',
+    });
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Unable to analyze document',
         errorType: 'INTERNAL_ERROR',
         retryable: true
       }),

@@ -68,7 +68,7 @@ export default function UserAuditMetrics({
   onAuditClick,
 }: UserAuditMetricsProps) {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { session } = useAuth();
   const { metrics, loading, error } = useUserAudits({
     userId,
     limit,
@@ -110,6 +110,7 @@ export default function UserAuditMetrics({
 
   const handleQuickAudit = async () => {
     if (!urlField.value.trim() || urlField.error || auditLoading) return;
+    if (!session?.access_token) return;
 
     setAuditLoading(true);
 
@@ -122,10 +123,10 @@ export default function UserAuditMetrics({
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url: fullUrl, user_id: user?.id || null }),
+        body: JSON.stringify({ url: fullUrl }),
         signal: abortControllerRef.current.signal,
       });
 

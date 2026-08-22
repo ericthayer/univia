@@ -55,7 +55,7 @@ const ACCEPTED_TYPES = [
 ] as const;
 
 export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumentUploadProps) {
-  const { user } = useAuth();
+  const { session } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -160,6 +160,10 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
       setShowInfo(true);
       return;
     }
+    if (!session?.access_token) {
+      setError('Please sign in before analyzing a document');
+      return;
+    }
 
     const controller = new AbortController();
     setAbortController(controller);
@@ -189,7 +193,7 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -198,7 +202,6 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
           fileType: file.type,
           modelPreference,
           analysisDepth,
-          user_id: user?.id || null,
         }),
         signal: controller.signal,
       });

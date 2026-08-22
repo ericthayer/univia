@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import Icon from '../ui/Icon';
 import LegalDisclaimer from '../ui/LegalDisclaimer';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface DocumentUploadDialogProps {
   open: boolean;
@@ -109,6 +110,7 @@ export default function DocumentUploadDialog({
   onClose,
   onUploadComplete,
 }: DocumentUploadDialogProps) {
+  const { session } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -167,6 +169,10 @@ export default function DocumentUploadDialog({
 
   const handleUpload = async () => {
     if (!file) return;
+    if (!session?.access_token) {
+      setError('Please sign in before analyzing a document');
+      return;
+    }
 
     const controller = new AbortController();
     setAbortController(controller);
@@ -195,7 +201,7 @@ export default function DocumentUploadDialog({
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

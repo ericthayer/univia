@@ -14,6 +14,7 @@ import {
   Grid,
 } from '@mui/material';
 import Icon from '../../components/ui/Icon';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface AnalysisDebugInfo {
   analysisMethod: string;
@@ -48,6 +49,7 @@ interface AnalysisResult {
 }
 
 export default function DocumentAnalysisTest() {
+  const { session } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -64,6 +66,10 @@ export default function DocumentAnalysisTest() {
 
   const handleTest = async () => {
     if (!file) return;
+    if (!session?.access_token) {
+      setError('Please sign in before analyzing a document');
+      return;
+    }
 
     setUploading(true);
     setError(null);
@@ -90,7 +96,7 @@ export default function DocumentAnalysisTest() {
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

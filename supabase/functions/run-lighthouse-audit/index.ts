@@ -1,5 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { authenticateRequest } from '../_shared/auth.ts';
 
 type SupabaseClient = ReturnType<typeof createClient>;
 
@@ -12,7 +13,6 @@ const corsHeaders = {
 interface AuditRequest {
   url: string;
   business_id?: string;
-  user_id?: string | null;
 }
 
 async function runSingleAudit(
@@ -21,7 +21,7 @@ async function runSingleAudit(
   sessionId: string,
   supabase: SupabaseClient,
   businessId?: string,
-  userId?: string | null
+  userId: string
 ) {
   const strategy = deviceType === 'mobile' ? 'MOBILE' : 'DESKTOP';
   const apiKey = Deno.env.get('PAGESPEED_API_KEY');
@@ -137,12 +137,27 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
+    const auth = await authenticateRequest(req);
+    if (!auth) {
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { url, business_id, user_id }: AuditRequest = await req.json();
+    const { url, business_id }: AuditRequest = await req.json();
 
     if (!url) {
       return new Response(
@@ -157,8 +172,8 @@ Deno.serve(async (req: Request) => {
     const sessionId = crypto.randomUUID();
 
     const [mobileResult, desktopResult] = await Promise.all([
-      runSingleAudit(url, 'mobile', sessionId, supabase, business_id, user_id),
-      runSingleAudit(url, 'desktop', sessionId, supabase, business_id, user_id),
+      runSingleAudit(url, 'mobile', sessionId, supabase, business_id, auth.user.id),
+      runSingleAudit(url, 'desktop', sessionId, supabase, business_id, auth.user.id),
     ]);
 
     return new Response(
@@ -173,9 +188,11 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (error) {
-    console.error('Audit error:', error);
+    console.error('Audit request failed', {
+      errorType: error instanceof Error ? error.name : 'UnknownError',
+    });
     return new Response(
-      JSON.stringify({ error: error.message || 'Internal server error' }),
+      JSON.stringify({ error: 'Unable to complete audit', errorType: 'INTERNAL_ERROR' }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

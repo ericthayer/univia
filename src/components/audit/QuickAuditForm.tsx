@@ -15,7 +15,7 @@ import Icon from '../ui/Icon';
 
 export default function QuickAuditForm() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { session } = useAuth();
   const { getFieldState, setFieldValue, validateFieldDebounced } = useFormValidation();
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
@@ -57,6 +57,12 @@ export default function QuickAuditForm() {
         return;
       }
 
+      if (!session?.access_token) {
+        setApiError('Please sign in before running an audit');
+        setLoading(false);
+        return;
+      }
+
       const fullUrl = urlField.value.startsWith('http') ? urlField.value : `https://${urlField.value}`;
 
       const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-lighthouse-audit`;
@@ -66,10 +72,10 @@ export default function QuickAuditForm() {
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url: fullUrl, user_id: user?.id || null }),
+        body: JSON.stringify({ url: fullUrl }),
         signal: abortControllerRef.current.signal,
       });
 
