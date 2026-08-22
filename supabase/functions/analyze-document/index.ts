@@ -2,12 +2,13 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { GoogleGenerativeAI } from 'npm:@google/generative-ai@0.21.0';
 import { authenticateRequest } from '../_shared/auth.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
-};
+import {
+  createRequestId,
+  getAllowedOrigins,
+  getCorsHeaders,
+  isAllowedOrigin,
+  jsonResponse,
+} from '../_shared/http.ts';
 
 interface AnalysisRequest {
   fileContent: string;
@@ -725,17 +726,29 @@ function analyzeDocumentWithRegex(text: string, fileName: string): DocumentAnaly
 }
 
 Deno.serve(async (req: Request) => {
+  const requestId = createRequestId();
+  const allowedOrigins = getAllowedOrigins(Deno.env.get('ALLOWED_ORIGINS'));
+  const responseHeaders = {
+    ...getCorsHeaders(req, allowedOrigins, requestId),
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-store',
+  };
+
+  if (!isAllowedOrigin(req, allowedOrigins)) {
+    return jsonResponse(req, { error: 'Origin not allowed' }, 403, allowedOrigins, requestId);
+  }
+
   if (req.method === 'OPTIONS') {
     return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
+      status: 204,
+      headers: getCorsHeaders(req, allowedOrigins, requestId),
     });
   }
 
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: responseHeaders,
     });
   }
 
@@ -744,7 +757,7 @@ Deno.serve(async (req: Request) => {
     if (!auth) {
       return new Response(JSON.stringify({ error: 'Authentication required' }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: responseHeaders,
       });
     }
 
@@ -766,7 +779,7 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: 'File content and file name are required' }),
         {
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: responseHeaders,
         }
       );
     }
@@ -821,7 +834,7 @@ Deno.serve(async (req: Request) => {
                 }),
                 {
                   status: 500,
-                  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                  headers: responseHeaders,
                 }
               );
             }
@@ -835,7 +848,7 @@ Deno.serve(async (req: Request) => {
               }),
               {
                 status: 500,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                  headers: responseHeaders,
               }
             );
           }
@@ -855,7 +868,7 @@ Deno.serve(async (req: Request) => {
               }),
               {
                 status: 503,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                headers: responseHeaders,
               }
             );
           }
@@ -868,7 +881,7 @@ Deno.serve(async (req: Request) => {
             }),
             {
               status: 503,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              headers: responseHeaders,
             }
           );
         }
@@ -948,7 +961,7 @@ Deno.serve(async (req: Request) => {
         }
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: responseHeaders,
       }
     );
   } catch (error) {
@@ -963,7 +976,7 @@ Deno.serve(async (req: Request) => {
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: responseHeaders,
       }
     );
   }
