@@ -65,24 +65,24 @@ const content = aiGenerated || defaultContent;
 
 **MUST**: Never expose API keys in client-side code.
 
-```tsx
-// ✅ Good: Environment variable
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+```ts
+// ✅ Good: Read the secret only in a Supabase Edge Function
+const apiKey = Deno.env.get('GEMINI_API_KEY');
 
-// ❌ CRITICAL: Hardcoded key
-const apiKey = "AIzaSyD..."; // NEVER DO THIS
+// ❌ CRITICAL: Never put a Gemini key in browser/Vite code.
+// Browser configuration must contain only the documented Supabase variables.
 ```
 
 **MUST**: Use server-side proxy for production.
 
 ```tsx
-// ✅ Good: Server-side API route
+// ✅ Good: Browser calls an authenticated server boundary
 const response = await fetch('/api/gemini', {
   method: 'POST',
   body: JSON.stringify({ prompt }),
 });
 
-// ❌ Bad: Direct client-side API call in production
+// ❌ Bad: Direct client-side API call or Gemini client import
 const genAI = new GoogleGenerativeAI(apiKey);
 ```
 
@@ -479,8 +479,8 @@ const generateWithRetry = async (maxRetries = 3) => {
 
 ```tsx
 // ✅ Good: Mocked AI for tests
-jest.mock('@google/generative-ai', () => ({
-  GoogleGenerativeAI: jest.fn().mockImplementation(() => ({
+vi.mock('npm:@google/generative-ai@0.21.0', () => ({
+  GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
     getGenerativeModel: () => ({
       generateContent: async () => ({
         response: { text: () => 'Mocked AI response' },

@@ -6,7 +6,7 @@ description: Create a React component following project conventions and accessib
 
 **Read Instructions** from [Development Standards](../instructions/development-standards.instructions.md) before proceeding for helpful context when building React components.
 
-**Development Process**: Follow [Spec-Driven Development](../skills/workflows/sdd-workflow.md)
+**Development Process**: Follow [Spec-Driven Development](../rules/spec-driven-development.md)
 - Create component spec FIRST before generating code
 - Spec location: `src/components/${category}/${componentName}/${componentName}.spec.md`
 - Update spec changelog for any changes during development

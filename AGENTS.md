@@ -14,7 +14,7 @@ Univia is a React 18 + TypeScript + Vite application for WCAG compliance, access
   - [web performance](./.agents/rules/web-performance.md)
   - [development standards](./.agents/instructions/development-standards.instructions.md)
   - [web interface guidelines](./.agents/instructions/web-interface-guidelines.instructions.md)
-- When working inside `.agents/`, also follow [`.agents/AGENTS.md`](./.agents/AGENTS.md).
+If any external rule file conflicts with instructions in this prompt, the instructions in this prompt take precedence. Flag the conflict in a code comment.
 
 ## Project map
 
@@ -66,13 +66,13 @@ Include the following specifications:
    - One component per file with PascalCase filename (`.tsx`)
    - Functional components with hooks
    - Explicit prop types via interfaces
-   - `defaultProps` for optional props
-   - Named exports or single default export
+ - Use default parameter values in function signatures for optional props (e.g., `function Foo({ size = "medium" }: FooProps)`). Do not use `defaultProps`.
+ - Named exports or single default export
 
 5. **State Management**: 
    - Use `useState` and `useContext` for local/shared state
-   - Consider Context API for multi-level prop passing (2-3+ levels)
-   - URL state for filters, tabs, pagination, expanded panels (use libraries like `nuqs`)
+ - Use Context API when props must pass through 3 or more component levels.
+ - URL state for filters, tabs, pagination, expanded panels (use libraries like `nuqs`)
    - Manage Gemini API response state separately from UI state
 
 6. **Styling**: 
@@ -103,7 +103,7 @@ Include the following specifications:
     - Virtualize large lists (>50 items)
     - Avoid layout reads in render (`getBoundingClientRect`, `offsetHeight`)
     - Batch DOM operations
-    - Use uncontrolled inputs where possible
+    - Prefer uncontrolled inputs for simple forms where React state is not needed; use controlled inputs when validation, async request state, inline errors, or submit/error focus behavior depends on the value.
     - Memoize expensive computations (`useMemo`, `useCallback`)
     - Debounce Gemini API calls to prevent rate limiting
 
@@ -143,19 +143,11 @@ Include the following specifications:
     - Unit tests for core components and utilities
     - Mock Gemini API responses for testing
     - Visual regression tests when possible
-    - Accessibility audits (APAC/WCAG)
+    - Accessibility audits (APCA/WCAG)
     - Test error scenarios and API failures
 
-17. **Web Standards Compliance**: Follow all guidelines in [Web Interface Guidelines](.github/instructions/web-interface-guidelines.instructions.md) for forms, focus, animations, content handling, hydration, and copy.
+17. **Web Standards Compliance**: Follow all guidelines in [Web Interface Guidelines](.github/instructions/web-interface-guidelines.instructions.md) for forms, focus, animations, content handling, hydration, and copy. When performing UI code reviews, use that file's audit output format (group findings by file with terse `file:line` findings); this does not apply to general implementation tasks.
 
-- Use strict TypeScript; avoid `any`, preserve `noUnusedLocals`/`noUnusedParameters`, and define interfaces for component props.
-- Use functional React components and hooks. This is not a Next.js app: do not introduce Server Components or React 19-only APIs.
-- Use named exports where practical and keep major components in their own PascalCase folder/file.
-- Use MUI components and the existing theme. Use `sx` for instance-specific styles and theme tokens for colors, spacing, and typography.
-- For MUI v7 grids, use `Grid size={{ xs: 12, md: 6 }}`; never use the deprecated `item`/breakpoint props.
-- For clickable cards, use `CardActionArea`, not `onClick` on `Card`.
-- Preserve semantic HTML, visible focus states, keyboard support, labels, icon-button `aria-label`s, reduced-motion support, and confirmation for destructive actions.
-- Keep authentication and Supabase access behind the existing `AuthContext`, `supabaseClient`, and service helpers. Maintain RLS and never expose server secrets to browser code.
 - Browser configuration uses `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. `GEMINI_API_KEY` is server-side Edge Function configuration; do not place it in Vite client code.
 
 ## Verification

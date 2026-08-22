@@ -1,124 +1,64 @@
 ---
 name: integrate-gemini
-description: Implement robust Google Gemini API integration with streaming, error handling, and type safety.
+description: Implement robust Google Gemini API integration through Supabase Edge Functions with streaming, error handling, and type safety.
 ---
 
 # `integrate-gemini`
 
-Use this skill when the user wants to "connect to Gemini", "add AI features", or "fix API generation".
+Use this skill when adding or changing Gemini-backed analysis in Univia.
 
-## Requirements (from rules/gemini.md)
-1.  **Safety**: NEVER hardcode API keys. Use `import.meta.env` or similar.
-2.  **UX**: Always show Loading / Streaming states.
-3.  **Reliability**: Handle errors gracefully (network, blocking, rate limits).
-4.  **Attribution**: AI content must be labeled.
+## Non-negotiable boundary
 
-## Usage
-1.  **Check for Client Library**: Ensure `@google/generative-ai` is installed. If not, install it.
-2.  **Create the Hook**: Create `hooks/useGemini.ts` (or similar).
-3.  **Implement Logic**: Use the pattern below to handle the complexities of streaming.
+- Never import `@google/generative-ai` into browser code.
+- Never expose `GEMINI_API_KEY` or a `VITE_GEMINI_API_KEY` to the browser.
+- Use `npm:@google/generative-ai@0.21.0` and `Deno.env.get('GEMINI_API_KEY')` only inside a Supabase Edge Function under `supabase/functions/`.
+- Browser components call the authenticated Edge Function through the existing service helpers and `AuthContext`/`useAuth` boundaries.
 
-## Code Pattern: `useGemini` Hook
+## Workflow
 
-```typescript
-import { useState, useCallback } from 'react';
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+1. Read [the Gemini rules](../../rules/gemini.md), the target Edge Function, and the existing service or hook before changing code.
+2. Validate and bound user input at the Edge Function boundary. Do not rely on browser validation for security.
+3. Keep API-key access and provider calls in the Edge Function. Return a typed, minimal response to the browser.
+4. Add loading, error, retry, and AI-attribution states. Stream long-form text when the Edge Function contract supports streaming.
+5. Keep critical AI output human-reviewed; never save or apply generated content without explicit user confirmation.
+6. Add or update Vitest tests for success, network failure, rate limiting, malformed output, and safety-block responses.
 
-// Initialize outside component if key is static, or inside if dynamic
-// const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+## Browser pattern
 
-interface UseGeminiOptions {
-  modelName?: string;
-  // Gemini 3 Thinking Config
-  useThinking?: boolean; 
-  thinkingBudget?: number; // e.g., 16384
-  onError?: (error: Error) => void;
-}
+Use the existing authenticated service boundary rather than constructing a Gemini client:
 
-export const useGemini = ({ 
-  modelName = "gemini-3-pro-preview", // Updated default to Gemini 3
-  useThinking = false,
-  thinkingBudget = 16384,
-  onError 
-}: UseGeminiOptions = {}) => {
-  const [response, setResponse] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  const generate = useCallback(async (prompt: string, images?: File[]) => {
-    setIsLoading(true);
-    setIsStreaming(false);
-    setError(null);
-    setResponse('');
-
-    try {
-      const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-      
-      // Determine configuration based on Thinking
-      const generationConfig: any = {};
-      if (useThinking) {
-        generationConfig.thinkingConfig = { thinkingBudget };
-        // Must increase maxOutputTokens to accommodate thinking process
-        generationConfig.maxOutputTokens = thinkingBudget + 8192; 
-      }
-
-      const model = genAI.getGenerativeModel({ 
-        model: modelName,
-        generationConfig 
-      });
-
-      // Prepare contents (Text + optional Images)
-      let contents: any[] = [{ text: prompt }];
-      if (images && images.length > 0) {
-        // Simple example for adding images (implementation varies by input format)
-        // Ideally convert File -> Base64 here
-        // const imageParts = await Promise.all(images.map(fileToGenerativePart));
-        // contents = [...imageParts, { text: prompt }];
-      }
-
-      // Use streaming for better UX
-      const result = await model.generateContentStream(contents);
-      
-      setIsLoading(false); // Initial wait is over, now we stream
-      setIsStreaming(true);
-
-      let fullText = '';
-      for await (const chunk of result.stream) {
-        const chunkText = chunk.text();
-        fullText += chunkText;
-        setResponse(prev => prev + chunkText);
-      }
-      
-      setIsStreaming(false);
-      return fullText;
-
-    } catch (err: any) {
-      const errorObj = err instanceof Error ? err : new Error(String(err));
-      setError(errorObj);
-      setIsLoading(false);
-      setIsStreaming(false);
-      if (onError) onError(errorObj);
-      console.error("Gemini API Error:", err);
-    }
-  }, [modelName, useThinking, thinkingBudget, onError]);
-
-  return {
-    generate,
-    response,
-    isLoading,
-    isStreaming,
-    error,
-    attribution: "Generated by Google Gemini" 
-  };
-};
+```tsx
+const analysis = await requestAccessibilityAnalysis({
+  content: prompt,
+  accessToken: session?.access_token ?? null,
+});
 ```
 
-## UI Implementation Tips
-- **Thinking UI**: If `useThinking` is true, the `isLoading` state might be longer. Considering adding a "Reasoning..." label.
-- **Cancel Support**: Consider passing an `AbortSignal` to `generate` for long-running thinking tasks.
-- **Images**: If using `gemini-3-pro-image-preview`, use standard `generateContent` (not stream) and handle base64 output.
-- **Disable Submit**: `disabled={isLoading || isStreaming}`
-- **Loading Spinner**: Show when `isLoading` is true.
-- **Cursor/Typewriter**: Show when `isStreaming` is true.
-- **Error Banner**: Display `error.message` if `error` exists.
+The current `useGemini` hook exposes `isLoading`, `error`, and server-protected attribution. Preserve that contract unless the feature explicitly requires a documented change.
+
+## Edge Function pattern
+
+```ts
+import { GoogleGenerativeAI } from 'npm:@google/generative-ai@0.21.0';
+
+const apiKey = Deno.env.get('GEMINI_API_KEY');
+if (!apiKey) {
+  throw new Error('Gemini service is not configured');
+}
+
+const genAI = new GoogleGenerativeAI(apiKey);
+```
+
+Configure safety settings, timeouts, bounded retries with exponential backoff, and response validation in the Edge Function. Return user-friendly error codes/messages; do not return provider credentials or raw internal errors.
+
+## UI requirements
+
+- Disable submission after the request starts and show a spinner while loading.
+- Announce loading, errors, and streaming updates with accessible status text or `aria-live="polite"`.
+- Identify generated content as AI-assisted and tell users when their data is sent to Google Gemini.
+- Offer retry or recovery for transient failures.
+- Support cancellation where the Edge Function and service contract allow it.
+
+## Verification
+
+Run the focused tests, then `npm run typecheck`, `npm run lint`, and `npm run build` for cross-cutting changes. Keep `GEMINI_API_KEY` configured only in Supabase Edge Function secrets; browser `.env` files may contain only the documented Vite Supabase variables.
