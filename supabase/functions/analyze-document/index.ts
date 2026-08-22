@@ -3,6 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { GoogleGenerativeAI } from 'npm:@google/generative-ai@0.21.0';
 import { authenticateRequest } from '../_shared/auth.ts';
 import { validateDocumentRequest } from '../_shared/document-validation.ts';
+import { validateDocumentAnalysis, type DocumentAnalysis } from '../_shared/analysis-validation.ts';
 import {
   createRequestId,
   getAllowedOrigins,
@@ -11,39 +12,11 @@ import {
   jsonResponse,
 } from '../_shared/http.ts';
 
-interface DocumentAnalysis {
-  documentSummary: string;
-  documentType: string;
-  keyPoints: string[];
-  recommendedActions: string[];
-  urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
-  additionalResources: string[];
-  extractedData: {
-    plaintiffName?: string;
-    attorneyName?: string;
-    attorneyFirm?: string;
-    responseDeadline?: string;
-    settlementAmount?: number;
-    violationsCited?: string[];
-    caseNumber?: string;
-    courtName?: string;
-    filingDate?: string;
-  };
-  confidenceScores?: Record<string, number>;
-  extractedEntities?: {
-    persons: string[];
-    organizations: string[];
-    dates: string[];
-    amounts: string[];
-    legalCitations: string[];
-  };
-  legalAnalysis?: {
-    claimType: string;
-    jurisdiction?: string;
-    statuteOfLimitations?: string;
-    potentialDefenses: string[];
-    riskAssessment: string;
-  };
+class InvalidGeminiResponseError extends Error {
+  constructor() {
+    super('invalid_gemini_response');
+    this.name = 'InvalidGeminiResponseError';
+  }
 }
 
 const GEMINI_MODELS = {
@@ -268,58 +241,31 @@ async function analyzeWithGemini(
     const response = await result.response;
     const generatedText = response.text();
 
-    console.log('[DEBUG] Gemini raw response length:', generatedText.length);
-
     const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.error('[ERROR] Could not extract JSON from Gemini response');
-      console.error('[ERROR] Response text:', generatedText.substring(0, 500));
-      return null;
+      throw new InvalidGeminiResponseError();
     }
 
-    const parsedData = JSON.parse(jsonMatch[0]);
-    console.log('[SUCCESS] Parsed Gemini response successfully');
+    let parsedData: unknown;
+    try {
+      parsedData = JSON.parse(jsonMatch[0]);
+    } catch {
+      throw new InvalidGeminiResponseError();
+    }
+    const validatedAnalysis = validateDocumentAnalysis(parsedData);
+    if (!validatedAnalysis) {
+      throw new InvalidGeminiResponseError();
+    }
 
-    return {
-      documentSummary: parsedData.documentSummary || 'Document analyzed successfully',
-      documentType: parsedData.documentType || 'General Document',
-      keyPoints: parsedData.keyPoints || [],
-      recommendedActions: parsedData.recommendedActions || ['Review document contents carefully', 'Determine if any action is required'],
-      urgencyLevel: parsedData.urgencyLevel || 'medium',
-      additionalResources: parsedData.additionalResources || ['Help Center', 'Professional Resources Directory'],
-      extractedData: {
-        plaintiffName: parsedData.plaintiffName || undefined,
-        attorneyName: parsedData.attorneyName || undefined,
-        attorneyFirm: parsedData.attorneyFirm || undefined,
-        responseDeadline: parsedData.responseDeadline || undefined,
-        settlementAmount: parsedData.settlementAmount || undefined,
-        violationsCited: parsedData.violationsCited?.length > 0 ? parsedData.violationsCited : undefined,
-        caseNumber: parsedData.caseNumber || undefined,
-        courtName: parsedData.courtName || undefined,
-        filingDate: parsedData.filingDate || undefined,
-      },
-      confidenceScores: parsedData.confidenceScores || {},
-      extractedEntities: {
-        persons: parsedData.extractedEntities?.persons || [],
-        organizations: parsedData.extractedEntities?.organizations || [],
-        dates: parsedData.extractedEntities?.dates || [],
-        amounts: parsedData.extractedEntities?.amounts || [],
-        legalCitations: parsedData.extractedEntities?.legalCitations || [],
-      },
-      legalAnalysis: parsedData.legalAnalysis ? {
-        claimType: parsedData.legalAnalysis.claimType || 'Unknown',
-        jurisdiction: parsedData.legalAnalysis.jurisdiction,
-        statuteOfLimitations: parsedData.legalAnalysis.statuteOfLimitations,
-        potentialDefenses: parsedData.legalAnalysis.potentialDefenses || [],
-        riskAssessment: parsedData.legalAnalysis.riskAssessment || 'Risk assessment not available',
-      } : undefined,
-    };
+    return validatedAnalysis;
   } catch (error) {
-    console.error('[ERROR] Gemini API call failed:', error);
-    if (error instanceof Error) {
-      console.error('[ERROR] Error message:', error.message);
-      console.error('[ERROR] Error stack:', error.stack);
+    if (error instanceof InvalidGeminiResponseError) {
+      throw error;
     }
+
+    console.error('[GEMINI] Analysis request failed', {
+      errorType: error instanceof Error ? error.name : 'UnknownError',
+    });
     return null;
   }
 }
