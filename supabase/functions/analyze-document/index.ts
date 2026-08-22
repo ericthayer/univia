@@ -2,6 +2,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { GoogleGenerativeAI } from 'npm:@google/generative-ai@0.21.0';
 import { authenticateRequest } from '../_shared/auth.ts';
+import { validateDocumentRequest } from '../_shared/document-validation.ts';
 import {
   createRequestId,
   getAllowedOrigins,
@@ -9,15 +10,6 @@ import {
   isAllowedOrigin,
   jsonResponse,
 } from '../_shared/http.ts';
-
-interface AnalysisRequest {
-  fileContent: string;
-  fileName: string;
-  fileType: string;
-  business_id?: string;
-  modelPreference?: 'flash' | 'pro';
-  analysisDepth?: 'standard' | 'detailed';
-}
 
 interface DocumentAnalysis {
   documentSummary: string;
@@ -761,28 +753,36 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    let requestBody: unknown;
+    try {
+      requestBody = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid request body' }), {
+        status: 400,
+        headers: responseHeaders,
+      });
+    }
+
+    const validation = validateDocumentRequest(requestBody);
+    if (!validation.ok) {
+      return new Response(JSON.stringify({ error: validation.error }), {
+        status: validation.status,
+        headers: responseHeaders,
+      });
+    }
 
     const {
       fileContent,
       fileName,
       fileType,
       business_id,
-      modelPreference = 'flash',
-      analysisDepth = 'standard'
-    }: AnalysisRequest = await req.json();
+      modelPreference,
+      analysisDepth,
+    } = validation.value;
 
-    if (!fileContent || !fileName) {
-      return new Response(
-        JSON.stringify({ error: 'File content and file name are required' }),
-        {
-          status: 400,
-          headers: responseHeaders,
-        }
-      );
-    }
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const isPDF = fileType === 'application/pdf';
     const isImage = fileType.startsWith('image/');
