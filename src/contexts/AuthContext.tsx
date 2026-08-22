@@ -8,6 +8,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   session: Session | null;
   loading: boolean;
+  profileLoading: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: AuthError | null }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signInWithOAuth: (provider: 'google' | 'github' | 'apple') => Promise<{ error: AuthError | null }>;
@@ -24,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   const fetchUserProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -41,10 +43,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshProfile = async () => {
-    if (user) {
-      const profileData = await fetchUserProfile(user.id);
-      setProfile(profileData);
+    if (!user) {
+      return;
     }
+
+    setProfileLoading(true);
+    const profileData = await fetchUserProfile(user.id);
+    setProfile(profileData);
+    setProfileLoading(false);
   };
 
   useEffect(() => {
@@ -52,12 +58,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (async () => {
         setSession(session);
         setUser(session?.user ?? null);
+        setProfileLoading(Boolean(session?.user));
 
         if (session?.user) {
           const profileData = await fetchUserProfile(session.user.id);
           setProfile(profileData);
+        } else {
+          setProfile(null);
         }
 
+        setProfileLoading(false);
         setLoading(false);
       })();
     });
@@ -68,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (async () => {
         setSession(session);
         setUser(session?.user ?? null);
+        setProfileLoading(Boolean(session?.user));
 
         if (session?.user) {
           const profileData = await fetchUserProfile(session.user.id);
@@ -75,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setProfile(null);
         }
+        setProfileLoading(false);
       })();
     });
 
@@ -164,6 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profile,
         session,
         loading,
+        profileLoading,
         signUp,
         signIn,
         signInWithOAuth,
