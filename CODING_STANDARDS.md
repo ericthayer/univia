@@ -103,9 +103,10 @@
   - `fix`, `perf`, `revert` -> patch release
   - `docs`, `style`, `chore`, `refactor`, `test`, `build`, `ci` -> no release
 - Breaking changes must include a `BREAKING CHANGE:` note in the commit body to trigger a major release.
-- Releases are managed by semantic-release on pushes to `main`.
+- Releases are managed by semantic-release after successful CI on `main`; manual dispatch is restricted to `main`.
 - Releases publish Git tags and GitHub Releases (no npm publish).
 - Keep squash merge enabled so semantic PR titles map directly to the merged commit message.
+- Git tags and GitHub Releases are canonical. Semantic Release does not update `package.json` or the checked-in `CHANGELOG.md`.
 
 ### Theme System
 

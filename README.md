@@ -99,7 +99,7 @@ This project follows WCAG 2.1 Level AA standards:
 
 ## Release Automation
 
-- Semantic Release runs on pushes to `main` and can be manually executed with workflow dispatch.
+- Semantic Release runs after successful CI on `main`. Manual workflow dispatch is also restricted to `main`.
 - Version bumps follow Conventional Commits:
    - `feat` -> minor
    - `fix`, `perf`, `revert` -> patch
@@ -108,4 +108,5 @@ This project follows WCAG 2.1 Level AA standards:
    - any commit type with a `BREAKING CHANGE:` note publishes a major release
 - Releases are published as GitHub tags and GitHub Releases (no npm publish).
 - PR titles are validated for Conventional Commit format in CI. Use squash merge so the PR title becomes the commit message on `main`.
+- Git tags and GitHub Releases are the release version source of truth. Releases do not update `package.json` or the checked-in `CHANGELOG.md`; the current package metadata may therefore differ from the latest release tag.
 - Local preview command: `npm run release:dry-run`
