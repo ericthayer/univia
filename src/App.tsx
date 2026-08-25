@@ -5,6 +5,7 @@ import AppShell from './components/layout/AppShell';
 import { useSystemColorMode } from './hooks/useSystemColorMode';
 import { ROUTE_PATHS } from './config/navigation';
 import { AuthProvider } from './contexts/AuthContext';
+import { AdminRoute, ProtectedRoute, RegisteredRoute } from './components/auth/RouteGuards';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const AccessibilityAudit = lazy(() => import('./pages/AccessibilityAudit'));
@@ -45,7 +46,12 @@ function App() {
 
   return (
     <AuthProvider>
-      <Router>
+      <Router
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true
+        }}
+      >
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Auth Routes - Standalone */}
@@ -61,23 +67,110 @@ function App() {
               element={
                 <AppShell>
                   <Routes>
-                    <Route path={ROUTE_PATHS.DASHBOARD} element={<Dashboard />} />
-                    <Route path={ROUTE_PATHS.AUDIT} element={<AccessibilityAudit />} />
-                    <Route path={ROUTE_PATHS.AUDIT_RESULTS} element={<AuditResults />} />
-                    <Route path={ROUTE_PATHS.LETTERS} element={<DemandLetters />} />
-                    <Route path={ROUTE_PATHS.CHECKLIST} element={<ComplianceChecklist />} />
-                    <Route path={ROUTE_PATHS.ACTION_PLAN} element={<ActionsPlan />} />
+                    <Route
+                      path={ROUTE_PATHS.DASHBOARD}
+                      element={<Dashboard />}
+                    />
+                    <Route
+                      path={ROUTE_PATHS.AUDIT}
+                      element={
+                        <ProtectedRoute>
+                          <AccessibilityAudit />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path={ROUTE_PATHS.AUDIT_RESULTS}
+                      element={
+                        <ProtectedRoute>
+                          <AuditResults />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path={ROUTE_PATHS.LETTERS}
+                      element={
+                        <ProtectedRoute>
+                          <DemandLetters />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path={ROUTE_PATHS.CHECKLIST}
+                      element={
+                        <RegisteredRoute>
+                          <ComplianceChecklist />
+                        </RegisteredRoute>
+                      }
+                    />
+                    <Route
+                      path={ROUTE_PATHS.ACTION_PLAN}
+                      element={
+                        <RegisteredRoute>
+                          <ActionsPlan />
+                        </RegisteredRoute>
+                      }
+                    />
                     <Route path={ROUTE_PATHS.RESOURCES} element={<Resources />} />
                     <Route path={ROUTE_PATHS.HELP} element={<HelpCenter />} />
-                    <Route path={ROUTE_PATHS.ANALYZE_REPORT} element={<AnalyzeReport />} />
-                    <Route path="/settings" element={<AccountSettings />} />
+                    <Route
+                      path={ROUTE_PATHS.ANALYZE_REPORT}
+                      element={
+                        <ProtectedRoute>
+                          <AnalyzeReport />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/settings"
+                      element={
+                        <RegisteredRoute>
+                          <AccountSettings />
+                        </RegisteredRoute>
+                      }
+                    />
                     <Route path="/pricing" element={<Pricing />} />
                     <Route path="/pattern-library" element={<PatternLibrary />} />
-                    <Route path="/admin/users" element={<UserManagement />} />
-                    <Route path="/admin/billing" element={<UserManagement />} />
-                    <Route path="/admin/settings" element={<UserManagement />} />
-                    <Route path="/admin/test-analysis" element={<DocumentAnalysisTest />} />
-                    <Route path="/admin/streaming-demo" element={<GeminiStreamingDemo />} />
+                    <Route
+                      path="/admin/users"
+                      element={
+                        <AdminRoute>
+                          <UserManagement />
+                        </AdminRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/billing"
+                      element={
+                        <AdminRoute>
+                          <UserManagement />
+                        </AdminRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/settings"
+                      element={
+                        <AdminRoute>
+                          <UserManagement />
+                        </AdminRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/test-analysis"
+                      element={
+                        <AdminRoute>
+                          <DocumentAnalysisTest />
+                        </AdminRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/streaming-demo"
+                      element={
+                        <AdminRoute>
+                          <GeminiStreamingDemo />
+                        </AdminRoute>
+                      }
+                    />
                   </Routes>
                 </AppShell>
               }

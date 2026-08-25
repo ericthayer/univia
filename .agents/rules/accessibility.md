@@ -1,36 +1,40 @@
 ---
-description: Accessibility standards for Three.js and React applications.
+description: Accessibility standards for Univia's React and MUI interfaces.
 ---
 
 **OBJECTIVE:**
-Building inclusive 3D web experiences that are accessible to keyboard users, screen reader users, and those with motion sensitivities.
+Build inclusive interfaces for keyboard users, screen reader users, people with low vision, and people with motion sensitivities.
 
-**REASON:**
-3D environments are inherently non-semantic. Without explicit effort, they are invisible to assistive technologies and can cause physical discomfort for users with vestibular disorders.
+## Semantic structure
 
-**DESCRIPTION:**
-Guidelines for semantic canvas layering, focus management, and motion preference handling.
+- Use native HTML semantics before ARIA: buttons for actions, links for navigation, labels for controls, and lists/tables for grouped data.
+- Maintain a logical heading hierarchy with one page-level `h1`.
+- Provide a skip link to the main content and meaningful page titles.
 
-**INSTRUCTIONS:**
+## Interaction and focus
 
-### Instant Perceptual Feedback
-- **Critical CSS Inlining**: Inline the minimum CSS required to render a themed background and loading indicator directly in the `<head>` of `index.html`. This prevents the "blank white screen" during bundle download.
-- **Pre-Hydration Status**: Provide a `role="status"` or `aria-live="polite"` container in the initial HTML structure. Use CSS `:empty` pseudo-classes to show a loading message that automatically disappears once React hydrates the root.
-- **Theme-Aware Loading**: Ensure the initial "Critical" background color matches the user's system preference (light/dark) to avoid "flash of un-themed content" (FOUT/FOIT).
+- Every interactive element must be keyboard reachable and operable.
+- Preserve visible `:focus-visible` states; never remove an outline without a clear replacement.
+- Use MUI components and native controls rather than clickable `div` or `span` elements.
+- Icon-only buttons require a concise, descriptive `aria-label`.
+- Destructive actions require confirmation or an undo window.
 
-### Scene Accessibility
-- **Canvas Metadata**: Always provide a descriptive `aria-label` or `title` on the `<canvas>` element. Use `role="img"` if the scene is purely visual, or `role="application"` if it is interactive.
-- **Fallback Content**: Place a text description of the scene inside the `<canvas>` tag for older browsers or screen readers that don't support canvas metadata.
+## Forms and content
 
-### Motion Control (CRITICAL)
-- **Respect `@media (prefers-reduced-motion)`**: Use the `useMediaQuery` hook or CSS to detect if the user prefers reduced motion.
-- **Auto-Pause/Slow**: If reduced motion is active, automatically pause or significantly slow down ambient animations (rotations, particle systems, floating effects).
-- **Toggle Visibility**: Avoid rapid flashing or strobing effects in 3D scenes.
+- Associate every input with a visible label or an accurate accessible name.
+- Link validation errors with `aria-describedby` and move focus to the first invalid field on submit.
+- Announce loading, errors, and asynchronous updates with `role="status"` or `aria-live="polite"`.
+- Keep generated or user-provided content readable when it is empty, long, or unexpectedly formatted.
 
-### Interaction & Focus
-- **Standard UI Elements**: Use standard HTML `<button>` or `<a>` tags for interactions whenever possible, layered over the canvas.
-- **Keyboard Navigation**: Ensure every interactive element in the 3D scene can be reached and activated via the `Tab` and `Enter/Space` keys.
-- **Visual Focus States**: Never remove focus outlines (`outline: none`) without providing a clear, high-contrast alternative for navigated elements.
+## Media and motion
 
-### Contrast & Legibility
-- **Text over 3D**: Ensure text labels overlaying 3D scenes have sufficient contrast (WCAG AA 4.5:1). Use text-shadows or semi-transparent backgrounds to guarantee legibility over dynamic backgrounds.
+- Give images meaningful `alt` text, or `alt=""` when decorative, and explicit dimensions to prevent layout shift.
+- Respect `prefers-reduced-motion`; avoid flashing or rapid animation.
+- Ensure text and interactive states meet the project's contrast requirements without relying on color alone.
+
+## Ready-to-ship checklist
+
+- [ ] Keyboard navigation and visible focus verified.
+- [ ] Labels, accessible names, headings, and landmark structure verified.
+- [ ] Async states and validation errors announced.
+- [ ] Reduced-motion and responsive behavior checked.

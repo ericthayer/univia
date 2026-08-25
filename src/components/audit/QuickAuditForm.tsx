@@ -8,14 +8,14 @@ import {
   Stack,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { ensureSession } from '../../services/session';
+import { hasFailedDevice, LighthouseAuditError, requestLighthouseAudit } from '../../services/lighthouseAudit.service';
 import { useFormValidation } from '../../hooks/useFormValidation';
 import ValidationFeedback from '../validation/ValidationFeedback';
 import Icon from '../ui/Icon';
 
 export default function QuickAuditForm() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { getFieldState, setFieldValue, validateFieldDebounced } = useFormValidation();
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
@@ -57,35 +57,16 @@ export default function QuickAuditForm() {
         return;
       }
 
-      const fullUrl = urlField.value.startsWith('http') ? urlField.value : `https://${urlField.value}`;
-
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-lighthouse-audit`;
-
+      const currentSession = await ensureSession();
       abortControllerRef.current = new AbortController();
-
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: fullUrl, user_id: user?.id || null }),
-        signal: abortControllerRef.current.signal,
+      const result = await requestLighthouseAudit(urlField.value, currentSession?.access_token, abortControllerRef.current.signal);
+      navigate(`/audit/${result.session_id}`, {
+        state: { partialAudit: hasFailedDevice(result) },
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to run audit');
-      }
-
-      const result = await response.json();
-
-      if (result.session_id) {
-        navigate(`/audit/${result.session_id}`);
-      }
     } catch (err: unknown) {
       if (!(err instanceof Error && err.name === 'AbortError')) {
         console.error('Audit error:', err);
-        setApiError('Failed to run audit. Please try again.');
+        setApiError(err instanceof LighthouseAuditError ? err.message : 'Failed to run audit. Please try again.');
       }
     } finally {
       setLoading(false);

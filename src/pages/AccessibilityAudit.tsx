@@ -23,6 +23,8 @@ import { AccessibilityAudit as AuditType } from '../types';
 import ComplianceGauge from '../components/ui/ComplianceGauge';
 import AuditHistoryCard from '../components/audit/AuditHistoryCard';
 import { useAuth } from '../contexts/AuthContext';
+import { ensureSession } from '../services/session';
+import { hasFailedDevice, LighthouseAuditError, requestLighthouseAudit } from '../services/lighthouseAudit.service';
 import Icon from '../components/ui/Icon';
 import { useFormValidation } from '../hooks/useFormValidation';
 import ValidationFeedback from '../components/validation/ValidationFeedback';
@@ -70,7 +72,9 @@ export default function AccessibilityAudit() {
           setPinnedAuditIds(new Set(pinnedData.map(p => p.audit_id)));
         }
       } else {
-        query = query.is('user_id', null).limit(MAX_AUDITS_TO_LOAD * 2);
+        setAudits([]);
+        setAllAuditsForAverage([]);
+        return;
       }
 
       const { data: allAudits } = await query;
@@ -144,35 +148,16 @@ export default function AccessibilityAudit() {
         return;
       }
 
-      const fullUrl = urlField.value.startsWith('http') ? urlField.value : `https://${urlField.value}`;
-
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-lighthouse-audit`;
-
+      const currentSession = await ensureSession();
       abortControllerRef.current = new AbortController();
-
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: fullUrl, user_id: user?.id || null }),
-        signal: abortControllerRef.current.signal,
+      const result = await requestLighthouseAudit(urlField.value, currentSession?.access_token, abortControllerRef.current.signal);
+      navigate(`/audit/${result.session_id}`, {
+        state: { partialAudit: hasFailedDevice(result) },
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to run audit');
-      }
-
-      const result = await response.json();
-
-      if (result.session_id) {
-        navigate(`/audit/${result.session_id}`);
-      }
     } catch (err: unknown) {
       if (!(err instanceof Error && err.name === 'AbortError')) {
         console.error('Audit error:', err);
-        setApiError('Failed to run audit. Please try again.');
+        setApiError(err instanceof LighthouseAuditError ? err.message : 'Failed to run audit. Please try again.');
       }
     } finally {
       setLoading(false);

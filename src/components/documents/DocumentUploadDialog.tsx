@@ -17,6 +17,8 @@ import {
 } from '@mui/material';
 import Icon from '../ui/Icon';
 import LegalDisclaimer from '../ui/LegalDisclaimer';
+import { ensureSession } from '../../services/session';
+import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from '../../services/supabaseFunctions';
 
 interface DocumentUploadDialogProps {
   open: boolean;
@@ -167,6 +169,11 @@ export default function DocumentUploadDialog({
 
   const handleUpload = async () => {
     if (!file) return;
+    const currentSession = await ensureSession();
+    if (!currentSession?.access_token) {
+      setError('Unable to establish a secure session. Please try again.');
+      return;
+    }
 
     const controller = new AbortController();
     setAbortController(controller);
@@ -188,16 +195,13 @@ export default function DocumentUploadDialog({
 
       setStage('processing');
 
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-document`;
+      const apiUrl = getSupabaseFunctionUrl('analyze-document');
 
       setStage('extracting');
 
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
+        headers: getSupabaseFunctionHeaders(currentSession.access_token),
         body: JSON.stringify({
           fileContent: base64Content,
           fileName: file.name,

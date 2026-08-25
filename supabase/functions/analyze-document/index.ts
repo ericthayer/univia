@@ -1,62 +1,46 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { GoogleGenerativeAI } from 'npm:@google/generative-ai@0.21.0';
+import { authenticateRequest } from '../_shared/auth.ts';
+import { getSupabaseKey } from '../_shared/supabase-keys.ts';
+import { validateDocumentRequest } from '../_shared/document-validation.ts';
+import { validateDocumentAnalysis, type DocumentAnalysis } from '../_shared/analysis-validation.ts';
+import {
+  createRequestId,
+  getAllowedOrigins,
+  getCorsHeaders,
+  isAllowedOrigin,
+  jsonResponse,
+} from '../_shared/http.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
-};
-
-interface AnalysisRequest {
-  fileContent: string;
-  fileName: string;
-  fileType: string;
-  business_id?: string;
-  user_id?: string | null;
-  modelPreference?: 'flash' | 'pro';
-  analysisDepth?: 'standard' | 'detailed';
-}
-
-interface DocumentAnalysis {
-  documentSummary: string;
-  documentType: string;
-  keyPoints: string[];
-  recommendedActions: string[];
-  urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
-  additionalResources: string[];
-  extractedData: {
-    plaintiffName?: string;
-    attorneyName?: string;
-    attorneyFirm?: string;
-    responseDeadline?: string;
-    settlementAmount?: number;
-    violationsCited?: string[];
-    caseNumber?: string;
-    courtName?: string;
-    filingDate?: string;
-  };
-  confidenceScores?: Record<string, number>;
-  extractedEntities?: {
-    persons: string[];
-    organizations: string[];
-    dates: string[];
-    amounts: string[];
-    legalCitations: string[];
-  };
-  legalAnalysis?: {
-    claimType: string;
-    jurisdiction?: string;
-    statuteOfLimitations?: string;
-    potentialDefenses: string[];
-    riskAssessment: string;
-  };
+class InvalidGeminiResponseError extends Error {
+  constructor() {
+    super('invalid_gemini_response');
+    this.name = 'InvalidGeminiResponseError';
+  }
 }
 
 const GEMINI_MODELS = {
   flash: 'gemini-3-flash-preview',
   pro: 'gemini-3-pro-preview',
 } as const;
+const ANONYMOUS_LETTER_LIMIT = 5;
+
+function isAnonymousLetterLimitError(error: unknown): boolean {
+  return error instanceof Error && error.message.includes('ANONYMOUS_LETTER_LIMIT');
+}
+
+function createErrorResponse(
+  message: string,
+  status: number,
+  headers: HeadersInit,
+  errorType?: string,
+): Response {
+  return new Response(JSON.stringify({ error: message, ...(errorType ? { errorType } : {}) }), {
+    status,
+    headers,
+  });
+}
 
 function buildAnalysisPrompt(documentType: string, analysisDepth: 'standard' | 'detailed'): string {
   const basePrompt = `You are an expert legal document analyzer specializing in ADA compliance, accessibility law, and demand letter analysis. Your role is to provide accurate, actionable insights for legal professionals and business owners.
@@ -275,58 +259,31 @@ async function analyzeWithGemini(
     const response = await result.response;
     const generatedText = response.text();
 
-    console.log('[DEBUG] Gemini raw response length:', generatedText.length);
-
     const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.error('[ERROR] Could not extract JSON from Gemini response');
-      console.error('[ERROR] Response text:', generatedText.substring(0, 500));
-      return null;
+      throw new InvalidGeminiResponseError();
     }
 
-    const parsedData = JSON.parse(jsonMatch[0]);
-    console.log('[SUCCESS] Parsed Gemini response successfully');
+    let parsedData: unknown;
+    try {
+      parsedData = JSON.parse(jsonMatch[0]);
+    } catch {
+      throw new InvalidGeminiResponseError();
+    }
+    const validatedAnalysis = validateDocumentAnalysis(parsedData);
+    if (!validatedAnalysis) {
+      throw new InvalidGeminiResponseError();
+    }
 
-    return {
-      documentSummary: parsedData.documentSummary || 'Document analyzed successfully',
-      documentType: parsedData.documentType || 'General Document',
-      keyPoints: parsedData.keyPoints || [],
-      recommendedActions: parsedData.recommendedActions || ['Review document contents carefully', 'Determine if any action is required'],
-      urgencyLevel: parsedData.urgencyLevel || 'medium',
-      additionalResources: parsedData.additionalResources || ['Help Center', 'Professional Resources Directory'],
-      extractedData: {
-        plaintiffName: parsedData.plaintiffName || undefined,
-        attorneyName: parsedData.attorneyName || undefined,
-        attorneyFirm: parsedData.attorneyFirm || undefined,
-        responseDeadline: parsedData.responseDeadline || undefined,
-        settlementAmount: parsedData.settlementAmount || undefined,
-        violationsCited: parsedData.violationsCited?.length > 0 ? parsedData.violationsCited : undefined,
-        caseNumber: parsedData.caseNumber || undefined,
-        courtName: parsedData.courtName || undefined,
-        filingDate: parsedData.filingDate || undefined,
-      },
-      confidenceScores: parsedData.confidenceScores || {},
-      extractedEntities: {
-        persons: parsedData.extractedEntities?.persons || [],
-        organizations: parsedData.extractedEntities?.organizations || [],
-        dates: parsedData.extractedEntities?.dates || [],
-        amounts: parsedData.extractedEntities?.amounts || [],
-        legalCitations: parsedData.extractedEntities?.legalCitations || [],
-      },
-      legalAnalysis: parsedData.legalAnalysis ? {
-        claimType: parsedData.legalAnalysis.claimType || 'Unknown',
-        jurisdiction: parsedData.legalAnalysis.jurisdiction,
-        statuteOfLimitations: parsedData.legalAnalysis.statuteOfLimitations,
-        potentialDefenses: parsedData.legalAnalysis.potentialDefenses || [],
-        riskAssessment: parsedData.legalAnalysis.riskAssessment || 'Risk assessment not available',
-      } : undefined,
-    };
+    return validatedAnalysis;
   } catch (error) {
-    console.error('[ERROR] Gemini API call failed:', error);
-    if (error instanceof Error) {
-      console.error('[ERROR] Error message:', error.message);
-      console.error('[ERROR] Error stack:', error.stack);
+    if (error instanceof InvalidGeminiResponseError) {
+      throw error;
     }
+
+    console.error('[GEMINI] Analysis request failed', {
+      errorType: error instanceof Error ? error.name : 'UnknownError',
+    });
     return null;
   }
 }
@@ -725,36 +682,98 @@ function analyzeDocumentWithRegex(text: string, fileName: string): DocumentAnaly
 }
 
 Deno.serve(async (req: Request) => {
+  const requestId = createRequestId();
+  const allowedOrigins = getAllowedOrigins(Deno.env.get('ALLOWED_ORIGINS'));
+  const responseHeaders = {
+    ...getCorsHeaders(req, allowedOrigins, requestId),
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-store',
+  };
+
+  if (!isAllowedOrigin(req, allowedOrigins)) {
+    return jsonResponse(req, { error: 'Origin not allowed' }, 403, allowedOrigins, requestId);
+  }
+
   if (req.method === 'OPTIONS') {
     return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
+      status: 204,
+      headers: getCorsHeaders(req, allowedOrigins, requestId),
+    });
+  }
+
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: responseHeaders,
     });
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const auth = await authenticateRequest(req);
+    if (!auth) {
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
+        status: 401,
+        headers: responseHeaders,
+      });
+    }
+
+    let requestBody: unknown;
+    try {
+      requestBody = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid request body' }), {
+        status: 400,
+        headers: responseHeaders,
+      });
+    }
+
+    const validation = validateDocumentRequest(requestBody);
+    if (!validation.ok) {
+      return new Response(JSON.stringify({ error: validation.error }), {
+        status: validation.status,
+        headers: responseHeaders,
+      });
+    }
 
     const {
       fileContent,
       fileName,
       fileType,
       business_id,
-      user_id,
-      modelPreference = 'flash',
-      analysisDepth = 'standard'
-    }: AnalysisRequest = await req.json();
+      modelPreference,
+      analysisDepth,
+    } = validation.value;
 
-    if (!fileContent || !fileName) {
-      return new Response(
-        JSON.stringify({ error: 'File content and file name are required' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = getSupabaseKey('SUPABASE_SECRET_KEYS');
+    if (!supabaseKey) {
+      return new Response(JSON.stringify({ error: 'Analysis service unavailable' }), {
+        status: 503,
+        headers: responseHeaders,
+      });
+    }
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const isAnonymous = auth.user.is_anonymous;
+
+    if (isAnonymous) {
+      const { count, error: quotaError } = await supabase
+        .from('demand_letters')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', auth.user.id);
+
+      if (quotaError) {
+        console.error({ event: 'demand_letter_quota_check_failed', requestId });
+        return createErrorResponse('Unable to save demand letter', 503, responseHeaders, 'PERSISTENCE_ERROR');
+      }
+
+      if ((count ?? 0) >= ANONYMOUS_LETTER_LIMIT) {
+        return createErrorResponse(
+          'Anonymous users can save up to 5 demand letters. Create an account to continue saving letters.',
+          429,
+          responseHeaders,
+          'ANONYMOUS_LETTER_LIMIT',
+        );
+      }
     }
 
     const isPDF = fileType === 'application/pdf';
@@ -762,20 +781,11 @@ Deno.serve(async (req: Request) => {
 
     let analysis: DocumentAnalysis;
     let aiModel = 'regex-enhanced-v2';
-    let analysisMethod = 'regex';
-
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     const hasGeminiKey = geminiApiKey && geminiApiKey !== 'your_gemini_api_key_here';
 
-    console.log(`[DEBUG] Processing ${fileName} (${fileType})`);
-    console.log(`[DEBUG] Gemini API Key configured: ${hasGeminiKey ? 'Yes' : 'No'}`);
-    console.log(`[DEBUG] Model preference: ${modelPreference}`);
-    console.log(`[DEBUG] Analysis depth: ${analysisDepth}`);
-    console.log(`[DEBUG] File content length: ${fileContent.length}`);
-
     if (isImage || isPDF) {
       if (hasGeminiKey) {
-        console.log(`[DEBUG] Attempting Gemini analysis for ${isPDF ? 'PDF' : 'image'}...`);
         const geminiResult = await analyzeWithGemini(
           fileContent,
           fileType,
@@ -787,7 +797,6 @@ Deno.serve(async (req: Request) => {
         if (geminiResult) {
           analysis = geminiResult;
           aiModel = GEMINI_MODELS[modelPreference];
-          analysisMethod = isPDF ? 'gemini-pdf' : 'gemini-vision';
           console.log('[SUCCESS] Gemini analysis completed');
         } else {
           console.log('[WARN] Gemini analysis failed');
@@ -797,31 +806,25 @@ Deno.serve(async (req: Request) => {
             if (extractedText.length > 100) {
               console.log('[INFO] Falling back to regex analysis for PDF text');
               analysis = analyzeDocumentWithRegex(extractedText, fileName);
-              analysisMethod = 'regex-pdf';
             } else {
               return new Response(
                 JSON.stringify({
-                  error: 'PDF analysis failed. The PDF may be image-based or encrypted.',
-                  errorType: 'AI_ANALYSIS_FAILED',
-                  hint: 'Try converting the PDF to an image (PNG/JPG) for better results, or ensure the PDF contains searchable text.'
+                  error: 'Unable to analyze document'
                 }),
                 {
                   status: 500,
-                  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                  headers: responseHeaders,
                 }
               );
             }
           } else {
             return new Response(
               JSON.stringify({
-                error: 'Image analysis failed. Gemini API may be unavailable. Please try again.',
-                errorType: 'AI_ANALYSIS_FAILED',
-                retryable: true,
-                hint: 'Check if your Gemini API key is valid and has proper permissions'
+                  error: 'Unable to analyze document'
               }),
               {
                 status: 500,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                  headers: responseHeaders,
               }
             );
           }
@@ -832,16 +835,14 @@ Deno.serve(async (req: Request) => {
           if (extractedText.length > 100) {
             console.log('[INFO] Using regex analysis for PDF (no Gemini key)');
             analysis = analyzeDocumentWithRegex(extractedText, fileName);
-            analysisMethod = 'regex-pdf';
           } else {
             return new Response(
               JSON.stringify({
-                error: 'PDF analysis requires AI configuration for image-based PDFs. Please contact your administrator or convert the PDF to an image.',
-                errorType: 'AI_NOT_CONFIGURED'
+                  error: 'Unable to analyze document'
               }),
               {
                 status: 503,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                headers: responseHeaders,
               }
             );
           }
@@ -849,12 +850,11 @@ Deno.serve(async (req: Request) => {
           console.log('[ERROR] No Gemini API key configured - cannot analyze images');
           return new Response(
             JSON.stringify({
-              error: 'Image analysis requires AI configuration. Please contact your administrator to enable this feature.',
-              errorType: 'AI_NOT_CONFIGURED'
+              error: 'Unable to analyze document'
             }),
             {
               status: 503,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              headers: responseHeaders,
             }
           );
         }
@@ -871,12 +871,9 @@ Deno.serve(async (req: Request) => {
       if (geminiResult) {
         analysis = geminiResult;
         aiModel = GEMINI_MODELS[modelPreference];
-        analysisMethod = 'gemini-text';
-        console.log('[SUCCESS] Gemini text analysis completed');
       } else {
         const extractedText = extractTextFromContent(fileContent);
         analysis = analyzeDocumentWithRegex(extractedText, fileName);
-        analysisMethod = 'regex';
         console.log('[INFO] Using regex analysis (Gemini not available)');
       }
     }
@@ -888,66 +885,67 @@ Deno.serve(async (req: Request) => {
       'low': 'low',
     };
 
-    const { data: letterData, error: letterError } = await supabase
-      .from('demand_letters')
-      .insert({
-        business_id: business_id || null,
-        user_id: user_id || null,
-        file_name: fileName,
-        file_size: Math.round(fileContent.length * 0.75),
-        upload_date: new Date().toISOString(),
-        plaintiff_name: analysis.extractedData.plaintiffName || null,
-        attorney_name: analysis.extractedData.attorneyName || null,
-        attorney_firm: analysis.extractedData.attorneyFirm || null,
-        response_deadline: analysis.extractedData.responseDeadline || null,
-        settlement_amount: analysis.extractedData.settlementAmount || null,
-        violations_cited: analysis.extractedData.violationsCited ? { items: analysis.extractedData.violationsCited } : null,
-        extracted_text: fileType.startsWith('image/') ? 'Image document - text extracted by AI' : extractTextFromContent(fileContent).substring(0, 50000),
-        analysis_summary: analysis.documentSummary,
-        risk_level: riskLevelMap[analysis.urgencyLevel] || 'medium',
-        status: 'pending',
-        confidence_scores: analysis.confidenceScores || {},
-        extracted_entities: analysis.extractedEntities || {},
-        ai_model_version: aiModel,
-        processing_status: 'completed',
-      })
-      .select()
-      .single();
+    const letterPayload = {
+      business_id: business_id || '',
+      file_name: fileName,
+      file_size: String(Math.round(fileContent.length * 0.75)),
+      upload_date: new Date().toISOString(),
+      plaintiff_name: analysis.extractedData.plaintiffName || '',
+      attorney_name: analysis.extractedData.attorneyName || '',
+      attorney_firm: analysis.extractedData.attorneyFirm || '',
+      response_deadline: analysis.extractedData.responseDeadline || '',
+      settlement_amount: analysis.extractedData.settlementAmount ? String(analysis.extractedData.settlementAmount) : '',
+      violations_cited: analysis.extractedData.violationsCited ? { items: analysis.extractedData.violationsCited } : null,
+      extracted_text: fileType.startsWith('image/') ? 'Image document - text extracted by AI' : extractTextFromContent(fileContent).substring(0, 50000),
+      analysis_summary: analysis.documentSummary,
+      risk_level: riskLevelMap[analysis.urgencyLevel] || 'medium',
+      status: 'pending',
+      confidence_scores: analysis.confidenceScores || {},
+      extracted_entities: analysis.extractedEntities || {},
+      ai_model_version: aiModel,
+      processing_status: 'completed',
+    };
+
+    const { data: letterId, error: letterError } = await supabase.rpc('insert_demand_letter', {
+      p_user_id: auth.user.id,
+      p_is_anonymous: isAnonymous,
+      p_letter: letterPayload,
+    });
 
     if (letterError) {
-      console.error('Error saving letter:', letterError);
+      if (isAnonymousLetterLimitError(letterError)) {
+        return createErrorResponse(
+          'Anonymous users can save up to 5 demand letters. Create an account to continue saving letters.',
+          429,
+          responseHeaders,
+          'ANONYMOUS_LETTER_LIMIT',
+        );
+      }
+      console.error({ event: 'demand_letter_persistence_failed', requestId });
+      return createErrorResponse('Unable to save demand letter', 503, responseHeaders, 'PERSISTENCE_ERROR');
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        letter_id: letterData?.id,
+        letter_id: letterId,
         analysis,
-        debug: {
-          analysisMethod,
-          aiModel,
-          hasGeminiKey,
-          fileType,
-          modelPreference,
-          analysisDepth,
-          timestamp: new Date().toISOString(),
-        }
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: responseHeaders,
       }
     );
   } catch (error) {
-    console.error('Analysis error:', error);
+    console.error('Analysis request failed', {
+      errorType: error instanceof Error ? error.name : 'UnknownError',
+    });
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : 'Internal server error',
-        errorType: 'INTERNAL_ERROR',
-        retryable: true
+        error: 'Unable to analyze document',
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: responseHeaders,
       }
     );
   }

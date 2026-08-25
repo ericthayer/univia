@@ -14,6 +14,8 @@ import {
   Grid,
 } from '@mui/material';
 import Icon from '../../components/ui/Icon';
+import { ensureSession } from '../../services/session';
+import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from '../../services/supabaseFunctions';
 
 interface AnalysisDebugInfo {
   analysisMethod: string;
@@ -64,6 +66,11 @@ export default function DocumentAnalysisTest() {
 
   const handleTest = async () => {
     if (!file) return;
+    const currentSession = await ensureSession({ allowAnonymous: false });
+    if (!currentSession?.access_token) {
+      setError('Authentication required');
+      return;
+    }
 
     setUploading(true);
     setError(null);
@@ -81,7 +88,7 @@ export default function DocumentAnalysisTest() {
         reader.readAsDataURL(file);
       });
 
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-document`;
+      const apiUrl = getSupabaseFunctionUrl('analyze-document');
 
       console.log('[TEST] Sending request to:', apiUrl);
       console.log('[TEST] File type:', file.type);
@@ -89,10 +96,7 @@ export default function DocumentAnalysisTest() {
 
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
+        headers: getSupabaseFunctionHeaders(currentSession.access_token),
         body: JSON.stringify({
           fileContent: base64Content,
           fileName: file.name,

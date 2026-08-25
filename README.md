@@ -73,6 +73,21 @@ src/
 - Responsive design (mobile-first)
 - Full keyboard navigation support
 
+### Hosted Lighthouse audit configuration
+
+The `run-lighthouse-audit` Edge Function calls the Google PageSpeed Insights API,
+which runs Lighthouse remotely. Configure these as Supabase Edge Function
+secrets—not as `VITE_*` browser variables:
+
+- `PAGESPEED_API_KEY` — a Google PageSpeed Insights API key with the API enabled
+- `SUPABASE_SECRET_KEYS` and `SUPABASE_PUBLISHABLE_KEYS` — the existing JSON key dictionaries, or the compatible `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_ANON_KEY` fallbacks
+- `ALLOWED_ORIGINS` — comma-separated production and local browser origins
+
+The function runs mobile and desktop independently. If one provider run fails,
+the completed device report remains available and the results page identifies
+the unavailable device. If both runs fail, inspect the Edge Function logs using
+the returned `X-Request-ID` and the structured PageSpeed error classification.
+
 ## Accessibility
 
 This project follows WCAG 2.1 Level AA standards:
@@ -84,7 +99,7 @@ This project follows WCAG 2.1 Level AA standards:
 
 ## Release Automation
 
-- Semantic Release runs on pushes to `main` and can be manually executed with workflow dispatch.
+- Semantic Release runs after successful CI on `main`. Manual workflow dispatch is also restricted to `main`.
 - Version bumps follow Conventional Commits:
    - `feat` -> minor
    - `fix`, `perf`, `revert` -> patch
@@ -93,4 +108,5 @@ This project follows WCAG 2.1 Level AA standards:
    - any commit type with a `BREAKING CHANGE:` note publishes a major release
 - Releases are published as GitHub tags and GitHub Releases (no npm publish).
 - PR titles are validated for Conventional Commit format in CI. Use squash merge so the PR title becomes the commit message on `main`.
+- Git tags and GitHub Releases are the release version source of truth. Each release also updates `package.json` and `package-lock.json` in an automated release commit; the checked-in `CHANGELOG.md` remains manually maintained.
 - Local preview command: `npm run release:dry-run`

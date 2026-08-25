@@ -5,7 +5,7 @@ description: Verify that a component or page meets the high accessibility standa
 
 # `accessibility-audit`
 
-Use this skill before marking any feature as "Done". It helps you catch common accessibility issues that are strictly forbidden by [AGENTS.md](../../AGENTS.md).
+Use this skill before marking any feature as "Done". It helps you catch common accessibility issues that are strictly forbidden by [AGENTS.md](../../../AGENTS.md).
 
 ## Checklist
 

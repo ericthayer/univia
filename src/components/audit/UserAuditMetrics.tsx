@@ -8,7 +8,8 @@ import StatCard from '../ui/StatCard';
 import Icon from '../ui/Icon';
 import { useUserAudits } from '../../hooks/useUserAudits';
 import { useFormValidation } from '../../hooks/useFormValidation';
-import { useAuth } from '../../contexts/AuthContext';
+import { ensureSession } from '../../services/session';
+import { hasFailedDevice, requestLighthouseAudit } from '../../services/lighthouseAudit.service';
 import DocumentUploadDrawer from '../documents/DocumentUploadDrawer';
 
 interface UserAuditMetricsProps {
@@ -68,7 +69,6 @@ export default function UserAuditMetrics({
   onAuditClick,
 }: UserAuditMetricsProps) {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { metrics, loading, error } = useUserAudits({
     userId,
     limit,
@@ -111,33 +111,15 @@ export default function UserAuditMetrics({
   const handleQuickAudit = async () => {
     if (!urlField.value.trim() || urlField.error || auditLoading) return;
 
+    const currentSession = await ensureSession();
     setAuditLoading(true);
 
     try {
-      const fullUrl = urlField.value.startsWith('http') ? urlField.value : `https://${urlField.value}`;
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-lighthouse-audit`;
-
       abortControllerRef.current = new AbortController();
-
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: fullUrl, user_id: user?.id || null }),
-        signal: abortControllerRef.current.signal,
+      const result = await requestLighthouseAudit(urlField.value, currentSession?.access_token, abortControllerRef.current.signal);
+      navigate(`/audit/${result.session_id}`, {
+        state: { partialAudit: hasFailedDevice(result) },
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to run audit');
-      }
-
-      const result = await response.json();
-
-      if (result.session_id) {
-        navigate(`/audit/${result.session_id}`);
-      }
     } catch (err: unknown) {
       if (!(err instanceof Error && err.name === 'AbortError')) {
         console.error('Audit error:', err);

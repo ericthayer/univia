@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -25,6 +25,8 @@ import Icon from '../components/ui/Icon';
 export default function AuditResults() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const routePartialAudit = (location.state as { partialAudit?: boolean } | null)?.partialAudit === true;
   const [mobileAudit, setMobileAudit] = useState<AccessibilityAudit | null>(null);
   const [desktopAudit, setDesktopAudit] = useState<AccessibilityAudit | null>(null);
   const [mobileViolations, setMobileViolations] = useState<Violation[]>([]);
@@ -83,6 +85,7 @@ export default function AuditResults() {
 
   const currentAudit = deviceTab === 0 ? mobileAudit : desktopAudit;
   const currentViolations = deviceTab === 0 ? mobileViolations : desktopViolations;
+  const partialAudit = routePartialAudit || (Boolean(mobileAudit) !== Boolean(desktopAudit));
 
   const getFilteredViolations = () => {
     if (severityTab === 0) return currentViolations;
@@ -131,6 +134,11 @@ export default function AuditResults() {
                 <Icon name="open_in_new" />
               </Link>
           </Stack>
+          {partialAudit && (
+            <Alert severity="warning" role="status" sx={{ mt: 2 }}>
+              This report includes the device audit that completed successfully. The other device could not be audited and can be retried later.
+            </Alert>
+          )}
         </Box>
 
         <Card sx={{ mb: 4 }}>

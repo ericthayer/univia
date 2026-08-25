@@ -1,6 +1,6 @@
 ---
 description: Review UI code for Web Interface Guidelines compliance
-applyTo: <file-or-pattern>
+applyTo: '**/*.{ts,tsx,jsx,css,html}'
 ---
 
 # Web Interface Guidelines

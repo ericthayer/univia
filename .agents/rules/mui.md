@@ -207,12 +207,12 @@ function App() {
 **Rule**: Always use the new Grid2 component for layouts.
 
 ```tsx
-// ✅ Good: Grid v2 with container queries
-import Grid from '@mui/material/Unstable_Grid2';
+// ✅ Good: MUI v7 Grid with responsive sizes
+import Grid from '@mui/material/Grid';
 
 <Grid container spacing={2}>
-  <Grid xs={12} md={6}>Column 1</Grid>
-  <Grid xs={12} md={6}>Column 2</Grid>
+  <Grid size={{ xs: 12, md: 6 }}>Column 1</Grid>
+  <Grid size={{ xs: 12, md: 6 }}>Column 2</Grid>
 </Grid>
 ```
 

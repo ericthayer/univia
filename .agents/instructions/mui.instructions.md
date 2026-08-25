@@ -1,3 +1,7 @@
+---
+applyTo: '**/*.{ts,tsx,jsx,css}'
+---
+
 # Material-UI (MUI) Coding Instructions
 
 **INSTRUCTIONS:**
@@ -7,11 +11,11 @@ Include the following specifications:
 
 1. **Accessibility & Performance**: Prioritize as first-class features. Follow [Web Interface Guidelines](./web-interface-guidelines.instructions.md)—semantic HTML, ARIA labels, keyboard navigation, focus states, and screen reader support.
 
-2. **Adaptive Layout & Mobile-First UX**: Use Container Queries, dynamic viewport units (`cqw`, `dvh`), and `clamp()` for responsive spacing and visual hierarchy. Test on mobile-first.
+2. **Adaptive Layout & Mobile-First UX**: Use `@container` Queries, dynamic viewport units (`cqw`, `dvh`), and `clamp()` for responsive spacing and visual hierarchy. Test on mobile-first.
 
 3. **Grid System**: Use [MUI Grid v2 syntax](https://mui.com/material-ui/react-grid/).
 
-4. **Modern CSS & Progressive Enhancement**: Apply [CSS Wrapped 2025](https://chrome.dev/css-wrapped-2025/) principles.
+4. **Modern CSS & Progressive Enhancement**: Apply [Modern CSS](https://modern-css.com/llms.txt) principles when writing styles. Use CSS custom properties, `clamp()`, and `min()`/`max()` for responsive design. Avoid inline styles; prefer `sx` prop or styled components.
 
 5. **Theming**: 
    - Use MUI's theme provider with `cssVariables` enabled
@@ -27,7 +31,7 @@ Include the following specifications:
 
 9. **Component Architecture**: Extend MUI base components with TypeScript. Use PascalCase for filenames (`.tsx`). One component per file. Prefer functional components with hooks.
 
-10. **Testing & Documentation**: Create Storybook documentation and visual regression tests (Playwright/Chromatic when possible).
+10. **Testing & Documentation**: Add focused Vitest and Testing Library coverage for behavior changes. Use browser or visual regression tests when the repository provides that tooling.
 
 11. **Web Standards Compliance**: Ensure forms, inputs, focus states, and interactive elements meet standards in the Web Interface Guidelines:
     - Form inputs require labels and proper `type`/`inputmode`

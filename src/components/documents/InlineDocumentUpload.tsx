@@ -18,7 +18,8 @@ import {
 import Icon from '../ui/Icon';
 import LegalDisclaimer from '../ui/LegalDisclaimer';
 import { DocumentAnalysis } from './DocumentUploadDialog';
-import { useAuth } from '../../contexts/AuthContext';
+import { ensureSession } from '../../services/session';
+import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from '../../services/supabaseFunctions';
 
 interface InlineDocumentUploadProps {
   onUploadComplete: (analysis: DocumentAnalysis) => void;
@@ -55,7 +56,6 @@ const ACCEPTED_TYPES = [
 ] as const;
 
 export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumentUploadProps) {
-  const { user } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -160,6 +160,11 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
       setShowInfo(true);
       return;
     }
+    const currentSession = await ensureSession();
+    if (!currentSession?.access_token) {
+      setError('Unable to establish a secure session. Please try again.');
+      return;
+    }
 
     const controller = new AbortController();
     setAbortController(controller);
@@ -182,23 +187,19 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
 
       setStage('processing');
 
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-document`;
+      const apiUrl = getSupabaseFunctionUrl('analyze-document');
 
       setStage('extracting');
 
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
+        headers: getSupabaseFunctionHeaders(currentSession.access_token),
         body: JSON.stringify({
           fileContent: base64Content,
           fileName: file.name,
           fileType: file.type,
           modelPreference,
           analysisDepth,
-          user_id: user?.id || null,
         }),
         signal: controller.signal,
       });

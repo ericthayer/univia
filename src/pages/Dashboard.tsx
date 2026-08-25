@@ -7,12 +7,12 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isRegistered } = useAuth();
 
   return (
     <Box>
       {/* Hero */}
-      {!user && (
+      {!isRegistered && (
       <Box
         sx={{
           bgcolor: 'light-dark(hsl(0 0% 98.82% / 1), hsl(0 0% 6% / 1))',
@@ -91,17 +91,17 @@ export default function Dashboard() {
     <Container maxWidth="lg" sx={{ py: 'clamp(4rem, 6dvh, 8rem)', px: '2rem !important' }}>
 
       {/* User Audit Metrics - Only shown when logged in */}
-      {user && (
+      {isRegistered && user && (
         <UserAuditMetrics
           userId={user.id}
-          enabled={!!user}
+          enabled={isRegistered}
           fullWidth={false}
         />
       )}
       
         
         {/* Standards Overview */}
-        {!user && (
+        {!isRegistered && (
       <>
         <Stack gap={6}>
           <Box sx={{
