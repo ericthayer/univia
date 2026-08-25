@@ -26,21 +26,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function getAuthRequest(req: Request): Request {
-  const authorization = req.headers.get('Authorization');
-  const publishableKey = req.headers.get('apikey');
-  const bearerToken = authorization?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
-
-  // The Supabase dashboard's anon test can send the apikey again as a bearer
-  // value. Treat that duplicate as publishable-key auth; never downgrade a
-  // different bearer token because it may be an invalid or expired user JWT.
-  if (bearerToken && publishableKey && bearerToken === publishableKey) {
-    const headers = new Headers(req.headers);
-    headers.delete('Authorization');
-    return new Request(req, { headers });
-  }
-
-  return req;
+function withoutAuthorization(req: Request): Request {
+  const headers = new Headers(req.headers);
+  headers.delete('Authorization');
+  return new Request(req, { headers });
 }
 
 async function readBoundedText(response: Response, maxBytes: number): Promise<string> {
@@ -324,9 +313,11 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { data: authContext, error: authError } = await createSupabaseContext(getAuthRequest(req), {
-      auth: ['user', 'publishable'],
-    });
+    const userContext = await createSupabaseContext(req, { auth: 'user' });
+    const publishableContext = userContext.data
+      ? userContext
+      : await createSupabaseContext(withoutAuthorization(req), { auth: 'publishable' });
+    const { data: authContext, error: authError } = publishableContext;
     if (authError || !authContext) {
       console.warn({ event: 'audit_request_rejected', requestId, reason: 'authentication_failed', status: 401 });
       return new Response(JSON.stringify({ error: 'Authentication required' }), {
