@@ -293,7 +293,7 @@ Deno.serve(async (req: Request) => {
     'Cache-Control': 'no-store',
   };
 
-  if (!isAllowedOrigin(req, allowedOrigins)) {
+  if (!isAllowedOrigin(req, allowedOrigins, !req.headers.has('Authorization'))) {
     console.warn({ event: 'audit_request_rejected', requestId, reason: 'origin_not_allowed', status: 403 });
     return jsonResponse(req, { error: 'Origin not allowed' }, 403, allowedOrigins, requestId);
   }
@@ -314,7 +314,16 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const hasAuthorizationHeader = req.headers.has('Authorization');
     const userContext = await createSupabaseContext(req, { auth: 'user' });
+    if (!userContext.data && hasAuthorizationHeader) {
+      console.warn({ event: 'audit_request_rejected', requestId, reason: 'authentication_failed', status: 401 });
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
+        status: 401,
+        headers: responseHeaders,
+      });
+    }
+
     const publishableContext = userContext.data
       ? userContext
       : await createSupabaseContext(withoutAuthorization(req), { auth: 'publishable' });

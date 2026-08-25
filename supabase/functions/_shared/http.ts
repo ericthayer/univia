@@ -12,9 +12,13 @@ export function getAllowedOrigins(configuredOrigins?: string): Set<string> {
   return new Set(origins?.length ? origins : DEFAULT_ALLOWED_ORIGINS);
 }
 
-export function isAllowedOrigin(req: Request, allowedOrigins: Set<string>): boolean {
+export function isAllowedOrigin(
+  req: Request,
+  allowedOrigins: Set<string>,
+  requireOrigin = false,
+): boolean {
   const origin = req.headers.get('Origin');
-  return !origin || allowedOrigins.has(origin);
+  return (requireOrigin && !origin) ? false : !origin || allowedOrigins.has(origin);
 }
 
 export function getCorsHeaders(

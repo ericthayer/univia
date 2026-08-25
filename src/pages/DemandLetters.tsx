@@ -33,6 +33,7 @@ export default function DemandLetters() {
   }, []);
 
   const loadLetters = async () => {
+    setLoading(true);
     try {
       setLoadError(null);
       const { data, error } = await supabase

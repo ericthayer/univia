@@ -19,7 +19,7 @@ describe('http boundary helpers', () => {
     ]);
   });
 
-  it('allows requests without an Origin and only configured browser origins', () => {
+  it('allows requests without an Origin by default and only configured browser origins', () => {
     const allowedOrigins = getAllowedOrigins('https://app.example');
     expect(isAllowedOrigin(new Request('https://edge.example'), allowedOrigins)).toBe(true);
     expect(isAllowedOrigin(new Request('https://edge.example', {
@@ -28,6 +28,17 @@ describe('http boundary helpers', () => {
     expect(isAllowedOrigin(new Request('https://edge.example', {
       headers: { Origin: 'https://evil.example' },
     }), allowedOrigins)).toBe(false);
+  });
+
+  it('requires an allowlisted Origin when configured for anonymous access', () => {
+    const allowedOrigins = getAllowedOrigins('https://app.example');
+    expect(isAllowedOrigin(new Request('https://edge.example'), allowedOrigins, true)).toBe(false);
+    expect(isAllowedOrigin(new Request('https://edge.example', {
+      headers: { Origin: 'https://app.example' },
+    }), allowedOrigins, true)).toBe(true);
+    expect(isAllowedOrigin(new Request('https://edge.example', {
+      headers: { Origin: 'https://evil.example' },
+    }), allowedOrigins, true)).toBe(false);
   });
 
   it('returns narrow CORS headers and a request correlation header', () => {
