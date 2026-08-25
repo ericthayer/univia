@@ -100,6 +100,7 @@ This project follows WCAG 2.1 Level AA standards:
 ## Release Automation
 
 - Semantic Release runs after successful CI on `main`. Manual workflow dispatch is also restricted to `main`.
+- Netlify builds and deploys the `main` branch; GitHub Pages is not used.
 - Version bumps follow Conventional Commits:
    - `feat` -> minor
    - `fix`, `perf`, `revert` -> patch
@@ -108,5 +109,5 @@ This project follows WCAG 2.1 Level AA standards:
    - any commit type with a `BREAKING CHANGE:` note publishes a major release
 - Releases are published as GitHub tags and GitHub Releases (no npm publish).
 - PR titles are validated for Conventional Commit format in CI. Use squash merge so the PR title becomes the commit message on `main`.
-- Git tags and GitHub Releases are the release version source of truth. Each release also updates `package.json` and `package-lock.json` in an automated release commit; the checked-in `CHANGELOG.md` remains manually maintained.
+- Git tags and GitHub Releases are the release version source of truth. Release metadata is not committed automatically because `main` requires changes through a pull request; the checked-in `CHANGELOG.md` remains manually maintained.
 - Local preview command: `npm run release:dry-run`
