@@ -108,5 +108,5 @@ This project follows WCAG 2.1 Level AA standards:
    - any commit type with a `BREAKING CHANGE:` note publishes a major release
 - Releases are published as GitHub tags and GitHub Releases (no npm publish).
 - PR titles are validated for Conventional Commit format in CI. Use squash merge so the PR title becomes the commit message on `main`.
-- Git tags and GitHub Releases are the release version source of truth. Releases do not update `package.json` or the checked-in `CHANGELOG.md`; the current package metadata may therefore differ from the latest release tag.
+- Git tags and GitHub Releases are the release version source of truth. Each release also updates `package.json` and `package-lock.json` in an automated release commit; the checked-in `CHANGELOG.md` remains manually maintained.
 - Local preview command: `npm run release:dry-run`

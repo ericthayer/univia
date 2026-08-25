@@ -106,7 +106,7 @@
 - Releases are managed by semantic-release after successful CI on `main`; manual dispatch is restricted to `main`.
 - Releases publish Git tags and GitHub Releases (no npm publish).
 - Keep squash merge enabled so semantic PR titles map directly to the merged commit message.
-- Git tags and GitHub Releases are canonical. Semantic Release does not update `package.json` or the checked-in `CHANGELOG.md`.
+- Git tags and GitHub Releases are canonical. Semantic Release updates `package.json` and `package-lock.json` in an automated release commit; the checked-in `CHANGELOG.md` remains manually maintained.
 
 ### Theme System
 
