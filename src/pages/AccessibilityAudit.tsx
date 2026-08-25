@@ -24,7 +24,7 @@ import ComplianceGauge from '../components/ui/ComplianceGauge';
 import AuditHistoryCard from '../components/audit/AuditHistoryCard';
 import { useAuth } from '../contexts/AuthContext';
 import { ensureSession } from '../services/session';
-import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from '../services/supabaseFunctions';
+import { LighthouseAuditError, requestLighthouseAudit } from '../services/lighthouseAudit.service';
 import Icon from '../components/ui/Icon';
 import { useFormValidation } from '../hooks/useFormValidation';
 import ValidationFeedback from '../components/validation/ValidationFeedback';
@@ -155,32 +155,13 @@ export default function AccessibilityAudit() {
         return;
       }
 
-      const fullUrl = urlField.value.startsWith('http') ? urlField.value : `https://${urlField.value}`;
-
-      const functionUrl = getSupabaseFunctionUrl('run-lighthouse-audit');
-
       abortControllerRef.current = new AbortController();
-
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: getSupabaseFunctionHeaders(currentSession.access_token),
-        body: JSON.stringify({ url: fullUrl }),
-        signal: abortControllerRef.current.signal,
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to run audit');
-      }
-
-      const result = await response.json();
-
-      if (result.session_id) {
-        navigate(`/audit/${result.session_id}`);
-      }
+      const result = await requestLighthouseAudit(urlField.value, currentSession.access_token, abortControllerRef.current.signal);
+      navigate(`/audit/${result.session_id}`);
     } catch (err: unknown) {
       if (!(err instanceof Error && err.name === 'AbortError')) {
         console.error('Audit error:', err);
-        setApiError('Failed to run audit. Please try again.');
+        setApiError(err instanceof LighthouseAuditError ? err.message : 'Failed to run audit. Please try again.');
       }
     } finally {
       setLoading(false);

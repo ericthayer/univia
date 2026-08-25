@@ -144,7 +144,7 @@ async function runSingleAudit(
   }
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch PageSpeed Insights data for ${deviceType}`);
+    throw new Error(response.status === 429 ? 'pagespeed_rate_limited' : 'pagespeed_upstream_error');
   }
 
   const data = await readBoundedJson(response);
@@ -152,6 +152,11 @@ async function runSingleAudit(
     ? parseLighthouseResult(data.lighthouseResult)
     : null;
   if (!lighthouseResult) throw new Error('invalid_pagespeed_response');
+
+  const runtimeError = isRecord(data) && isRecord(data.lighthouseResult) && isRecord(data.lighthouseResult.runtimeError)
+    ? data.lighthouseResult.runtimeError
+    : null;
+  if (runtimeError) throw new Error('pagespeed_runtime_error');
 
   const accessibilityScore = Math.round((lighthouseResult.categories.accessibility?.score || 0) * 100);
   const performanceScore = Math.round((lighthouseResult.categories.performance?.score || 0) * 100);
@@ -317,7 +322,13 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = getSupabaseKey('SUPABASE_SECRET_KEYS');
     if (!supabaseKey) {
-      return new Response(JSON.stringify({ error: 'Audit service unavailable' }), {
+      return new Response(JSON.stringify({ error: 'Audit service unavailable', errorType: 'CONFIGURATION_ERROR' }), {
+        status: 503,
+        headers: responseHeaders,
+      });
+    }
+    if (!Deno.env.get('PAGESPEED_API_KEY')) {
+      return new Response(JSON.stringify({ error: 'Audit service unavailable', errorType: 'CONFIGURATION_ERROR' }), {
         status: 503,
         headers: responseHeaders,
       });
@@ -363,13 +374,29 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (error) {
+    const errorCode = error instanceof Error ? error.message : 'INTERNAL_ERROR';
+    const status = errorCode === 'pagespeed_timeout'
+      ? 504
+      : errorCode === 'pagespeed_rate_limited'
+        ? 429
+        : errorCode.startsWith('pagespeed_') || errorCode === 'invalid_pagespeed_response'
+          ? 502
+          : 500;
     console.error('Audit request failed', {
       errorType: error instanceof Error ? error.name : 'UnknownError',
+      errorCode,
     });
     return new Response(
-      JSON.stringify({ error: 'Unable to complete audit', errorType: 'INTERNAL_ERROR' }),
+      JSON.stringify({
+        error: status === 504
+          ? 'Audit provider timed out'
+          : status === 429
+            ? 'Audit provider is busy'
+            : 'Unable to complete audit',
+        errorType: status === 500 ? 'INTERNAL_ERROR' : errorCode.toUpperCase(),
+      }),
       {
-        status: 500,
+        status,
         headers: responseHeaders,
       }
     );
