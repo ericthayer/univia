@@ -112,13 +112,11 @@ export default function UserAuditMetrics({
     if (!urlField.value.trim() || urlField.error || auditLoading) return;
 
     const currentSession = await ensureSession();
-    if (!currentSession?.access_token) return;
-
     setAuditLoading(true);
 
     try {
       abortControllerRef.current = new AbortController();
-      const result = await requestLighthouseAudit(urlField.value, currentSession.access_token, abortControllerRef.current.signal);
+      const result = await requestLighthouseAudit(urlField.value, currentSession?.access_token, abortControllerRef.current.signal);
       navigate(`/audit/${result.session_id}`, {
         state: { partialAudit: hasFailedDevice(result) },
       });

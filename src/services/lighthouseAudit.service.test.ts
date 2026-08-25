@@ -89,8 +89,22 @@ describe('requestLighthouseAudit', () => {
     expect(hasFailedDevice(result)).toBe(true);
   });
 
-  it('does not make unauthenticated requests', async () => {
-    await expect(requestLighthouseAudit('example.com', null)).rejects.toMatchObject({ status: 401 });
-    expect(fetchMock).not.toHaveBeenCalled();
+  it('allows publishable-key-only requests for anonymous audits', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({
+      success: true,
+      session_id: 'anonymous-session-id',
+      mobile: { status: 'completed', audit_id: 'mobile-id' },
+      desktop: { status: 'completed', audit_id: 'desktop-id' },
+    }), { status: 200 }));
+
+    await expect(requestLighthouseAudit('example.com', null)).resolves.toMatchObject({
+      session_id: 'anonymous-session-id',
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: expect.not.objectContaining({ Authorization: expect.any(String) }),
+      }),
+    );
   });
 });

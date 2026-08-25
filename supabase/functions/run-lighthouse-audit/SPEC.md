@@ -6,7 +6,7 @@ Make hosted website audits reliable and diagnosable without replacing the existi
 
 ## Usage
 
-The browser sends an authenticated `POST` request to `run-lighthouse-audit` with:
+The browser sends a `POST` request to `run-lighthouse-audit` with:
 
 ```json
 { "url": "https://example.com" }
@@ -25,7 +25,8 @@ The function validates the target, runs PageSpeed Insights for mobile and deskto
 
 ## Architecture and data flow
 
-- Authenticate with the caller's bearer token.
+- Authenticate with either a caller bearer token or the Supabase publishable key. A request with a missing or invalid bearer token is rejected rather than downgraded to publishable access.
+- Store user-authenticated and Supabase anonymous-session audits with their user ID. A publishable-key-only audit is stored without a user ID, and its result is available only in the immediate response.
 - Validate HTTPS hostname, business ownership, and public DNS targets.
 - Call Google PageSpeed Insights v5 with explicit Lighthouse categories and device strategy.
 - Bound upstream response size and timeout.
@@ -37,7 +38,7 @@ The function validates the target, runs PageSpeed Insights for mobile and deskto
 
 ## Error contract
 
-- `401`: authentication required.
+- `401`: missing or invalid publishable/user credentials.
 - `403`: origin or business access denied.
 - `422`: malformed/private/unverifiable audit target.
 - `429`: PageSpeed rate limit.
@@ -76,3 +77,5 @@ A successful response must contain a non-empty `session_id` and explicit `status
 - 2026-08-25: Initial specification for hosted Lighthouse audit reliability hardening.
 - 2026-08-25: Implemented key fallbacks, request-correlated provider diagnostics, bounded error parsing, and partial device success handling.
 - 2026-08-25: Accepted Lighthouse checklist-object detail payloads used by current PageSpeed responses after reproducing the hosted `502` with `ethayer.design`.
+- 2026-08-25: Added `@supabase/server` user-or-publishable authentication so authenticated and anonymous callers can run audits without weakening audit ownership policies.
+- 2026-08-25: Accepted the Supabase dashboard anon tester's duplicate publishable-key bearer header without downgrading other invalid bearer tokens.

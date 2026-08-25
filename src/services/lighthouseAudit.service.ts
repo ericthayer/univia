@@ -114,13 +114,9 @@ function getErrorMessage(status: number, payload: ErrorPayload): string {
 
 export async function requestLighthouseAudit(
   rawUrl: string,
-  accessToken: string | null | undefined,
+  accessToken?: string | null,
   signal?: AbortSignal,
 ): Promise<LighthouseAuditResponse> {
-  if (!accessToken) {
-    throw new LighthouseAuditError('Authentication required.', 401, null, 'AUTHENTICATION_REQUIRED');
-  }
-
   const url = normalizeAuditUrl(rawUrl);
   const response = await fetch(getSupabaseFunctionUrl(AUDIT_FUNCTION), {
     method: 'POST',

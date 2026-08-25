@@ -1,8 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import { createClient } from 'npm:@supabase/supabase-js@2';
-import { authenticateRequest } from '../_shared/auth.ts';
+import { createSupabaseContext } from 'npm:@supabase/server';
+import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import { resolvesToPublicIps, validateAuditRequest } from '../_shared/audit-validation.ts';
-import { getSupabaseKey } from '../_shared/supabase-keys.ts';
 import {
   createRequestId,
   getAllowedOrigins,
@@ -25,6 +24,23 @@ const MAX_PROVIDER_ERROR_BYTES = 16 * 1024;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function getAuthRequest(req: Request): Request {
+  const authorization = req.headers.get('Authorization');
+  const publishableKey = req.headers.get('apikey');
+  const bearerToken = authorization?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
+
+  // The Supabase dashboard's anon test can send the apikey again as a bearer
+  // value. Treat that duplicate as publishable-key auth; never downgrade a
+  // different bearer token because it may be an invalid or expired user JWT.
+  if (bearerToken && publishableKey && bearerToken === publishableKey) {
+    const headers = new Headers(req.headers);
+    headers.delete('Authorization');
+    return new Request(req, { headers });
+  }
+
+  return req;
 }
 
 async function readBoundedText(response: Response, maxBytes: number): Promise<string> {
@@ -97,15 +113,13 @@ function getProviderErrorSummary(payload: string): string {
   return 'non_json_provider_error';
 }
 
-type SupabaseClient = ReturnType<typeof createClient>;
-
 async function runSingleAudit(
   url: string,
   deviceType: 'mobile' | 'desktop',
   sessionId: string,
   requestId: string,
   supabase: SupabaseClient,
-  userId: string,
+  userId?: string,
   businessId?: string
 ): Promise<AuditRunSuccess> {
   const strategy = deviceType === 'mobile' ? 'MOBILE' : 'DESKTOP';
@@ -310,14 +324,17 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const auth = await authenticateRequest(req);
-    if (!auth) {
-      console.warn({ event: 'audit_request_rejected', requestId, reason: 'authentication_required', status: 401 });
+    const { data: authContext, error: authError } = await createSupabaseContext(getAuthRequest(req), {
+      auth: ['user', 'publishable'],
+    });
+    if (authError || !authContext) {
+      console.warn({ event: 'audit_request_rejected', requestId, reason: 'authentication_failed', status: 401 });
       return new Response(JSON.stringify({ error: 'Authentication required' }), {
         status: 401,
         headers: responseHeaders,
       });
     }
+    const userId = authContext.user?.id;
 
     let requestBody: unknown;
     try {
@@ -348,15 +365,6 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = getSupabaseKey('SUPABASE_SECRET_KEYS');
-    if (!supabaseKey) {
-      console.error({ event: 'audit_configuration_error', requestId, missing: 'supabase_secret_key' });
-      return new Response(JSON.stringify({ error: 'Audit service unavailable', errorType: 'CONFIGURATION_ERROR' }), {
-        status: 503,
-        headers: responseHeaders,
-      });
-    }
     if (!Deno.env.get('PAGESPEED_API_KEY')?.trim()) {
       console.error({ event: 'audit_configuration_error', requestId, missing: 'pagespeed_api_key' });
       return new Response(JSON.stringify({ error: 'Audit service unavailable', errorType: 'CONFIGURATION_ERROR' }), {
@@ -364,14 +372,22 @@ Deno.serve(async (req: Request) => {
         headers: responseHeaders,
       });
     }
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = authContext.supabaseAdmin;
 
     if (business_id) {
+      if (!userId) {
+        console.warn({ event: 'audit_request_rejected', requestId, reason: 'business_access_denied', status: 403 });
+        return new Response(JSON.stringify({ error: 'Business access denied' }), {
+          status: 403,
+          headers: responseHeaders,
+        });
+      }
+
       const { data: business, error: businessError } = await supabase
         .from('businesses')
         .select('id')
         .eq('id', business_id)
-        .eq('owner_id', auth.user.id)
+        .eq('owner_id', userId)
         .maybeSingle();
 
       if (businessError) {
@@ -390,8 +406,8 @@ Deno.serve(async (req: Request) => {
     const sessionId = crypto.randomUUID();
 
     const settledResults = await Promise.allSettled([
-      runSingleAudit(url, 'mobile', sessionId, requestId, supabase, auth.user.id, business_id),
-      runSingleAudit(url, 'desktop', sessionId, requestId, supabase, auth.user.id, business_id),
+      runSingleAudit(url, 'mobile', sessionId, requestId, supabase, userId, business_id),
+      runSingleAudit(url, 'desktop', sessionId, requestId, supabase, userId, business_id),
     ]);
     const mobileResult: AuditDeviceResult = toDeviceResult('mobile', settledResults[0]);
     const desktopResult: AuditDeviceResult = toDeviceResult('desktop', settledResults[1]);

@@ -1,2 +1,2 @@
 [functions.run-lighthouse-audit]
-verify_jwt = true
+verify_jwt = false

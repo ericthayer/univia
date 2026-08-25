@@ -58,14 +58,8 @@ export default function QuickAuditForm() {
       }
 
       const currentSession = await ensureSession();
-      if (!currentSession?.access_token) {
-        setApiError('Unable to establish a secure session. Please try again.');
-        setLoading(false);
-        return;
-      }
-
       abortControllerRef.current = new AbortController();
-      const result = await requestLighthouseAudit(urlField.value, currentSession.access_token, abortControllerRef.current.signal);
+      const result = await requestLighthouseAudit(urlField.value, currentSession?.access_token, abortControllerRef.current.signal);
       navigate(`/audit/${result.session_id}`, {
         state: { partialAudit: hasFailedDevice(result) },
       });
