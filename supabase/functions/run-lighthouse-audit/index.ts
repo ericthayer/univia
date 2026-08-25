@@ -224,10 +224,11 @@ async function runSingleAudit(
   const violations = [];
 
   for (const [key, audit] of Object.entries(a11yAudits)) {
-    if (audit.score !== null && audit.score < 1 && audit.score !== undefined) {
-      const severity = audit.score === 0 ? 'critical' : audit.score < 0.5 ? 'serious' : audit.score < 0.9 ? 'moderate' : 'minor';
+    const score = audit.score;
+    if (typeof score === 'number' && score < 1) {
+      const severity = score === 0 ? 'critical' : score < 0.5 ? 'serious' : score < 0.9 ? 'moderate' : 'minor';
 
-      let remediationSteps = [];
+      let remediationSteps: string[] = [];
       if (audit.details?.items && Array.isArray(audit.details.items)) {
         remediationSteps = audit.details.items.slice(0, 5).map((item, index) => {
           if (typeof item === 'string') {
@@ -325,7 +326,7 @@ Deno.serve(async (req: Request) => {
         headers: responseHeaders,
       });
     }
-    const userId = authContext.user?.id;
+    const userId = authContext.userClaims?.id;
 
     let requestBody: unknown;
     try {

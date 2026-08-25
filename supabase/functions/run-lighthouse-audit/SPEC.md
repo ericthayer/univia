@@ -79,3 +79,4 @@ A successful response must contain a non-empty `session_id` and explicit `status
 - 2026-08-25: Accepted Lighthouse checklist-object detail payloads used by current PageSpeed responses after reproducing the hosted `502` with `ethayer.design`.
 - 2026-08-25: Added `@supabase/server` user-or-publishable authentication so authenticated and anonymous callers can run audits without weakening audit ownership policies.
 - 2026-08-25: Accepted the Supabase dashboard anon tester's duplicate publishable-key bearer header without downgrading other invalid bearer tokens.
+- 2026-08-25: Persist audit ownership from `@supabase/server`'s `userClaims.id`, including anonymous Auth sessions, so private history RLS can return completed audits.
