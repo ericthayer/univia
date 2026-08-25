@@ -9,7 +9,7 @@ import Icon from '../ui/Icon';
 import { useUserAudits } from '../../hooks/useUserAudits';
 import { useFormValidation } from '../../hooks/useFormValidation';
 import { ensureSession } from '../../services/session';
-import { requestLighthouseAudit } from '../../services/lighthouseAudit.service';
+import { hasFailedDevice, requestLighthouseAudit } from '../../services/lighthouseAudit.service';
 import DocumentUploadDrawer from '../documents/DocumentUploadDrawer';
 
 interface UserAuditMetricsProps {
@@ -119,7 +119,9 @@ export default function UserAuditMetrics({
     try {
       abortControllerRef.current = new AbortController();
       const result = await requestLighthouseAudit(urlField.value, currentSession.access_token, abortControllerRef.current.signal);
-      navigate(`/audit/${result.session_id}`);
+      navigate(`/audit/${result.session_id}`, {
+        state: { partialAudit: hasFailedDevice(result) },
+      });
     } catch (err: unknown) {
       if (!(err instanceof Error && err.name === 'AbortError')) {
         console.error('Audit error:', err);

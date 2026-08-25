@@ -18,5 +18,17 @@ export function parseSupabaseKeyDictionary(rawValue: string | undefined): string
 }
 
 export function getSupabaseKey(variableName: 'SUPABASE_PUBLISHABLE_KEYS' | 'SUPABASE_SECRET_KEYS'): string | null {
-  return parseSupabaseKeyDictionary(Deno.env.get(variableName));
+  const dictionaryKey = parseSupabaseKeyDictionary(Deno.env.get(variableName));
+  if (dictionaryKey) return dictionaryKey;
+
+  const fallbackNames = variableName === 'SUPABASE_SECRET_KEYS'
+    ? ['SUPABASE_SERVICE_ROLE_KEY']
+    : ['SUPABASE_PUBLISHABLE_KEY', 'SUPABASE_ANON_KEY'];
+
+  for (const fallbackName of fallbackNames) {
+    const fallbackKey = Deno.env.get(fallbackName)?.trim();
+    if (fallbackKey) return fallbackKey;
+  }
+
+  return null;
 }

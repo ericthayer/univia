@@ -24,7 +24,7 @@ import ComplianceGauge from '../components/ui/ComplianceGauge';
 import AuditHistoryCard from '../components/audit/AuditHistoryCard';
 import { useAuth } from '../contexts/AuthContext';
 import { ensureSession } from '../services/session';
-import { LighthouseAuditError, requestLighthouseAudit } from '../services/lighthouseAudit.service';
+import { hasFailedDevice, LighthouseAuditError, requestLighthouseAudit } from '../services/lighthouseAudit.service';
 import Icon from '../components/ui/Icon';
 import { useFormValidation } from '../hooks/useFormValidation';
 import ValidationFeedback from '../components/validation/ValidationFeedback';
@@ -157,7 +157,9 @@ export default function AccessibilityAudit() {
 
       abortControllerRef.current = new AbortController();
       const result = await requestLighthouseAudit(urlField.value, currentSession.access_token, abortControllerRef.current.signal);
-      navigate(`/audit/${result.session_id}`);
+      navigate(`/audit/${result.session_id}`, {
+        state: { partialAudit: hasFailedDevice(result) },
+      });
     } catch (err: unknown) {
       if (!(err instanceof Error && err.name === 'AbortError')) {
         console.error('Audit error:', err);

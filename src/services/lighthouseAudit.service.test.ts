@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { LighthouseAuditError, requestLighthouseAudit } from './lighthouseAudit.service';
+import { hasFailedDevice, LighthouseAuditError, requestLighthouseAudit } from './lighthouseAudit.service';
 
 const fetchMock = vi.fn();
 vi.stubGlobal('fetch', fetchMock);
@@ -8,7 +8,12 @@ describe('requestLighthouseAudit', () => {
   beforeEach(() => fetchMock.mockReset());
 
   it('normalizes bare domains and returns a valid audit session', async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ success: true, session_id: 'session-id', mobile: {}, desktop: {} }), {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({
+      success: true,
+      session_id: 'session-id',
+      mobile: { status: 'completed', audit_id: 'mobile-id' },
+      desktop: { status: 'completed', audit_id: 'desktop-id' },
+    }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     }));
@@ -40,6 +45,48 @@ describe('requestLighthouseAudit', () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ success: true }), { status: 200 }));
 
     await expect(requestLighthouseAudit('example.com', 'session-token')).rejects.toBeInstanceOf(LighthouseAuditError);
+  });
+
+  it('accepts a session when one device completed and the other failed', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({
+      success: true,
+      session_id: 'partial-session-id',
+      mobile: { status: 'completed', audit_id: 'mobile-id' },
+      desktop: { status: 'failed', error_type: 'PAGESPEED_TIMEOUT' },
+    }), { status: 200 }));
+
+    await expect(requestLighthouseAudit('example.com', 'session-token')).resolves.toMatchObject({
+      session_id: 'partial-session-id',
+      desktop: { status: 'failed' },
+    });
+  });
+
+  it('normalizes legacy completed device records during deployment overlap', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({
+      success: true,
+      session_id: 'legacy-session-id',
+      mobile: { audit_id: 'mobile-id', device_type: 'mobile' },
+      desktop: { audit_id: 'desktop-id', device_type: 'desktop' },
+    }), { status: 200 }));
+
+    await expect(requestLighthouseAudit('example.com', 'session-token')).resolves.toMatchObject({
+      session_id: 'legacy-session-id',
+      mobile: { status: 'completed', audit_id: 'mobile-id' },
+      desktop: { status: 'completed', audit_id: 'desktop-id' },
+    });
+  });
+
+  it('identifies a partial device result without treating it as a request failure', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({
+      success: true,
+      session_id: 'partial-session-id',
+      mobile: { status: 'completed', audit_id: 'mobile-id' },
+      desktop: { status: 'failed', error_type: 'PAGESPEED_TIMEOUT' },
+    }), { status: 200 }));
+
+    const result = await requestLighthouseAudit('example.com', 'session-token');
+
+    expect(hasFailedDevice(result)).toBe(true);
   });
 
   it('does not make unauthenticated requests', async () => {

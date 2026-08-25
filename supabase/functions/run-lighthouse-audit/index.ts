@@ -10,79 +10,30 @@ import {
   isAllowedOrigin,
   jsonResponse,
 } from '../_shared/http.ts';
+import {
+  getAuditErrorCode,
+  getAuditErrorStatus,
+  toDeviceResult,
+  type AuditDeviceResult,
+  type AuditRunSuccess,
+} from './audit-result.ts';
+import { parseLighthouseResult } from './lighthouse-result.ts';
 
 const UPSTREAM_TIMEOUT_MS = 90_000;
 const MAX_PAGESPEED_RESPONSE_BYTES = 5 * 1024 * 1024;
-
-interface LighthouseAudit {
-  score?: number | null;
-  title: string;
-  description: string;
-  displayValue?: string;
-  details?: {
-    data?: unknown;
-    items?: unknown[];
-  };
-}
-
-interface LighthouseResult {
-  categories: Record<string, { score?: number | null }>;
-  audits: Record<string, LighthouseAudit>;
-}
+const MAX_PROVIDER_ERROR_BYTES = 16 * 1024;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function isFiniteScore(value: unknown): value is number | null | undefined {
-  return value === null || value === undefined || (
-    typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1
-  );
-}
-
-function parseLighthouseResult(value: unknown): LighthouseResult | null {
-  if (!isRecord(value) || !isRecord(value.categories) || !isRecord(value.audits)) {
-    return null;
-  }
-
-  const categories: LighthouseResult['categories'] = {};
-  for (const [name, category] of Object.entries(value.categories)) {
-    if (!isRecord(category) || !isFiniteScore(category.score)) return null;
-    categories[name] = { score: category.score };
-  }
-
-  const audits: LighthouseResult['audits'] = {};
-  for (const [name, audit] of Object.entries(value.audits)) {
-    if (!isRecord(audit) || !isFiniteScore(audit.score)) return null;
-
-    const details = audit.details === undefined || audit.details === null
-      ? undefined
-      : audit.details;
-    if (details !== undefined && !isRecord(details)) return null;
-    if (details && details.items !== undefined && !Array.isArray(details.items)) return null;
-
-    audits[name] = {
-      score: audit.score,
-      title: typeof audit.title === 'string' ? audit.title.slice(0, 1_000) : name,
-      description: typeof audit.description === 'string' ? audit.description.slice(0, 2_000) : '',
-      displayValue: typeof audit.displayValue === 'string' ? audit.displayValue.slice(0, 1_000) : undefined,
-      details: details ? {
-        data: details.data,
-        items: details.items as unknown[] | undefined,
-      } : undefined,
-    };
-  }
-
-  return { categories, audits };
-}
-
-async function readBoundedJson(response: Response): Promise<unknown> {
+async function readBoundedText(response: Response, maxBytes: number): Promise<string> {
   if (!response.body) {
     const text = await response.text();
-    if (new TextEncoder().encode(text).byteLength > MAX_PAGESPEED_RESPONSE_BYTES) {
+    if (new TextEncoder().encode(text).byteLength > maxBytes) {
       throw new Error('pagespeed_response_too_large');
     }
-    return JSON.parse(text);
+    return text;
   }
 
   const reader = response.body.getReader();
@@ -94,7 +45,7 @@ async function readBoundedJson(response: Response): Promise<unknown> {
       const { done, value } = await reader.read();
       if (done) break;
       totalBytes += value.byteLength;
-      if (totalBytes > MAX_PAGESPEED_RESPONSE_BYTES) {
+      if (totalBytes > maxBytes) {
         await reader.cancel();
         throw new Error('pagespeed_response_too_large');
       }
@@ -111,7 +62,39 @@ async function readBoundedJson(response: Response): Promise<unknown> {
     offset += chunk.byteLength;
   }
 
-  return JSON.parse(new TextDecoder().decode(bytes));
+  return new TextDecoder().decode(bytes);
+}
+
+async function readBoundedJson(response: Response): Promise<unknown> {
+  return JSON.parse(await readBoundedText(response, MAX_PAGESPEED_RESPONSE_BYTES));
+}
+
+function sanitizeProviderMessage(value: string): string {
+  return value
+    .replace(/([?&](?:key|api_key)=)[^&\s]+/gi, '$1[REDACTED]')
+    .replace(/Bearer\s+[^\s]+/gi, 'Bearer [REDACTED]')
+    .replace(/https?:\/\/[^\s]+/gi, '[URL]')
+    .slice(0, 500);
+}
+
+function getProviderErrorSummary(payload: string): string {
+  try {
+    const parsed: unknown = JSON.parse(payload);
+    if (isRecord(parsed)) {
+      const providerError = isRecord(parsed.error) ? parsed.error : parsed;
+      const code = typeof providerError.code === 'string' ? providerError.code : undefined;
+      const message = typeof providerError.message === 'string' ? providerError.message : undefined;
+      if (code || message) {
+        return sanitizeProviderMessage(
+          [code && `code=${code}`, message && `message=${message}`].filter(Boolean).join('; '),
+        );
+      }
+    }
+  } catch {
+    // Keep provider failures bounded and generic when the response is not JSON.
+  }
+
+  return 'non_json_provider_error';
 }
 
 type SupabaseClient = ReturnType<typeof createClient>;
@@ -120,13 +103,14 @@ async function runSingleAudit(
   url: string,
   deviceType: 'mobile' | 'desktop',
   sessionId: string,
+  requestId: string,
   supabase: SupabaseClient,
-  businessId?: string,
-  userId: string
-) {
+  userId: string,
+  businessId?: string
+): Promise<AuditRunSuccess> {
   const strategy = deviceType === 'mobile' ? 'MOBILE' : 'DESKTOP';
-  const apiKey = Deno.env.get('PAGESPEED_API_KEY');
-  const pagespeedUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&category=ACCESSIBILITY&category=PERFORMANCE&category=BEST_PRACTICES&category=SEO&strategy=${strategy}${apiKey ? `&key=${apiKey}` : ''}`;
+  const apiKey = Deno.env.get('PAGESPEED_API_KEY')?.trim();
+  const pagespeedUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&category=ACCESSIBILITY&category=PERFORMANCE&category=BEST_PRACTICES&category=SEO&strategy=${strategy}&key=${encodeURIComponent(apiKey || '')}`;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
@@ -136,36 +120,75 @@ async function runSingleAudit(
     response = await fetch(pagespeedUrl, { signal: controller.signal });
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
+      console.error({ event: 'pagespeed_request_failed', requestId, deviceType, errorCode: 'pagespeed_timeout' });
       throw new Error('pagespeed_timeout');
     }
-    throw error;
+    console.error({
+      event: 'pagespeed_request_failed',
+      requestId,
+      deviceType,
+      errorCode: 'pagespeed_upstream_error',
+      errorType: error instanceof Error ? error.name : 'UnknownError',
+    });
+    throw new Error('pagespeed_upstream_error');
   } finally {
     clearTimeout(timeout);
   }
 
   if (!response.ok) {
-    throw new Error(response.status === 429 ? 'pagespeed_rate_limited' : 'pagespeed_upstream_error');
+    let providerError = 'provider_error_unreadable';
+    try {
+      providerError = getProviderErrorSummary(await readBoundedText(response, MAX_PROVIDER_ERROR_BYTES));
+    } catch {
+      // The status and stable classification are enough when the provider body cannot be read.
+    }
+    const errorCode = response.status === 429 ? 'pagespeed_rate_limited' : 'pagespeed_upstream_error';
+    console.error({
+      event: 'pagespeed_provider_error',
+      requestId,
+      deviceType,
+      errorCode,
+      upstreamStatus: response.status,
+      providerError,
+    });
+    throw new Error(errorCode);
   }
 
-  const data = await readBoundedJson(response);
+  let data: unknown;
+  try {
+    data = await readBoundedJson(response);
+  } catch (error) {
+    const errorCode = error instanceof Error && error.message === 'pagespeed_response_too_large'
+      ? error.message
+      : 'invalid_pagespeed_response';
+    console.error({ event: 'pagespeed_response_invalid', requestId, deviceType, errorCode });
+    throw new Error(errorCode);
+  }
   const lighthouseResult = isRecord(data)
     ? parseLighthouseResult(data.lighthouseResult)
     : null;
-  if (!lighthouseResult) throw new Error('invalid_pagespeed_response');
+  if (!lighthouseResult) {
+    console.error({ event: 'pagespeed_response_invalid', requestId, deviceType, errorCode: 'invalid_pagespeed_response' });
+    throw new Error('invalid_pagespeed_response');
+  }
 
   const runtimeError = isRecord(data) && isRecord(data.lighthouseResult) && isRecord(data.lighthouseResult.runtimeError)
     ? data.lighthouseResult.runtimeError
     : null;
-  if (runtimeError) throw new Error('pagespeed_runtime_error');
+  if (runtimeError) {
+    console.error({ event: 'pagespeed_runtime_error', requestId, deviceType });
+    throw new Error('pagespeed_runtime_error');
+  }
 
   const accessibilityScore = Math.round((lighthouseResult.categories.accessibility?.score || 0) * 100);
   const performanceScore = Math.round((lighthouseResult.categories.performance?.score || 0) * 100);
   const bestPracticesScore = Math.round((lighthouseResult.categories['best-practices']?.score || 0) * 100);
   const seoScore = Math.round((lighthouseResult.categories.seo?.score || 0) * 100);
 
+  const screenshotItems = lighthouseResult.audits['screenshot-thumbnails']?.details?.items;
   const screenshotCandidate = lighthouseResult.audits['final-screenshot']?.details?.data ||
-    (isRecord(lighthouseResult.audits['screenshot-thumbnails']?.details?.items?.[0])
-      ? lighthouseResult.audits['screenshot-thumbnails']?.details?.items?.[0].data
+    (Array.isArray(screenshotItems) && isRecord(screenshotItems[0])
+      ? screenshotItems[0].data
       : undefined);
   const screenshotData = typeof screenshotCandidate === 'string' && screenshotCandidate.length <= MAX_PAGESPEED_RESPONSE_BYTES
     ? screenshotCandidate
@@ -267,6 +290,7 @@ Deno.serve(async (req: Request) => {
   };
 
   if (!isAllowedOrigin(req, allowedOrigins)) {
+    console.warn({ event: 'audit_request_rejected', requestId, reason: 'origin_not_allowed', status: 403 });
     return jsonResponse(req, { error: 'Origin not allowed' }, 403, allowedOrigins, requestId);
   }
 
@@ -278,6 +302,7 @@ Deno.serve(async (req: Request) => {
   }
 
   if (req.method !== 'POST') {
+    console.warn({ event: 'audit_request_rejected', requestId, reason: 'method_not_allowed', status: 405 });
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
       headers: responseHeaders,
@@ -287,6 +312,7 @@ Deno.serve(async (req: Request) => {
   try {
     const auth = await authenticateRequest(req);
     if (!auth) {
+      console.warn({ event: 'audit_request_rejected', requestId, reason: 'authentication_required', status: 401 });
       return new Response(JSON.stringify({ error: 'Authentication required' }), {
         status: 401,
         headers: responseHeaders,
@@ -297,6 +323,7 @@ Deno.serve(async (req: Request) => {
     try {
       requestBody = await req.json();
     } catch {
+      console.warn({ event: 'audit_request_rejected', requestId, reason: 'invalid_request_body', status: 400 });
       return new Response(JSON.stringify({ error: 'Invalid request body' }), {
         status: 400,
         headers: responseHeaders,
@@ -304,7 +331,8 @@ Deno.serve(async (req: Request) => {
     }
 
     const validation = validateAuditRequest(requestBody);
-    if (!validation.ok) {
+    if (validation.ok === false) {
+      console.warn({ event: 'audit_request_rejected', requestId, reason: 'validation_failed', status: validation.status });
       return new Response(JSON.stringify({ error: validation.error }), {
         status: validation.status,
         headers: responseHeaders,
@@ -313,6 +341,7 @@ Deno.serve(async (req: Request) => {
 
     const { url, business_id } = validation.value;
     if (!await resolvesToPublicIps(new URL(url).hostname)) {
+      console.warn({ event: 'audit_request_rejected', requestId, reason: 'target_not_public', status: 422 });
       return new Response(JSON.stringify({ error: 'URL could not be verified as public' }), {
         status: 422,
         headers: responseHeaders,
@@ -322,12 +351,14 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = getSupabaseKey('SUPABASE_SECRET_KEYS');
     if (!supabaseKey) {
+      console.error({ event: 'audit_configuration_error', requestId, missing: 'supabase_secret_key' });
       return new Response(JSON.stringify({ error: 'Audit service unavailable', errorType: 'CONFIGURATION_ERROR' }), {
         status: 503,
         headers: responseHeaders,
       });
     }
-    if (!Deno.env.get('PAGESPEED_API_KEY')) {
+    if (!Deno.env.get('PAGESPEED_API_KEY')?.trim()) {
+      console.error({ event: 'audit_configuration_error', requestId, missing: 'pagespeed_api_key' });
       return new Response(JSON.stringify({ error: 'Audit service unavailable', errorType: 'CONFIGURATION_ERROR' }), {
         status: 503,
         headers: responseHeaders,
@@ -348,6 +379,7 @@ Deno.serve(async (req: Request) => {
       }
 
       if (!business) {
+        console.warn({ event: 'audit_request_rejected', requestId, reason: 'business_access_denied', status: 403 });
         return new Response(JSON.stringify({ error: 'Business access denied' }), {
           status: 403,
           headers: responseHeaders,
@@ -357,10 +389,33 @@ Deno.serve(async (req: Request) => {
 
     const sessionId = crypto.randomUUID();
 
-    const [mobileResult, desktopResult] = await Promise.all([
-      runSingleAudit(url, 'mobile', sessionId, supabase, business_id, auth.user.id),
-      runSingleAudit(url, 'desktop', sessionId, supabase, business_id, auth.user.id),
+    const settledResults = await Promise.allSettled([
+      runSingleAudit(url, 'mobile', sessionId, requestId, supabase, auth.user.id, business_id),
+      runSingleAudit(url, 'desktop', sessionId, requestId, supabase, auth.user.id, business_id),
     ]);
+    const mobileResult: AuditDeviceResult = toDeviceResult('mobile', settledResults[0]);
+    const desktopResult: AuditDeviceResult = toDeviceResult('desktop', settledResults[1]);
+
+    for (const [deviceType, result] of [['mobile', mobileResult], ['desktop', desktopResult]] as const) {
+      if (result.status === 'failed') {
+        console.error({
+          event: 'audit_device_failed',
+          requestId,
+          deviceType,
+          errorCode: result.error_type,
+        });
+      }
+    }
+
+    if (mobileResult.status === 'failed' && desktopResult.status === 'failed') {
+      const rejectedResults = settledResults.filter(
+        (result): result is PromiseRejectedResult => result.status === 'rejected',
+      );
+      const errorCode = rejectedResults
+        .map((result) => getAuditErrorCode(result.reason))
+        .find((code) => code !== 'internal_error') || 'internal_error';
+      throw new Error(errorCode);
+    }
 
     return new Response(
       JSON.stringify({
@@ -374,17 +429,13 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (error) {
-    const errorCode = error instanceof Error ? error.message : 'INTERNAL_ERROR';
-    const status = errorCode === 'pagespeed_timeout'
-      ? 504
-      : errorCode === 'pagespeed_rate_limited'
-        ? 429
-        : errorCode.startsWith('pagespeed_') || errorCode === 'invalid_pagespeed_response'
-          ? 502
-          : 500;
-    console.error('Audit request failed', {
-      errorType: error instanceof Error ? error.name : 'UnknownError',
+    const errorCode = getAuditErrorCode(error);
+    const status = getAuditErrorStatus(errorCode);
+    console.error({
+      event: 'audit_request_failed',
+      requestId,
       errorCode,
+      status,
     });
     return new Response(
       JSON.stringify({

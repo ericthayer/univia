@@ -73,6 +73,21 @@ src/
 - Responsive design (mobile-first)
 - Full keyboard navigation support
 
+### Hosted Lighthouse audit configuration
+
+The `run-lighthouse-audit` Edge Function calls the Google PageSpeed Insights API,
+which runs Lighthouse remotely. Configure these as Supabase Edge Function
+secrets—not as `VITE_*` browser variables:
+
+- `PAGESPEED_API_KEY` — a Google PageSpeed Insights API key with the API enabled
+- `SUPABASE_SECRET_KEYS` and `SUPABASE_PUBLISHABLE_KEYS` — the existing JSON key dictionaries, or the compatible `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_ANON_KEY` fallbacks
+- `ALLOWED_ORIGINS` — comma-separated production and local browser origins
+
+The function runs mobile and desktop independently. If one provider run fails,
+the completed device report remains available and the results page identifies
+the unavailable device. If both runs fail, inspect the Edge Function logs using
+the returned `X-Request-ID` and the structured PageSpeed error classification.
+
 ## Accessibility
 
 This project follows WCAG 2.1 Level AA standards:

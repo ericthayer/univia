@@ -2,11 +2,22 @@ import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from './supabaseFu
 
 const AUDIT_FUNCTION = 'run-lighthouse-audit';
 
+export interface LighthouseAuditDeviceResult {
+  status: 'completed' | 'failed';
+  audit_id?: string;
+  device_type?: 'mobile' | 'desktop';
+  error_type?: string;
+}
+
 export interface LighthouseAuditResponse {
   success: true;
   session_id: string;
-  mobile: unknown;
-  desktop: unknown;
+  mobile: LighthouseAuditDeviceResult;
+  desktop: LighthouseAuditDeviceResult;
+}
+
+export function hasFailedDevice(result: LighthouseAuditResponse): boolean {
+  return result.mobile.status === 'failed' || result.desktop.status === 'failed';
 }
 
 interface ErrorPayload {
@@ -16,6 +27,36 @@ interface ErrorPayload {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function normalizeAuditDeviceResult(value: unknown): LighthouseAuditDeviceResult | null {
+  if (!isRecord(value)) return null;
+
+  if (value.status === 'completed' && typeof value.audit_id === 'string' && value.audit_id.length > 0) {
+    return {
+      status: 'completed',
+      audit_id: value.audit_id,
+      device_type: value.device_type === 'mobile' || value.device_type === 'desktop'
+        ? value.device_type
+        : undefined,
+    };
+  }
+
+  if (value.status === 'failed' && typeof value.error_type === 'string' && value.error_type.length > 0) {
+    return { status: 'failed', error_type: value.error_type };
+  }
+
+  if (typeof value.audit_id === 'string' && value.audit_id.length > 0) {
+    return {
+      status: 'completed',
+      audit_id: value.audit_id,
+      device_type: value.device_type === 'mobile' || value.device_type === 'desktop'
+        ? value.device_type
+        : undefined,
+    };
+  }
+
+  return null;
 }
 
 export class LighthouseAuditError extends Error {
@@ -110,5 +151,16 @@ export async function requestLighthouseAudit(
     throw new LighthouseAuditError('The audit service returned an incomplete response.', 502, requestId, 'INVALID_RESPONSE');
   }
 
-  return result as unknown as LighthouseAuditResponse;
+  const mobile = normalizeAuditDeviceResult(result.mobile);
+  const desktop = normalizeAuditDeviceResult(result.desktop);
+  if (!mobile || !desktop) {
+    throw new LighthouseAuditError('The audit service returned an incomplete response.', 502, requestId, 'INVALID_RESPONSE');
+  }
+
+  return {
+    success: true,
+    session_id: result.session_id,
+    mobile,
+    desktop,
+  };
 }

@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { ensureSession } from '../../services/session';
-import { LighthouseAuditError, requestLighthouseAudit } from '../../services/lighthouseAudit.service';
+import { hasFailedDevice, LighthouseAuditError, requestLighthouseAudit } from '../../services/lighthouseAudit.service';
 import { useFormValidation } from '../../hooks/useFormValidation';
 import ValidationFeedback from '../validation/ValidationFeedback';
 import Icon from '../ui/Icon';
@@ -66,7 +66,9 @@ export default function QuickAuditForm() {
 
       abortControllerRef.current = new AbortController();
       const result = await requestLighthouseAudit(urlField.value, currentSession.access_token, abortControllerRef.current.signal);
-      navigate(`/audit/${result.session_id}`);
+      navigate(`/audit/${result.session_id}`, {
+        state: { partialAudit: hasFailedDevice(result) },
+      });
     } catch (err: unknown) {
       if (!(err instanceof Error && err.name === 'AbortError')) {
         console.error('Audit error:', err);
