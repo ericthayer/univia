@@ -100,7 +100,7 @@ This project follows WCAG 2.1 Level AA standards:
 ## Release Automation
 
 - Semantic Release runs after successful CI on `main`. Manual workflow dispatch is also restricted to `main`.
-- Netlify builds and deploys the `main` branch; GitHub Pages is not used.
+- Netlify serves production deployments; GitHub Pages is not used.
 - Version bumps follow Conventional Commits:
    - `feat` -> minor
    - `fix`, `perf`, `revert` -> patch
@@ -110,4 +110,7 @@ This project follows WCAG 2.1 Level AA standards:
 - Releases are published as GitHub tags and GitHub Releases (no npm publish).
 - PR titles are validated for Conventional Commit format in CI. Use squash merge so the PR title becomes the commit message on `main`.
 - Git tags and GitHub Releases are the release version source of truth. Release metadata is not committed automatically because `main` requires changes through a pull request; the checked-in `CHANGELOG.md` remains manually maintained.
+- Production deployment is performed by the release workflow after semantic-release creates the tag. The workflow injects that exact version into the Vite build as `VITE_APP_VERSION` and deploys the artifact to Netlify.
+- Disable Netlify continuous deployment for the production site to prevent a duplicate `main`-push deployment. Branch and pull-request preview deploys may remain enabled.
+- Configure the GitHub Actions secrets `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID` for release deployment.
 - Local preview command: `npm run release:dry-run`

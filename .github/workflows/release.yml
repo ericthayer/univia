@@ -38,6 +38,22 @@ jobs:
         run: npm ci
 
       - name: Publish release
+        id: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run release
+
+      - name: Build release artifact
+        if: steps.release.outputs.version != ''
+        env:
+          VITE_APP_VERSION: v${{ steps.release.outputs.version }}
+        run: npm run build
+
+      - name: Deploy release artifact to Netlify
+        if: steps.release.outputs.version != ''
+        uses: netlify/actions/cli@master
+        with:
+          args: deploy --dir=dist --prod
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}

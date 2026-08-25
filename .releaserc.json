@@ -74,6 +74,12 @@
         "successComment": false,
         "failComment": false
       }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "successCmd": "echo \"version=${nextRelease.version}\" >> \"$GITHUB_OUTPUT\""
+      }
     ]
   ]
 }
