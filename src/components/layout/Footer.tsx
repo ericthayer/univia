@@ -3,6 +3,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LegalDialog from './LegalDialog';
 import packageJson from '../../../package.json';
+import { normalizeAppVersion } from '../../config/appVersion';
+
+const appVersion = normalizeAppVersion(import.meta.env.VITE_APP_VERSION, packageJson.version);
 
 export default function Footer() {
   const navigate = useNavigate();
@@ -62,7 +65,7 @@ export default function Footer() {
             variant="text"
             onClick={() => navigate('/pattern-library')}
           >
-            v{packageJson.version}
+            v{appVersion}
           </Button>
         </Stack>
       </Container>
