@@ -103,7 +103,7 @@ export default function DemandLetters() {
 
   return (
     <Box sx={{ py: 6 }}>
-      <Container maxWidth="md" sx={{ pt: 1 }}>
+      <Container maxWidth="lg" sx={{ pt: 1 }}>
         <Box sx={{ mb: 6 }}>
           <Typography variant="h3" component="h2" sx={{ mb: 2 }}>
             Analyze Demand Letters
@@ -146,8 +146,8 @@ export default function DemandLetters() {
             </Box>
           </Grid>
 
-          <Grid size={{ xs: 12, lg: 4 }} sx={{ }}>
-            <Box sx={{ mb: 3, mt: 12 }}>
+          <Grid size={{ xs: 12, lg: 12 }}>
+            <Box sx={{ mb: 3, mt: { xs: 8, lg: 12 } }}>
               <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
                 Your Demand Letters
               </Typography>
@@ -187,27 +187,42 @@ export default function DemandLetters() {
                 </CardContent>
               </Card>
             ) : (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 2.5 }}>
                 {letters.map((letter) => {
                   const daysLeft = getDaysUntilDeadline(letter.response_deadline);
                   return (
                     <Card
                       key={letter.id}
                       sx={{
-                        transition: 'all 0.3s ease',
+                        flex: '1 1 20rem',
+                        overflow: 'hidden',
+                        transition: 'transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease',
                         '&:hover': {
                           transform: 'translateY(-2px)',
                           boxShadow: 6,
+                          borderColor: 'text.secondary',
                         },
                       }}
                     >
-                      <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                      <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            flexDirection: { xs: 'column', sm: 'row' },
+                            justifyContent: 'space-between',
+                            alignItems: { xs: 'stretch', sm: 'flex-start' },
+                            gap: 2,
+                            mb: 2.5,
+                          }}
+                        >
+                          <Box sx={{ minWidth: 0, flex: 1 }}>
+                            <Typography
+                              variant="h6"
+                              sx={{ fontWeight: 600, lineHeight: 1.35, overflowWrap: 'anywhere' }}
+                            >
                               {letter.file_name}
                             </Typography>
-                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                            <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mt: 1.25 }}>
                               <Chip
                                 label={letter.status?.toUpperCase() || 'PENDING'}
                                 color={getStatusColor(letter.status)}
@@ -236,7 +251,7 @@ export default function DemandLetters() {
                               )}
                             </Box>
                           </Box>
-                          <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
                             <Button
                               variant="outlined"
                               size="small"
@@ -254,30 +269,30 @@ export default function DemandLetters() {
                           </Box>
                         </Box>
 
-                        <Grid container spacing={2}>
+                        <Grid container spacing={{ xs: 1.5, sm: 2 }}>
                           {letter.plaintiff_name && (
                             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.25 }}>
                                 Plaintiff
                               </Typography>
-                              <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                              <Typography variant="body1" sx={{ fontWeight: 500, overflowWrap: 'anywhere' }}>
                                 {letter.plaintiff_name}
                               </Typography>
                             </Grid>
                           )}
                           {letter.attorney_name && (
                             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.25 }}>
                                 Attorney
                               </Typography>
-                              <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                              <Typography variant="body1" sx={{ fontWeight: 500, overflowWrap: 'anywhere' }}>
                                 {letter.attorney_name}
                               </Typography>
                             </Grid>
                           )}
                           {letter.response_deadline && (
                             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.25 }}>
                                 Deadline
                               </Typography>
                               <Typography variant="body1" sx={{ fontWeight: 500 }}>
@@ -287,7 +302,7 @@ export default function DemandLetters() {
                           )}
                           {letter.settlement_amount && (
                             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.25 }}>
                                 Settlement Amount
                               </Typography>
                               <Typography variant="body1" sx={{ fontWeight: 500 }}>
@@ -298,7 +313,7 @@ export default function DemandLetters() {
                         </Grid>
 
                         {letter.analysis_summary && (
-                          <Box sx={{ mt: 2, p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
+                          <Box sx={{ mt: 2.5, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
                             <Typography variant="body2" color="text.secondary">
                               {letter.analysis_summary}
                             </Typography>
@@ -310,7 +325,7 @@ export default function DemandLetters() {
                 })}
 
                 {letters.length > 0 && (
-                  <Alert severity="info">
+                  <Alert severity="info" sx={{ flex: '1 1 100%' }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
                       Need Legal Help?
                     </Typography>
