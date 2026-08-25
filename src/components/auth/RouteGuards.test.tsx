@@ -19,7 +19,13 @@ function renderGuard(element: React.ReactNode, auth: Record<string, unknown>) {
   mockUseAuth.mockReturnValue(auth);
 
   return render(
-    <MemoryRouter initialEntries={["/protected"]}>
+    <MemoryRouter
+      initialEntries={["/protected"]}
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <Routes>
         <Route path="/protected" element={element} />
         <Route path="/" element={<LocationProbe />} />
