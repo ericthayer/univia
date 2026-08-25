@@ -24,6 +24,7 @@ type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'succe
 export default function DemandLetters() {
   const [letters, setLetters] = useState<DemandLetter[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<DocumentAnalysis | null>(null);
   const [activeTab, setActiveTab] = useState(0);
 
@@ -33,14 +34,18 @@ export default function DemandLetters() {
 
   const loadLetters = async () => {
     try {
-      const { data } = await supabase
+      setLoadError(null);
+      const { data, error } = await supabase
         .from('demand_letters')
-        .select('*')
+        .select('id, file_name, upload_date, plaintiff_name, attorney_name, response_deadline, settlement_amount, analysis_summary, risk_level, status, ai_model_version, created_at')
         .order('upload_date', { ascending: false });
+
+      if (error) throw error;
 
       setLetters(data || []);
     } catch (error) {
       console.error('Error loading letters:', error);
+      setLoadError('Unable to load your saved demand letters. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -151,7 +156,11 @@ export default function DemandLetters() {
               </Typography>
             </Box>
 
-            {letters.length === 0 && !loading ? (
+            {loadError && !loading ? (
+              <Alert severity="error" action={<Button color="inherit" size="small" onClick={loadLetters}>Retry</Button>}>
+                {loadError}
+              </Alert>
+            ) : letters.length === 0 && !loading ? (
               <Card>
                 <CardContent sx={{ textAlign: 'center', py: 8 }}>
                   <Box

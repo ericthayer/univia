@@ -24,6 +24,23 @@ const GEMINI_MODELS = {
   flash: 'gemini-3-flash-preview',
   pro: 'gemini-3-pro-preview',
 } as const;
+const ANONYMOUS_LETTER_LIMIT = 5;
+
+function isAnonymousLetterLimitError(error: unknown): boolean {
+  return error instanceof Error && error.message.includes('ANONYMOUS_LETTER_LIMIT');
+}
+
+function createErrorResponse(
+  message: string,
+  status: number,
+  headers: HeadersInit,
+  errorType?: string,
+): Response {
+  return new Response(JSON.stringify({ error: message, ...(errorType ? { errorType } : {}) }), {
+    status,
+    headers,
+  });
+}
 
 function buildAnalysisPrompt(documentType: string, analysisDepth: 'standard' | 'detailed'): string {
   const basePrompt = `You are an expert legal document analyzer specializing in ADA compliance, accessibility law, and demand letter analysis. Your role is to provide accurate, actionable insights for legal professionals and business owners.
@@ -736,6 +753,28 @@ Deno.serve(async (req: Request) => {
       });
     }
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const isAnonymous = auth.user.is_anonymous;
+
+    if (isAnonymous) {
+      const { count, error: quotaError } = await supabase
+        .from('demand_letters')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', auth.user.id);
+
+      if (quotaError) {
+        console.error({ event: 'demand_letter_quota_check_failed', requestId });
+        return createErrorResponse('Unable to save demand letter', 503, responseHeaders, 'PERSISTENCE_ERROR');
+      }
+
+      if ((count ?? 0) >= ANONYMOUS_LETTER_LIMIT) {
+        return createErrorResponse(
+          'Anonymous users can save up to 5 demand letters. Create an account to continue saving letters.',
+          429,
+          responseHeaders,
+          'ANONYMOUS_LETTER_LIMIT',
+        );
+      }
+    }
 
     const isPDF = fileType === 'application/pdf';
     const isImage = fileType.startsWith('image/');
@@ -846,40 +885,50 @@ Deno.serve(async (req: Request) => {
       'low': 'low',
     };
 
-    const { data: letterData, error: letterError } = await supabase
-      .from('demand_letters')
-      .insert({
-        business_id: business_id || null,
-        user_id: auth.user.id,
-        file_name: fileName,
-        file_size: Math.round(fileContent.length * 0.75),
-        upload_date: new Date().toISOString(),
-        plaintiff_name: analysis.extractedData.plaintiffName || null,
-        attorney_name: analysis.extractedData.attorneyName || null,
-        attorney_firm: analysis.extractedData.attorneyFirm || null,
-        response_deadline: analysis.extractedData.responseDeadline || null,
-        settlement_amount: analysis.extractedData.settlementAmount || null,
-        violations_cited: analysis.extractedData.violationsCited ? { items: analysis.extractedData.violationsCited } : null,
-        extracted_text: fileType.startsWith('image/') ? 'Image document - text extracted by AI' : extractTextFromContent(fileContent).substring(0, 50000),
-        analysis_summary: analysis.documentSummary,
-        risk_level: riskLevelMap[analysis.urgencyLevel] || 'medium',
-        status: 'pending',
-        confidence_scores: analysis.confidenceScores || {},
-        extracted_entities: analysis.extractedEntities || {},
-        ai_model_version: aiModel,
-        processing_status: 'completed',
-      })
-      .select()
-      .single();
+    const letterPayload = {
+      business_id: business_id || '',
+      file_name: fileName,
+      file_size: String(Math.round(fileContent.length * 0.75)),
+      upload_date: new Date().toISOString(),
+      plaintiff_name: analysis.extractedData.plaintiffName || '',
+      attorney_name: analysis.extractedData.attorneyName || '',
+      attorney_firm: analysis.extractedData.attorneyFirm || '',
+      response_deadline: analysis.extractedData.responseDeadline || '',
+      settlement_amount: analysis.extractedData.settlementAmount ? String(analysis.extractedData.settlementAmount) : '',
+      violations_cited: analysis.extractedData.violationsCited ? { items: analysis.extractedData.violationsCited } : null,
+      extracted_text: fileType.startsWith('image/') ? 'Image document - text extracted by AI' : extractTextFromContent(fileContent).substring(0, 50000),
+      analysis_summary: analysis.documentSummary,
+      risk_level: riskLevelMap[analysis.urgencyLevel] || 'medium',
+      status: 'pending',
+      confidence_scores: analysis.confidenceScores || {},
+      extracted_entities: analysis.extractedEntities || {},
+      ai_model_version: aiModel,
+      processing_status: 'completed',
+    };
+
+    const { data: letterId, error: letterError } = await supabase.rpc('insert_demand_letter', {
+      p_user_id: auth.user.id,
+      p_is_anonymous: isAnonymous,
+      p_letter: letterPayload,
+    });
 
     if (letterError) {
-      console.error('Error saving letter:', letterError);
+      if (isAnonymousLetterLimitError(letterError)) {
+        return createErrorResponse(
+          'Anonymous users can save up to 5 demand letters. Create an account to continue saving letters.',
+          429,
+          responseHeaders,
+          'ANONYMOUS_LETTER_LIMIT',
+        );
+      }
+      console.error({ event: 'demand_letter_persistence_failed', requestId });
+      return createErrorResponse('Unable to save demand letter', 503, responseHeaders, 'PERSISTENCE_ERROR');
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        letter_id: letterData?.id,
+        letter_id: letterId,
         analysis,
       }),
       {
