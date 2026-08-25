@@ -12,7 +12,10 @@ interface AuthContextType {
   profileLoading: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: AuthError | null }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
-  signInWithOAuth: (provider: 'google' | 'github' | 'apple') => Promise<{ error: AuthError | null }>;
+  signInWithOAuth: (
+    provider: 'google' | 'github' | 'apple',
+    options?: { linkAnonymous?: boolean },
+  ) => Promise<{ error: AuthError | null }>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
   updatePassword: (password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
@@ -144,7 +147,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
-  const signInWithOAuth = async (provider: 'google' | 'github' | 'apple') => {
+  const signInWithOAuth = async (
+    provider: 'google' | 'github' | 'apple',
+    { linkAnonymous = false }: { linkAnonymous?: boolean } = {},
+  ) => {
     const callbackUrl = `${window.location.origin}/auth/callback`;
     console.log('AuthContext: Initiating OAuth sign-in', { provider, callbackUrl });
 
@@ -156,7 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     };
 
-    const { error } = user?.is_anonymous
+    const { error } = user?.is_anonymous && linkAnonymous
       ? await supabase.auth.linkIdentity({ provider, options: oauthOptions })
       : await supabase.auth.signInWithOAuth({
         provider,

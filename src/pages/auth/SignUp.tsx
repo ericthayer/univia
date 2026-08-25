@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import Icon from '../../components/ui/Icon';
 import logoUniviaUrl from '../../assets/images/logo-univia.svg';
+import { getAuthErrorMessage } from '../../utils/authError';
 
 export default function SignUp() {
   const [fullName, setFullName] = useState('');
@@ -50,8 +51,8 @@ export default function SignUp() {
   const handleSocialSignIn = async (provider: 'google' | 'github' | 'apple') => {
     setError(null);
     try {
-      const { error } = await signInWithOAuth(provider);
-      if (error) setError(error.message);
+      const { error } = await signInWithOAuth(provider, { linkAnonymous: true });
+      if (error) setError(getAuthErrorMessage(error, `Failed to sign up with ${provider}`));
     } catch {
       setError(`Failed to sign up with ${provider}`);
     }

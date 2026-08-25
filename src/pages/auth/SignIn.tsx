@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import Icon from '../../components/ui/Icon';
 import logoUniviaUrl from '../../assets/images/logo-univia.svg';
+import { getAuthErrorMessage } from '../../utils/authError';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
@@ -60,7 +61,7 @@ export default function SignIn() {
     setError(null);
     try {
       const { error } = await signInWithOAuth(provider);
-      if (error) setError(error.message);
+      if (error) setError(getAuthErrorMessage(error, `Failed to sign in with ${provider}`));
     } catch {
       setError(`Failed to sign in with ${provider}`);
     }
