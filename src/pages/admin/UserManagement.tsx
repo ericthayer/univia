@@ -528,7 +528,6 @@ export default function UserManagement() {
                   bgcolor: 'background.paper',
                   border: '1px solid',
                   borderColor: 'divider',
-                  boxShadow: (theme) => theme.shadows[24],
                   maxWidth: 'calc(100vw - 32px)',
                   flexWrap: 'wrap',
                   justifyContent: 'center',

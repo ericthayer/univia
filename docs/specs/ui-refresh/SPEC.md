@@ -29,7 +29,7 @@ Every primary card is two layers so it reads like a glass plate seated in a tray
 | Layer | Light | Dark | Radius | Notes |
 |---|---|---|---|---|
 | Shell (outer) | `rgba(0,0,0,0.035)` fill, `1px solid divider` | `rgba(255,255,255,0.04)` fill, `1px solid divider` | 20px | 6px inset padding |
-| Core (inner) | `background.paper` + `inset 0 1px 0 rgba(255,255,255,0.9)` + ambient `0 1px 2px rgba(0,0,0,0.04), 0 16px 40px -24px rgba(0,0,0,0.18)` | `background.paper` + `inset 0 1px 0 rgba(255,255,255,0.06)` | 14px (= 20 − 6, concentric) | content padding 24px (16px below `sm`) |
+| Core (inner) | `background.paper` + `inset 0 1px 0 rgba(255,255,255,0.9)` (no outer shadow) | `background.paper` + `inset 0 1px 0 rgba(255,255,255,0.06)` | 14px (= 20 − 6, concentric) | content padding 24px (16px below `sm`) |
 
 Interactive surfaces lift 2px on hover and settle on press. Optional `accent` renders a 2px tone line along the core's top edge (replaces today's left-border stripe on stat cards).
 
@@ -237,3 +237,4 @@ Phases 3, 4, 5 are independent once Phase 1 lands and may run in parallel.
 
 - 2026-10-29 — Initial draft after codebase review and direction/mock-data/sign-in decisions.
 - 2026-10-29 — Implementation complete; added §10 deviations and §11 follow-ups; checklist ticked.
+- 2026-10-29 — Removed diffused ambient shadows from BezelCard (rest and hover) and the admin bulk-action bar; §3.1 and the "diffused ambient shadows" wording in the direction notes no longer apply. Inset highlights stay.

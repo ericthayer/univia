@@ -47,7 +47,7 @@ const Shell = styled(Box, {
     borderRadius: theme.surfaces.shellRadius,
     border: `1px solid ${palette.divider}`,
     backgroundColor: 'rgba(0, 0, 0, 0.035)',
-    // Only transform and border-color animate here; the core owns box-shadow.
+    // Only transform and border-color animate.
     transition: `transform ${slow}, border-color ${standard}`,
     ...theme.applyStyles('dark', {
       backgroundColor: 'rgba(255, 255, 255, 0.04)',
@@ -78,7 +78,6 @@ const Core = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'corePadding',
 })<CoreProps>(({ theme, corePadding }) => {
   const { palette } = theme.vars ?? theme;
-  const slow = `${theme.transitions.duration.slow}ms ${theme.transitions.easing.spring}`;
   const paddingMap: Record<BezelPadding, string | number> = {
     none: 0,
     sm: theme.spacing(2),
@@ -94,21 +93,14 @@ const Core = styled(Box, {
     padding: paddingMap[corePadding],
     borderRadius: theme.surfaces.coreRadius,
     backgroundColor: palette.background.paper,
-    boxShadow:
-      'inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(0, 0, 0, 0.04), 0 16px 40px -24px rgba(0, 0, 0, 0.18)',
-    transition: `box-shadow ${slow}`,
+    // Crisp inset highlight only. No outer drop shadow: depth comes from the
+    // shell/core nesting and the hairline border.
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.9)',
     [theme.breakpoints.down('sm')]: {
       padding: corePadding === 'md' ? theme.spacing(2) : paddingMap[corePadding],
     },
-    '.BezelCard-shell:hover > &': {
-      boxShadow:
-        'inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(0, 0, 0, 0.04), 0 24px 48px -24px rgba(0, 0, 0, 0.24)',
-    },
     ...theme.applyStyles('dark', {
       boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
-      '.BezelCard-shell:hover > &': {
-        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-      },
     }),
   };
 });

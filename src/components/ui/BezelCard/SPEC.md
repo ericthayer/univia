@@ -19,7 +19,8 @@
 
 **Accessibility:** The accent line is `aria-hidden`. No color is the sole signal. Motion honors the global `prefers-reduced-motion` rule in `index.css`.
 
-**Performance:** Animates `transform`, `opacity`, `box-shadow`, `border-color` only. No backdrop filters.
+**Performance:** Animates `transform`, `opacity`, `border-color` only. No backdrop filters, no outer shadows.
 
 **Changelog**
 - 2026-10-29 — Created.
+- 2026-10-29 — Removed the diffused ambient drop shadows (rest and hover). The core keeps only a crisp 1px inset highlight; depth comes from the nested shell and hairline border.
