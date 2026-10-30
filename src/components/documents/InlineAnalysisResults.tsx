@@ -1,30 +1,105 @@
-import { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Chip,
-  Divider,
-  Grid,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Paper,
-  Button,
-  Tooltip,
-  Collapse,
-  IconButton,
-  Card,
-  CardContent,
-} from '@mui/material';
+import { ReactNode, useId, useState } from 'react';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import Collapse from '@mui/material/Collapse';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
 import { DocumentAnalysis } from './DocumentUploadDialog';
+import { confidenceLabel, urgencyIcon, urgencyTone } from './urgency';
 import Icon from '../ui/Icon';
 import LegalDisclaimer from '../ui/LegalDisclaimer';
+import { ArrowButton } from '../ui/ArrowButton/ArrowButton';
+import { TonePill } from '../ui/TonePill/TonePill';
 
 interface InlineAnalysisResultsProps {
   analysis: DocumentAnalysis;
   onNewUpload: () => void;
 }
+
+interface AnalysisSectionProps {
+  id: string;
+  title: string;
+  /** Trailing control, e.g. a collapse toggle. */
+  action?: ReactNode;
+  children: ReactNode;
+}
+
+/** Section with an eyebrow title and a hairline above it. */
+function AnalysisSection({ id, title, action, children }: AnalysisSectionProps) {
+  return (
+    <Box
+      component="section"
+      aria-labelledby={id}
+      sx={{ pt: 3, mt: 3, borderTop: '1px solid', borderColor: 'divider' }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2, minHeight: 32 }}>
+        <Typography id={id} variant="eyebrow" component="h3">
+          {title}
+        </Typography>
+        {action}
+      </Box>
+      {children}
+    </Box>
+  );
+}
+
+/** Free-form text can be long, so these wrap instead of using the fixed-height pill. */
+function TextChip({ label, icon, tone }: { label: string; icon?: string; tone?: 'error' }) {
+  return (
+    <Chip
+      label={label}
+      size="small"
+      variant="outlined"
+      color={tone}
+      icon={icon ? <Icon name={icon} style={{ fontSize: 14 }} /> : undefined}
+      sx={{
+        borderRadius: 999,
+        maxWidth: '100%',
+        height: 'auto',
+        py: 0.5,
+        '& .MuiChip-label': { whiteSpace: 'normal', overflowWrap: 'anywhere' },
+      }}
+    />
+  );
+}
+
+interface DetailProps {
+  label: string;
+  confidence?: number;
+  children: ReactNode;
+}
+
+/** One term/definition pair in a details grid. */
+function Detail({ label, confidence, children }: DetailProps) {
+  const level = confidenceLabel(confidence);
+  return (
+    <Box sx={{ minWidth: 0 }}>
+      <Box component="dt" sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 0.25 }}>
+        <Typography variant="caption" color="text.secondary">
+          {label}
+        </Typography>
+        {level && confidence !== undefined && (
+          <Box component="span" title={`AI confidence: ${(confidence * 100).toFixed(0)}%`}>
+            <TonePill variant="outline">{level} confidence</TonePill>
+          </Box>
+        )}
+      </Box>
+      <Box component="dd" sx={{ m: 0 }}>
+        {children}
+      </Box>
+    </Box>
+  );
+}
+
+const detailsGridSx = {
+  display: 'grid',
+  gap: 2.5,
+  gridTemplateColumns: 'repeat(auto-fit, minmax(12rem, 1fr))',
+  m: 0,
+} as const;
+
+const pillButtonSx = { borderRadius: 999, minHeight: 44, px: 2.5 } as const;
 
 export default function InlineAnalysisResults({
   analysis,
@@ -32,63 +107,13 @@ export default function InlineAnalysisResults({
 }: InlineAnalysisResultsProps) {
   const [showEntities, setShowEntities] = useState(false);
   const [showLegalAnalysis, setShowLegalAnalysis] = useState(true);
+  const uid = useId();
 
   if (!analysis?.analysis) return null;
 
   const { analysis: result, debug } = analysis;
-
-  const getUrgencyColor = (level: string) => {
-    switch (level) {
-      case 'critical':
-        return 'error';
-      case 'high':
-        return 'warning';
-      case 'medium':
-        return 'info';
-      case 'low':
-        return 'success';
-      default:
-        return 'default';
-    }
-  };
-
-  const getUrgencyIcon = (level: string) => {
-    switch (level) {
-      case 'critical':
-        return 'error';
-      case 'high':
-        return 'warning';
-      case 'medium':
-        return 'info';
-      case 'low':
-        return 'check_circle';
-      default:
-        return 'help';
-    }
-  };
-
-  const getConfidenceLabel = (score?: number) => {
-    if (!score) return { label: 'Unknown', color: 'default' };
-    if (score >= 0.9) return { label: 'High', color: 'success' };
-    if (score >= 0.7) return { label: 'Medium', color: 'info' };
-    return { label: 'Low', color: 'warning' };
-  };
-
-  const ConfidenceBadge = ({ score }: { score?: number }) => {
-    if (!score) return null;
-    const { label, color } = getConfidenceLabel(score);
-    return (
-      <Tooltip title={`AI Confidence: ${(score * 100).toFixed(0)}%`}>
-        <Chip
-          label={`${label} Confidence`}
-          size="small"
-          color={color as 'success' | 'info' | 'warning' | 'default'}
-          variant="outlined"
-          sx={{ ml: 1 }}
-        />
-      </Tooltip>
-    );
-  };
+  const data = result.extractedData;
+  const scores = result.confidenceScores;
 
   const handleShare = () => {
     console.log('Share functionality');
@@ -98,502 +123,345 @@ export default function InlineAnalysisResults({
     console.log('Export PDF functionality');
   };
 
+  const entityGroups: ReadonlyArray<{ label: string; items?: string[]; limit: number; format?: (v: string) => string; icon?: string }> = result.extractedEntities
+    ? [
+        { label: 'Persons', items: result.extractedEntities.persons, limit: 10 },
+        { label: 'Organizations', items: result.extractedEntities.organizations, limit: 10 },
+        { label: 'Dates', items: result.extractedEntities.dates, limit: 10 },
+        { label: 'Amounts', items: result.extractedEntities.amounts, limit: 10, format: (v) => `$${v}` },
+        { label: 'Legal Citations', items: result.extractedEntities.legalCitations, limit: 15, icon: 'gavel' },
+      ]
+    : [];
+
   return (
-    <Paper elevation={2} sx={{ p: 4 }}>
+    <Box>
       <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-          <Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
-              Analysis Results
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              <Chip
-                label={result.documentType}
-                color="primary"
-                size="medium"
-              />
-              <Chip
-                icon={<Icon name={getUrgencyIcon(result.urgencyLevel)} style={{ fontSize: 18 }} />}
-                label={`${result.urgencyLevel.toUpperCase()} URGENCY`}
-                color={getUrgencyColor(result.urgencyLevel) as 'error' | 'warning' | 'info' | 'success' | 'default'}
-                size="medium"
-              />
-              {debug?.aiModel && (
-                <Chip
-                  icon={<Icon name="psychology" style={{ fontSize: 16 }} />}
-                  label={debug.aiModel}
-                  size="small"
-                  variant="outlined"
-                />
-              )}
-            </Box>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            <Button
-              variant="outlined"
-              startIcon={<Icon name="share" />}
-              onClick={handleShare}
-              size="small"
-            >
-              Share
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<Icon name="picture_as_pdf" />}
-              onClick={handleExportPDF}
-              size="small"
-            >
-              Export PDF
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<Icon name="upload_file" />}
-              onClick={onNewUpload}
-              size="small"
-            >
-              Upload Another
-            </Button>
-          </Box>
+        <Typography variant="h5" component="h2" sx={{ fontWeight: 700, letterSpacing: '-0.01em', mb: 1.5 }}>
+          Analysis Results
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2.5 }}>
+          <TonePill variant="solid">{result.documentType}</TonePill>
+          <TonePill tone={urgencyTone(result.urgencyLevel)} dot>
+            <Icon name={urgencyIcon(result.urgencyLevel)} style={{ fontSize: 14 }} aria-hidden />
+            {result.urgencyLevel} urgency
+          </TonePill>
+          {debug?.aiModel && (
+            <TonePill variant="outline">
+              <Icon name="psychology" style={{ fontSize: 14 }} aria-hidden />
+              {debug.aiModel}
+            </TonePill>
+          )}
+        </Box>
+        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+          <ArrowButton onClick={onNewUpload}>Upload Another</ArrowButton>
+          <Button variant="outlined" startIcon={<Icon name="share" />} onClick={handleShare} sx={pillButtonSx}>
+            Share
+          </Button>
+          <Button variant="outlined" startIcon={<Icon name="picture_as_pdf" />} onClick={handleExportPDF} sx={pillButtonSx}>
+            Export PDF
+          </Button>
         </Box>
       </Box>
 
-      <LegalDisclaimer variant="compact" sx={{ mb: 3 }} />
+      <LegalDisclaimer variant="compact" />
 
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-          Summary
-        </Typography>
+      <AnalysisSection id={`${uid}-summary`} title="Summary">
         <Typography variant="body1" sx={{ lineHeight: 1.7 }}>
           {result.documentSummary}
         </Typography>
-      </Box>
+      </AnalysisSection>
 
-      <Divider sx={{ my: 3 }} />
-
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-          Key Information
-        </Typography>
-        <Grid container spacing={2}>
+      <AnalysisSection id={`${uid}-key`} title="Key Information">
+        <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0 }}>
           {result.keyPoints.map((point, index) => (
-            <Grid size={{ xs: 12, md: 6 }} key={index}>
-              <Box
-                sx={{
-                  p: 2,
-                  bgcolor: 'action.hover',
-                  borderRadius: 2,
-                  height: '100%',
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                  <Icon name="check_circle" style={{ color: '#2563EB', fontSize: 20, marginTop: 2 }} />
-                  <Typography variant="body2">{point}</Typography>
+            <Box
+              component="li"
+              key={index}
+              sx={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 1.25,
+                py: 1.25,
+                '&:first-of-type': { pt: 0 },
+                '&:last-of-type': { pb: 0 },
+                '& + &': { borderTop: '1px solid', borderColor: 'divider' },
+              }}
+            >
+              <Icon
+                name="check_circle"
+                aria-hidden
+                style={{ fontSize: 18, marginTop: 2, flexShrink: 0, color: 'var(--mui-palette-text-secondary)' }}
+              />
+              <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
+                {point}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      </AnalysisSection>
+
+      {data && Object.values(data).some((v) => (Array.isArray(v) ? v.length > 0 : Boolean(v))) && (
+        <AnalysisSection
+          id={`${uid}-details`}
+          title="Extracted Details"
+          action={
+            scores && Object.keys(scores).length > 0 ? (
+              <TonePill variant="outline">
+                <Icon name="psychology" style={{ fontSize: 14 }} aria-hidden />
+                AI-powered
+              </TonePill>
+            ) : undefined
+          }
+        >
+          <Box component="dl" sx={detailsGridSx}>
+            {data.plaintiffName && (
+              <Detail label="Plaintiff" confidence={scores?.plaintiffName}>
+                <Typography variant="body1" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
+                  {data.plaintiffName}
+                </Typography>
+              </Detail>
+            )}
+            {data.attorneyName && (
+              <Detail label="Attorney" confidence={scores?.attorneyName}>
+                <Typography variant="body1" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
+                  {data.attorneyName}
+                </Typography>
+              </Detail>
+            )}
+            {data.attorneyFirm && (
+              <Detail label="Law Firm" confidence={scores?.attorneyFirm}>
+                <Typography variant="body1" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
+                  {data.attorneyFirm}
+                </Typography>
+              </Detail>
+            )}
+            {data.caseNumber && (
+              <Detail label="Case Number">
+                <Typography variant="body1" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
+                  {data.caseNumber}
+                </Typography>
+              </Detail>
+            )}
+            {data.courtName && (
+              <Detail label="Court">
+                <Typography variant="body1" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
+                  {data.courtName}
+                </Typography>
+              </Detail>
+            )}
+            {data.filingDate && (
+              <Detail label="Filing Date">
+                <Typography variant="body1" sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                  {data.filingDate}
+                </Typography>
+              </Detail>
+            )}
+            {data.responseDeadline && (
+              <Detail label="Response Deadline" confidence={scores?.responseDeadline}>
+                <Typography variant="body1" sx={{ fontWeight: 600, color: 'error.main', fontVariantNumeric: 'tabular-nums' }}>
+                  {data.responseDeadline}
+                </Typography>
+              </Detail>
+            )}
+            {data.settlementAmount && (
+              <Detail label="Settlement Amount" confidence={scores?.settlementAmount}>
+                <Typography variant="body1" sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                  ${data.settlementAmount.toLocaleString()}
+                </Typography>
+              </Detail>
+            )}
+            {data.violationsCited && data.violationsCited.length > 0 && (
+              <Box sx={{ gridColumn: '1 / -1', minWidth: 0 }}>
+                <Box component="dt" sx={{ mb: 0.75 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Violations Cited
+                  </Typography>
+                </Box>
+                <Box component="dd" sx={{ m: 0, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {data.violationsCited.map((violation, index) => (
+                    <TextChip key={index} label={violation} tone="error" />
+                  ))}
                 </Box>
               </Box>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-
-      {result.extractedData && Object.values(result.extractedData).some(v => v) && (
-        <>
-          <Divider sx={{ my: 3 }} />
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                Extracted Details with AI Confidence
-              </Typography>
-              {result.confidenceScores && Object.keys(result.confidenceScores).length > 0 && (
-                <Tooltip title="Confidence scores indicate how certain the AI is about each extracted field">
-                  <Chip
-                    icon={<Icon name="psychology" style={{ fontSize: 16 }} />}
-                    label="AI-Powered"
-                    size="small"
-                    variant="outlined"
-                  />
-                </Tooltip>
-              )}
-            </Box>
-            <Grid container spacing={3}>
-              {result.extractedData.plaintiffName && (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary">Plaintiff</Typography>
-                      <ConfidenceBadge score={result.confidenceScores?.plaintiffName} />
-                    </Box>
-                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                      {result.extractedData.plaintiffName}
-                    </Typography>
-                  </Box>
-                </Grid>
-              )}
-              {result.extractedData.attorneyName && (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary">Attorney</Typography>
-                      <ConfidenceBadge score={result.confidenceScores?.attorneyName} />
-                    </Box>
-                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                      {result.extractedData.attorneyName}
-                    </Typography>
-                  </Box>
-                </Grid>
-              )}
-              {result.extractedData.attorneyFirm && (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary">Law Firm</Typography>
-                      <ConfidenceBadge score={result.confidenceScores?.attorneyFirm} />
-                    </Box>
-                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                      {result.extractedData.attorneyFirm}
-                    </Typography>
-                  </Box>
-                </Grid>
-              )}
-              {result.extractedData.caseNumber && (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                      Case Number
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                      {result.extractedData.caseNumber}
-                    </Typography>
-                  </Box>
-                </Grid>
-              )}
-              {result.extractedData.courtName && (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                      Court
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                      {result.extractedData.courtName}
-                    </Typography>
-                  </Box>
-                </Grid>
-              )}
-              {result.extractedData.filingDate && (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                      Filing Date
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                      {result.extractedData.filingDate}
-                    </Typography>
-                  </Box>
-                </Grid>
-              )}
-              {result.extractedData.responseDeadline && (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary">Response Deadline</Typography>
-                      <ConfidenceBadge score={result.confidenceScores?.responseDeadline} />
-                    </Box>
-                    <Typography variant="body1" sx={{ fontWeight: 600, color: 'error.main' }}>
-                      {result.extractedData.responseDeadline}
-                    </Typography>
-                  </Box>
-                </Grid>
-              )}
-              {result.extractedData.settlementAmount && (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary">Settlement Amount</Typography>
-                      <ConfidenceBadge score={result.confidenceScores?.settlementAmount} />
-                    </Box>
-                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                      ${result.extractedData.settlementAmount.toLocaleString()}
-                    </Typography>
-                  </Box>
-                </Grid>
-              )}
-              {result.extractedData.violationsCited && result.extractedData.violationsCited.length > 0 && (
-                <Grid size={{ xs: 12 }}>
-                  <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                      Violations Cited
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      {result.extractedData.violationsCited.map((violation, index) => (
-                        <Chip key={index} label={violation} size="small" color="error" variant="outlined" />
-                      ))}
-                    </Box>
-                  </Box>
-                </Grid>
-              )}
-            </Grid>
+            )}
           </Box>
-        </>
+        </AnalysisSection>
       )}
 
       {result.legalAnalysis && (
-        <>
-          <Divider sx={{ my: 3 }} />
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                Legal Analysis
-              </Typography>
-              <IconButton size="small" onClick={() => setShowLegalAnalysis(!showLegalAnalysis)}>
-                <Icon name={showLegalAnalysis ? 'expand_less' : 'expand_more'} />
-              </IconButton>
+        <AnalysisSection
+          id={`${uid}-legal`}
+          title="Legal Analysis"
+          action={
+            <IconButton
+              onClick={() => setShowLegalAnalysis((open) => !open)}
+              aria-expanded={showLegalAnalysis}
+              aria-controls={`${uid}-legal-panel`}
+              aria-label={showLegalAnalysis ? 'Collapse legal analysis' : 'Expand legal analysis'}
+              sx={{ width: 44, height: 44, mr: -1 }}
+            >
+              <Icon name={showLegalAnalysis ? 'expand_less' : 'expand_more'} />
+            </IconButton>
+          }
+        >
+          <Collapse in={showLegalAnalysis} id={`${uid}-legal-panel`}>
+            <Box component="dl" sx={{ ...detailsGridSx, mb: 2.5 }}>
+              <Detail label="Claim Type">
+                <Typography variant="body1" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
+                  {result.legalAnalysis.claimType}
+                </Typography>
+              </Detail>
+              {result.legalAnalysis.jurisdiction && (
+                <Detail label="Jurisdiction">
+                  <Typography variant="body1" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
+                    {result.legalAnalysis.jurisdiction}
+                  </Typography>
+                </Detail>
+              )}
+              {result.legalAnalysis.statuteOfLimitations && (
+                <Detail label="Statute of Limitations">
+                  <Typography variant="body1" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
+                    {result.legalAnalysis.statuteOfLimitations}
+                  </Typography>
+                </Detail>
+              )}
             </Box>
-            <Collapse in={showLegalAnalysis}>
-              <Card variant="outlined" sx={{ mb: 2 }}>
-                <CardContent>
-                  <Grid container spacing={3}>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                        Claim Type
-                      </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                        {result.legalAnalysis.claimType}
-                      </Typography>
-                    </Grid>
-                    {result.legalAnalysis.jurisdiction && (
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                          Jurisdiction
-                        </Typography>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                          {result.legalAnalysis.jurisdiction}
-                        </Typography>
-                      </Grid>
-                    )}
-                    {result.legalAnalysis.statuteOfLimitations && (
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                          Statute of Limitations
-                        </Typography>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                          {result.legalAnalysis.statuteOfLimitations}
-                        </Typography>
-                      </Grid>
-                    )}
-                    <Grid size={{ xs: 12 }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                        Risk Assessment
-                      </Typography>
-                      <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
-                        <Typography variant="body2">
-                          {result.legalAnalysis.riskAssessment}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    {result.legalAnalysis.potentialDefenses && result.legalAnalysis.potentialDefenses.length > 0 && (
-                      <Grid size={{ xs: 12 }}>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                          Potential Defenses to Consider
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                          {result.legalAnalysis.potentialDefenses.map((defense, index) => (
-                            <Chip
-                              key={index}
-                              label={defense}
-                              size="small"
-                              variant="outlined"
-                              icon={<Icon name="shield" style={{ fontSize: 16 }} />}
-                            />
-                          ))}
-                        </Box>
-                      </Grid>
-                    )}
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Collapse>
-          </Box>
-        </>
+
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
+              Risk Assessment
+            </Typography>
+            <Typography variant="body2" sx={{ lineHeight: 1.7, overflowWrap: 'anywhere' }}>
+              {result.legalAnalysis.riskAssessment}
+            </Typography>
+
+            {result.legalAnalysis.potentialDefenses && result.legalAnalysis.potentialDefenses.length > 0 && (
+              <Box sx={{ mt: 2.5 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
+                  Potential Defenses to Consider
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {result.legalAnalysis.potentialDefenses.map((defense, index) => (
+                    <TextChip key={index} label={defense} icon="shield" />
+                  ))}
+                </Box>
+              </Box>
+            )}
+          </Collapse>
+        </AnalysisSection>
       )}
 
       {result.extractedEntities && (
-        <>
-          <Divider sx={{ my: 3 }} />
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                All Extracted Entities
-              </Typography>
-              <IconButton size="small" onClick={() => setShowEntities(!showEntities)}>
-                <Icon name={showEntities ? 'expand_less' : 'expand_more'} />
-              </IconButton>
+        <AnalysisSection
+          id={`${uid}-entities`}
+          title="All Extracted Entities"
+          action={
+            <IconButton
+              onClick={() => setShowEntities((open) => !open)}
+              aria-expanded={showEntities}
+              aria-controls={`${uid}-entities-panel`}
+              aria-label={showEntities ? 'Collapse extracted entities' : 'Expand extracted entities'}
+              sx={{ width: 44, height: 44, mr: -1 }}
+            >
+              <Icon name={showEntities ? 'expand_less' : 'expand_more'} />
+            </IconButton>
+          }
+        >
+          <Collapse in={showEntities} id={`${uid}-entities-panel`}>
+            <Box component="dl" sx={{ m: 0, display: 'grid', gap: 2.5 }}>
+              {entityGroups
+                .filter((group) => group.items && group.items.length > 0)
+                .map((group) => (
+                  <Box key={group.label} sx={{ minWidth: 0 }}>
+                    <Box component="dt" sx={{ mb: 0.75 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        {group.label} ({group.items?.length})
+                      </Typography>
+                    </Box>
+                    <Box component="dd" sx={{ m: 0, display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                      {group.items?.slice(0, group.limit).map((item, index) => (
+                        <TextChip key={index} label={group.format ? group.format(item) : item} icon={group.icon} />
+                      ))}
+                    </Box>
+                  </Box>
+                ))}
             </Box>
-            <Collapse in={showEntities}>
-              <Grid container spacing={2}>
-                {result.extractedEntities.persons && result.extractedEntities.persons.length > 0 && (
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                        Persons ({result.extractedEntities.persons.length})
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                        {result.extractedEntities.persons.slice(0, 10).map((person, i) => (
-                          <Chip key={i} label={person} size="small" variant="outlined" />
-                        ))}
-                      </Box>
-                    </Box>
-                  </Grid>
-                )}
-                {result.extractedEntities.organizations && result.extractedEntities.organizations.length > 0 && (
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                        Organizations ({result.extractedEntities.organizations.length})
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                        {result.extractedEntities.organizations.slice(0, 10).map((org, i) => (
-                          <Chip key={i} label={org} size="small" variant="outlined" />
-                        ))}
-                      </Box>
-                    </Box>
-                  </Grid>
-                )}
-                {result.extractedEntities.dates && result.extractedEntities.dates.length > 0 && (
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                        Dates ({result.extractedEntities.dates.length})
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                        {result.extractedEntities.dates.slice(0, 10).map((date, i) => (
-                          <Chip key={i} label={date} size="small" variant="outlined" />
-                        ))}
-                      </Box>
-                    </Box>
-                  </Grid>
-                )}
-                {result.extractedEntities.amounts && result.extractedEntities.amounts.length > 0 && (
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                        Amounts ({result.extractedEntities.amounts.length})
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                        {result.extractedEntities.amounts.slice(0, 10).map((amount, i) => (
-                          <Chip key={i} label={`$${amount}`} size="small" variant="outlined" />
-                        ))}
-                      </Box>
-                    </Box>
-                  </Grid>
-                )}
-                {result.extractedEntities.legalCitations && result.extractedEntities.legalCitations.length > 0 && (
-                  <Grid size={{ xs: 12 }}>
-                    <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                        Legal Citations ({result.extractedEntities.legalCitations.length})
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                        {result.extractedEntities.legalCitations.slice(0, 15).map((citation, i) => (
-                          <Chip
-                            key={i}
-                            label={citation}
-                            size="small"
-                            variant="outlined"
-                            icon={<Icon name="gavel" style={{ fontSize: 14 }} />}
-                          />
-                        ))}
-                      </Box>
-                    </Box>
-                  </Grid>
-                )}
-              </Grid>
-            </Collapse>
-          </Box>
-        </>
+          </Collapse>
+        </AnalysisSection>
       )}
 
-      <Divider sx={{ my: 3 }} />
-
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-          Recommended Actions
-        </Typography>
-        <List disablePadding>
+      <AnalysisSection id={`${uid}-actions`} title="Recommended Actions">
+        <Box component="ol" sx={{ listStyle: 'none', m: 0, p: 0, display: 'grid', gap: 1.5 }}>
           {result.recommendedActions.map((action, index) => (
-            <ListItem key={index} disablePadding sx={{ mb: 1 }}>
-              <ListItemIcon sx={{ minWidth: 36 }}>
-                <Box
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: '50%',
-                    bgcolor: 'primary.main',
-                    color: 'primary.contrastText',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12,
-                    fontWeight: 600,
-                  }}
-                >
-                  {index + 1}
-                </Box>
-              </ListItemIcon>
-              <ListItemText primary={action} />
-            </ListItem>
-          ))}
-        </List>
-      </Box>
-
-      <Divider sx={{ my: 3 }} />
-
-      <Box>
-        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-          Additional Resources
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          {result.additionalResources.map((resource, index) => (
-            <Chip
-              key={index}
-              label={resource}
-              variant="outlined"
-              icon={<Icon name="link" style={{ fontSize: 16 }} />}
-              sx={{ cursor: 'pointer' }}
-            />
+            <Box component="li" key={index} sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+              <Box
+                aria-hidden="true"
+                sx={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  bgcolor: 'primary.main',
+                  color: 'primary.contrastText',
+                  display: 'grid',
+                  placeItems: 'center',
+                  flexShrink: 0,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {index + 1}
+              </Box>
+              <Typography variant="body2" sx={{ pt: 0.5, overflowWrap: 'anywhere' }}>
+                {action}
+              </Typography>
+            </Box>
           ))}
         </Box>
-      </Box>
+      </AnalysisSection>
+
+      <AnalysisSection id={`${uid}-resources`} title="Additional Resources">
+        <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          {result.additionalResources.map((resource, index) => (
+            <Box component="li" key={index} sx={{ maxWidth: '100%' }}>
+              <TextChip label={resource} icon="link" />
+            </Box>
+          ))}
+        </Box>
+      </AnalysisSection>
 
       {debug && (
-        <>
-          <Divider sx={{ my: 3 }} />
-          <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-              Analysis Details
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <Typography variant="caption">
-                Method: {debug.analysisMethod}
+        <AnalysisSection id={`${uid}-debug`} title="Analysis Details">
+          <Box component="dl" sx={{ m: 0, display: 'flex', gap: 2.5, flexWrap: 'wrap' }}>
+            <Detail label="Method">
+              <Typography variant="body2">{debug.analysisMethod}</Typography>
+            </Detail>
+            <Detail label="Model">
+              <Typography variant="body2">{debug.aiModel}</Typography>
+            </Detail>
+            {debug.modelPreference && (
+              <Detail label="Preference">
+                <Typography variant="body2">{debug.modelPreference}</Typography>
+              </Detail>
+            )}
+            {debug.analysisDepth && (
+              <Detail label="Depth">
+                <Typography variant="body2">{debug.analysisDepth}</Typography>
+              </Detail>
+            )}
+            <Detail label="Processed">
+              <Typography variant="body2" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                {Number.isNaN(new Date(debug.timestamp).getTime()) ? (
+                  debug.timestamp
+                ) : (
+                  <time dateTime={new Date(debug.timestamp).toISOString()}>
+                    {new Date(debug.timestamp).toLocaleString()}
+                  </time>
+                )}
               </Typography>
-              <Typography variant="caption">
-                Model: {debug.aiModel}
-              </Typography>
-              {debug.modelPreference && (
-                <Typography variant="caption">
-                  Preference: {debug.modelPreference}
-                </Typography>
-              )}
-              {debug.analysisDepth && (
-                <Typography variant="caption">
-                  Depth: {debug.analysisDepth}
-                </Typography>
-              )}
-              <Typography variant="caption">
-                Processed: {new Date(debug.timestamp).toLocaleString()}
-              </Typography>
-            </Box>
+            </Detail>
           </Box>
-        </>
+        </AnalysisSection>
       )}
-    </Paper>
+    </Box>
   );
 }

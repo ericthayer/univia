@@ -1,23 +1,21 @@
 import { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Box,
-  Typography,
-  IconButton,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Divider,
-  Alert,
-} from '@mui/material';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import FormControl from '@mui/material/FormControl';
+import IconButton from '@mui/material/IconButton';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { useLocalStorageChecklists } from '../../hooks/useLocalStorageChecklists';
 import type { CustomChecklistItem } from '../../types';
+import { dialogPaperSx } from './dialogPaperSx';
 import Icon from '../ui/Icon';
 
 interface ChecklistBuilderProps {
@@ -136,7 +134,7 @@ export default function ChecklistBuilder({ open, onClose, checklistId }: Checkli
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth slotProps={{ paper: { sx: dialogPaperSx } }}>
       <DialogTitle>
         {checklistId ? 'Edit Checklist' : 'Create New Checklist'}
       </DialogTitle>
@@ -167,48 +165,48 @@ export default function ChecklistBuilder({ open, onClose, checklistId }: Checkli
             placeholder="Optional description of this checklist"
           />
 
-          <Divider />
-
-          <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Checklist Items</Typography>
+          <Box sx={{ pt: 3, borderTop: '1px solid', borderColor: 'divider' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+              <Typography variant="h6" component="h3">Checklist Items</Typography>
               <Button
                 startIcon={<Icon name="add" />}
                 onClick={handleAddItem}
                 size="small"
+                sx={{ minHeight: 44 }}
               >
                 Add Item
               </Button>
             </Box>
 
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box component="ol" sx={{ display: 'flex', flexDirection: 'column', listStyle: 'none', m: 0, p: 0 }}>
               {items.map((item, index) => (
                 <Box
+                  component="li"
                   key={index}
                   sx={{
-                    p: 2,
-                    border: 1,
-                    borderColor: 'divider',
-                    borderRadius: 2,
-                    bgcolor: 'background.default',
+                    py: 2.5,
+                    '& + &': { borderTop: '1px solid', borderColor: 'divider' },
                   }}
                 >
-                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', mb: 2 }}>
-                    <Typography
-                      variant="caption"
+                  <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start', mb: 2 }}>
+                    <Box
+                      aria-hidden="true"
                       sx={{
-                        bgcolor: 'primary.main',
-                        color: 'primary.contrastText',
-                        px: 1,
-                        py: 0.5,
-                        borderRadius: 1,
+                        width: 28,
+                        height: 28,
+                        mt: 0.75,
+                        flexShrink: 0,
+                        display: 'grid',
+                        placeItems: 'center',
+                        borderRadius: '50%',
+                        bgcolor: 'action.hover',
+                        fontSize: '0.75rem',
                         fontWeight: 600,
-                        minWidth: 24,
-                        textAlign: 'center',
+                        fontVariantNumeric: 'tabular-nums',
                       }}
                     >
                       {index + 1}
-                    </Typography>
+                    </Box>
                     <TextField
                       label="Item Title"
                       value={item.title}
@@ -219,11 +217,10 @@ export default function ChecklistBuilder({ open, onClose, checklistId }: Checkli
                       placeholder="e.g., Test keyboard navigation"
                     />
                     <IconButton
-                      size="small"
-                      color="error"
                       onClick={() => handleRemoveItem(index)}
                       disabled={items.length === 1}
-                      aria-label="remove item"
+                      aria-label={`Remove item ${index + 1}`}
+                      sx={{ width: 44, height: 44, color: 'text.secondary', '&:hover': { color: 'error.main' } }}
                     >
                       <Icon name="delete" />
                     </IconButton>
@@ -292,9 +289,9 @@ export default function ChecklistBuilder({ open, onClose, checklistId }: Checkli
           </Box>
         </Box>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained">
+      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <Button onClick={onClose} sx={{ minHeight: 44 }}>Cancel</Button>
+        <Button onClick={handleSave} variant="contained" sx={{ borderRadius: 999, minHeight: 44, px: 2.5 }}>
           {checklistId ? 'Save Changes' : 'Create Checklist'}
         </Button>
       </DialogActions>

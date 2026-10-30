@@ -1,4 +1,7 @@
-import { Alert, AlertTitle, Box, Typography } from '@mui/material';
+import { ReactNode } from 'react';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import type { Theme } from '@mui/material/styles';
 import Icon from './Icon';
 
 interface LegalDisclaimerProps {
@@ -6,109 +9,101 @@ interface LegalDisclaimerProps {
   sx?: object;
 }
 
+interface DisclaimerBlockProps {
+  title: string;
+  /** Larger padding and icon for the long-form variants. */
+  roomy?: boolean;
+  sx?: object;
+  children: ReactNode;
+}
+
+/**
+ * Quiet, hairline-bordered block. The icon sits in a tinted nested circle;
+ * the tint is the only color, so the block informs without shouting.
+ */
+function DisclaimerBlock({ title, roomy = false, sx, children }: DisclaimerBlockProps) {
+  return (
+    <Box
+      role="note"
+      sx={{
+        p: roomy ? 3 : 2,
+        borderRadius: (theme: Theme) => `${theme.surfaces?.coreRadius ?? 14}px`,
+        border: '1px solid',
+        borderColor: 'divider',
+        bgcolor: 'background.paper',
+        ...sx,
+      }}
+    >
+      <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+        <Box
+          aria-hidden="true"
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            display: 'grid',
+            placeItems: 'center',
+            flexShrink: 0,
+            fontSize: '1rem',
+            color: 'text.primary',
+            bgcolor: 'color-mix(in srgb, var(--mui-palette-warning-main) 16%, transparent)',
+          }}
+        >
+          <Icon name="gavel" />
+        </Box>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="subtitle2" component="p" sx={{ fontWeight: 600, mb: 0.5 }}>
+            {title}
+          </Typography>
+          {children}
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
 export default function LegalDisclaimer({ variant = 'default', sx }: LegalDisclaimerProps) {
   if (variant === 'compact') {
     return (
-      <Box
-        sx={{
-          p: 2,
-          bgcolor: 'warning.lighter',
-          borderRadius: 2,
-          border: '1px solid',
-          borderColor: 'warning.light',
-          ...sx,
-        }}
-      >
-        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-          <Icon name="gavel" style={{ fontSize: 40, height: '1em', width: '2.5em', color: 'warning.main' }} />
-          <Box>
-            <Typography variant="body1" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
-              Legal Disclaimer
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-              Univia is not a law firm and does not provide legal advice. This analysis is
-              for informational purposes only and may contain errors. Results are AI-generated and
-              should not be relied upon without consulting a licensed attorney.
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
+      <DisclaimerBlock title="Legal Disclaimer" sx={sx}>
+        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+          Univia is not a law firm and does not provide legal advice. This analysis is
+          for informational purposes only and may contain errors. Results are AI-generated and
+          should not be relied upon without consulting a licensed attorney.
+        </Typography>
+      </DisclaimerBlock>
     );
   }
 
+  const longForm = (
+    <>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, lineHeight: 1.7 }}>
+        <Box component="strong" sx={{ color: 'text.primary', fontWeight: 600 }}>
+          Univia is not a law firm
+        </Box>{' '}
+        and does not provide legal advice. This
+        analysis is for informational purposes only and may contain errors. The results are
+        AI-generated and should not be relied upon without consulting a licensed attorney.
+        Univia makes no warranties about the accuracy or completeness of this analysis.
+      </Typography>
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.6 }}>
+        By using this service, you acknowledge that you understand these limitations and will
+        seek professional legal counsel for any legal matters.
+      </Typography>
+    </>
+  );
+
   if (variant === 'banner') {
     return (
-      <Alert
-        severity="warning"
-        icon={<Icon name="gavel" style={{ fontSize: 22 }} />}
-        sx={{
-          mb: 3,
-          border: '2px solid',
-          borderColor: 'warning.main',
-          '& .MuiAlert-message': { width: '100%' },
-          ...sx,
-        }}
-      >
-        <AlertTitle sx={{ fontWeight: 700, mb: 1 }}>
-          Important Legal Disclaimer
-        </AlertTitle>
-        <Typography variant="body2" sx={{ mb: 2, lineHeight: 1.7 }}>
-          <strong>Univia is not a law firm</strong> and does not provide legal advice. This
-          analysis is for informational purposes only and may contain errors. The results are
-          AI-generated and should not be relied upon without consulting a licensed attorney.
-          Univia makes no warranties about the accuracy or completeness of this analysis.
-        </Typography>
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-          By using this service, you acknowledge that you understand these limitations and will
-          seek professional legal counsel for any legal matters.
-        </Typography>
-      </Alert>
+      <DisclaimerBlock title="Important Legal Disclaimer" roomy sx={{ mb: 3, ...sx }}>
+        {longForm}
+      </DisclaimerBlock>
     );
   }
 
   return (
-    <Box
-      sx={{
-        p: 3,
-        bgcolor: 'warning.lighter',
-        borderRadius: 2,
-        border: '2px solid',
-        borderColor: 'warning.main',
-        ...sx,
-      }}
-    >
-      <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-        <Box
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: '50%',
-            bgcolor: 'warning.main',
-            color: 'warning.contrastText',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <Icon name="gavel" style={{ fontSize: 24 }} />
-        </Box>
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
-            Important Legal Disclaimer
-          </Typography>
-          <Typography variant="body2" sx={{ mb: 2, lineHeight: 1.7 }}>
-            <strong>Univia is not a law firm</strong> and does not provide legal advice. This
-            analysis is for informational purposes only and may contain errors. The results are
-            AI-generated and should not be relied upon without consulting a licensed attorney.
-            Univia makes no warranties about the accuracy or completeness of this analysis.
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-            By using this service, you acknowledge that you understand these limitations and will
-            seek professional legal counsel for any legal matters.
-          </Typography>
-        </Box>
-      </Box>
-    </Box>
+    <DisclaimerBlock title="Important Legal Disclaimer" roomy sx={sx}>
+      {longForm}
+    </DisclaimerBlock>
   );
 }

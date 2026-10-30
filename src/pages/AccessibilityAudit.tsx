@@ -1,23 +1,18 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  TextField,
-  Button,
-  Card,
-  CardContent,
-  Alert,
-  CircularProgress,
-  Tabs,
-  Tab,
-  LinearProgress,
-  Grid,
-  InputAdornment,
-  Stack,
-  Pagination,
-} from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
+import InputAdornment from '@mui/material/InputAdornment';
+import LinearProgress from '@mui/material/LinearProgress';
+import Pagination from '@mui/material/Pagination';
+import Stack from '@mui/material/Stack';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { AccessibilityAudit as AuditType } from '../types';
 import ComplianceGauge from '../components/ui/ComplianceGauge';
@@ -28,28 +23,106 @@ import { hasFailedDevice, LighthouseAuditError, requestLighthouseAudit } from '.
 import Icon from '../components/ui/Icon';
 import { useFormValidation } from '../hooks/useFormValidation';
 import ValidationFeedback from '../components/validation/ValidationFeedback';
+import { PageCanvas } from '../components/ui/PageCanvas/PageCanvas';
+import { PageHeader } from '../components/ui/PageHeader/PageHeader';
+import { SectionHeader } from '../components/ui/SectionHeader/SectionHeader';
+import { BezelCard } from '../components/ui/BezelCard/BezelCard';
+import { ArrowButton } from '../components/ui/ArrowButton/ArrowButton';
+import { EmptyState } from '../components/ui/EmptyState/EmptyState';
+import { ScoreBar } from '../components/ui/ScoreBar/ScoreBar';
+
+type AuditTab = 'history' | 'metrics' | 'checks';
+
+const TABS: ReadonlyArray<{ value: AuditTab; label: string }> = [
+  { value: 'history', label: 'Audit History' },
+  { value: 'metrics', label: 'Performance Metrics' },
+  { value: 'checks', label: 'What We Check' },
+];
+
+const CHECKS = [
+  { icon: 'contrast', title: 'Color Contrast', description: 'Ensures text is readable for users with visual impairments' },
+  { icon: 'keyboard', title: 'Keyboard Navigation', description: 'Verifies all interactive elements are keyboard accessible' },
+  { icon: 'image', title: 'Alternative Text', description: 'Checks images have descriptive alt text for screen readers' },
+  { icon: 'language', title: 'ARIA Labels', description: 'Validates proper semantic markup and ARIA attributes' },
+  { icon: 'text_fields', title: 'Form Labels', description: 'Ensures form inputs have associated labels' },
+  { icon: 'article', title: 'Document Structure', description: 'Reviews heading hierarchy and page structure' },
+] as const;
+
+const LATEST_SCORE_CATEGORIES = [
+  { key: 'performance_score', title: 'Performance', subtitle: 'Speed & optimization' },
+  { key: 'accessibility_score', title: 'Accessibility', subtitle: 'WCAG compliance' },
+  { key: 'best_practices_score', title: 'Best Practices', subtitle: 'Code quality' },
+  { key: 'seo_score', title: 'SEO', subtitle: 'Search optimization' },
+] as const;
+
+const srOnly = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+} as const;
+
+function parseTab(value: string | null): AuditTab {
+  return TABS.some((tab) => tab.value === value) ? (value as AuditTab) : 'history';
+}
+
+function parsePage(value: string | null): number {
+  const parsed = Number.parseInt(value ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
 
 export default function AccessibilityAudit() {
   const navigate = useNavigate();
+  const theme = useTheme();
   const { user } = useAuth();
   const { getFieldState, setFieldValue, validateFieldDebounced } = useFormValidation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
-  const [activeTab, setActiveTab] = useState(0);
 
   const [audits, setAudits] = useState<AuditType[]>([]);
+  const [allAuditsForAverage, setAllAuditsForAverage] = useState<AuditType[]>([]);
   const [pinnedAuditIds, setPinnedAuditIds] = useState<Set<string>>(new Set());
   const [metricsLoading, setMetricsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const loadingRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const tabsSurfaceRef = useRef<HTMLDivElement | null>(null);
 
   const AUDITS_PER_PAGE = 6;
   const MAX_AUDITS_TO_LOAD = 30;
 
   const urlField = getFieldState('url');
   const MAX_URL_LENGTH = 2048;
+
+  const activeTab = parseTab(searchParams.get('tab'));
+  const currentPage = parsePage(searchParams.get('page'));
+
+  const updateParams = useCallback(
+    (mutate: (next: URLSearchParams) => void, replace = false) => {
+      const next = new URLSearchParams(searchParams);
+      mutate(next);
+      setSearchParams(next, { replace });
+    },
+    [searchParams, setSearchParams]
+  );
+
+  const handleTabChange = (_: React.SyntheticEvent, value: AuditTab) => {
+    updateParams((next) => {
+      if (value === 'history') {
+        next.delete('tab');
+      } else {
+        next.set('tab', value);
+      }
+      next.delete('page');
+    });
+  };
 
   const loadMetrics = useCallback(async () => {
     try {
@@ -139,12 +212,14 @@ export default function AccessibilityAudit() {
       if (urlField.error) {
         setApiError('Please fix validation errors before submitting');
         setLoading(false);
+        inputRef.current?.focus();
         return;
       }
 
       if (!urlField.value.trim()) {
         setApiError('Please enter a URL');
         setLoading(false);
+        inputRef.current?.focus();
         return;
       }
 
@@ -165,8 +240,6 @@ export default function AccessibilityAudit() {
     }
   };
 
-  const [allAuditsForAverage, setAllAuditsForAverage] = useState<AuditType[]>([]);
-
   const filteredAudits = audits.filter(audit =>
     audit.url_scanned.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -177,422 +250,256 @@ export default function AccessibilityAudit() {
   const paginatedAudits = filteredAudits.slice(startIndex, endIndex);
 
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
-    setCurrentPage(value);
-    window.scrollTo({ top: 340, behavior: 'smooth' });
+    updateParams((next) => {
+      if (value <= 1) {
+        next.delete('page');
+      } else {
+        next.set('page', String(value));
+      }
+    }, true);
+    tabsSurfaceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    if (searchParams.has('page')) {
+      updateParams((next) => next.delete('page'), true);
+    }
   };
 
   const latestAudit = audits[0];
-  const averageScores = allAuditsForAverage.length > 0
-    ? {
-        performance: Math.round(
-          allAuditsForAverage.reduce((sum, a) => sum + (a.performance_score || 0), 0) / allAuditsForAverage.length
-        ),
-        accessibility: Math.round(
-          allAuditsForAverage.reduce((sum, a) => sum + (a.accessibility_score || 0), 0) / allAuditsForAverage.length
-        ),
-        bestPractices: Math.round(
-          allAuditsForAverage.reduce((sum, a) => sum + (a.best_practices_score || 0), 0) / allAuditsForAverage.length
-        ),
-        seo: Math.round(
-          allAuditsForAverage.reduce((sum, a) => sum + (a.seo_score || 0), 0) / allAuditsForAverage.length
-        ),
-      }
-    : { performance: 0, accessibility: 0, bestPractices: 0, seo: 0 };
+  const averageScores = useMemo(() => {
+    if (allAuditsForAverage.length === 0) {
+      return { performance: 0, accessibility: 0, bestPractices: 0, seo: 0 };
+    }
+    const count = allAuditsForAverage.length;
+    return {
+      performance: Math.round(
+        allAuditsForAverage.reduce((sum, a) => sum + (a.performance_score || 0), 0) / count
+      ),
+      accessibility: Math.round(
+        allAuditsForAverage.reduce((sum, a) => sum + (a.accessibility_score || 0), 0) / count
+      ),
+      bestPractices: Math.round(
+        allAuditsForAverage.reduce((sum, a) => sum + (a.best_practices_score || 0), 0) / count
+      ),
+      seo: Math.round(
+        allAuditsForAverage.reduce((sum, a) => sum + (a.seo_score || 0), 0) / count
+      ),
+    };
+  }, [allAuditsForAverage]);
+
+  const iconCircleSx = {
+    width: 40,
+    height: 40,
+    borderRadius: '50%',
+    display: 'grid',
+    placeItems: 'center',
+    flexShrink: 0,
+    color: 'text.primary',
+    bgcolor: 'action.hover',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.5)',
+    fontSize: '1.25rem',
+    ...theme.applyStyles('dark', {
+      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+    }),
+  } as const;
+
+  const tabPanelId = (tab: AuditTab) => `audit-tabpanel-${tab}`;
+  const tabId = (tab: AuditTab) => `audit-tab-${tab}`;
 
   return (
-    <Stack sx={{ py: 6, flex: 1 }}>
-      <Container maxWidth="md" sx={{ pt: 1, display: 'flex', flexDirection: 'column', flex: 1 }}>
-        {/* Audit Intro Section */}
-        <Stack gap={1} sx={{ mb: 3 }}>
-          <Typography variant="h3" component="h2">
-            Web Accessibility Audit
-          </Typography>
-          <Typography variant="body1" color="text.secondary" gutterBottom>
-            Run audits, track performance metrics, and monitor WCAG compliance over time.
-          </Typography>          
-        </Stack>
+    <PageCanvas maxWidth="lg">
+      <PageHeader
+        eyebrow="Lighthouse"
+        title="Web Accessibility Audit"
+        titleComponent="h1"
+        titleId="audit-page-title"
+        description="Run audits, track performance metrics, and monitor WCAG compliance over time."
+      />
 
-        <Card sx={{ mb: 4, containerType: 'inline-size' }}>
-          <CardContent sx={{ pt: 3, px: 4, pb: 'calc(4 * var(--mui-spacing)) !important' }}>
-            <Stack gap={3}>
-              <Typography variant="h5" component="h2">Run Audit</Typography>
-              <Box component="form" onSubmit={handleSubmit} autoComplete="on">
-                <Box sx={{ mb: 3 }}>
-                  <TextField
-                    fullWidth
-                    label="Website Address"
-                    placeholder="yoursite.com"
-                    value={urlField.value}
-                    autoComplete="url"
-                    onChange={(e) => {
-                      setFieldValue('url', e.target.value);
-                      validateFieldDebounced('url', e.target.value, 'url');
-                    }}
-                    onBlur={() => {
-                      validateFieldDebounced('url', urlField.value, 'url');
-                    }}
-                    disabled={loading}
-                    error={Boolean(urlField.error) && (urlField.isDirty || urlField.isTouched)}
-                    InputProps={{
-                      startAdornment: (
-                        <Icon name="language" style={{ marginRight: 8, color: 'var(--mui-palette-grey-500)' }} />
-                      ),
-                      endAdornment: urlField.value && !loading ? (
-                        <InputAdornment position="end">
-                          <Button
-                            onClick={handleReset}
-                            sx={{
-                              minWidth: 'auto',
-                              p: 0.5,
-                              color: 'text.secondary',
-                              '&:hover': { color: 'text.primary' },
-                            }}
-                            aria-label="Clear input"
-                          >
-                            <Icon name="close" style={{ fontSize: 20 }} />
-                          </Button>
-                        </InputAdornment>
-                      ) : undefined,
-                    }}
-                  />
-                  <ValidationFeedback
-                    error={urlField.error}
-                    isValid={!urlField.error}
-                    isDirty={urlField.isDirty}
-                    isTouched={urlField.isTouched}
-                    characterCount={urlField.value.length}
-                    maxLength={MAX_URL_LENGTH}
-                    showCharacterCount={false}
-                    label="URL"
-                    alwaysShowHelper={
-                      !urlField.value.trim()
-                        ? 'Enter a website URL (e.g., example.com or https://example.com)'
-                        : 'URL format: must be a valid website address'
-                    }
-                  />
-                </Box>
-  
-                {apiError && (
-                  <Alert severity={apiError.includes('cancelled') ? 'info' : 'error'} sx={{ mb: 3 }}>
-                    {apiError}
-                  </Alert>
-                )}
-
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  {loading ? (
-                    <>
-                      <Button
-                        variant="contained"
-                        size="large"
-                        fullWidth
-                        disabled
-                        startIcon={<CircularProgress size={20} color="inherit" />}
-                      >
-                        Running Audits...
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        size="large"
-                        onClick={handleCancel}
-                        startIcon={<Icon name="close" />}
-                        sx={{ minWidth: 120 }}
-                      >
-                        Cancel
-                      </Button>
-                    </>
-                  ) : (
+      {/* Run Audit */}
+      <BezelCard component="section" aria-labelledby="run-audit-title" sx={{ containerType: 'inline-size' }}>
+        <SectionHeader id="run-audit-title" title="Run Audit" component="h2" dense />
+        <Box component="form" onSubmit={handleSubmit} autoComplete="on" noValidate>
+          <Box sx={{ mb: 3 }}>
+            <TextField
+              fullWidth
+              inputRef={inputRef}
+              label="Website Address"
+              placeholder="yoursite.com"
+              value={urlField.value}
+              autoComplete="url"
+              type="url"
+              inputMode="url"
+              onChange={(e) => {
+                setFieldValue('url', e.target.value);
+                validateFieldDebounced('url', e.target.value, 'url');
+              }}
+              onBlur={() => {
+                validateFieldDebounced('url', urlField.value, 'url');
+              }}
+              disabled={loading}
+              error={Boolean(urlField.error) && (urlField.isDirty || urlField.isTouched)}
+              sx={{
+                '& .MuiOutlinedInput-root': { borderRadius: 999, pl: 2 },
+                '& .MuiInputLabel-root': { ml: 1 },
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Icon name="language" style={{ color: 'var(--mui-palette-text-secondary)' }} />
+                  </InputAdornment>
+                ),
+                endAdornment: urlField.value && !loading ? (
+                  <InputAdornment position="end">
                     <Button
-                      type="submit"
-                      variant="contained"
-                      size="large"
-                      fullWidth
-                      startIcon={<Icon name="search" />}
+                      onClick={handleReset}
+                      sx={{
+                        minWidth: 'auto',
+                        width: 40,
+                        height: 40,
+                        p: 0,
+                        borderRadius: '50%',
+                        color: 'text.secondary',
+                        textDecoration: 'none !important',
+                        '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
+                      }}
+                      aria-label="Clear input"
                     >
-                      Run Audit
+                      <Icon name="close" style={{ fontSize: 20 }} />
                     </Button>
-                  )}
-                </Box>
-              </Box>
-            </Stack>
-          </CardContent>
-        </Card>
+                  </InputAdornment>
+                ) : undefined,
+              }}
+            />
+            <ValidationFeedback
+              error={urlField.error}
+              isValid={!urlField.error}
+              isDirty={urlField.isDirty}
+              isTouched={urlField.isTouched}
+              characterCount={urlField.value.length}
+              maxLength={MAX_URL_LENGTH}
+              showCharacterCount={false}
+              label="URL"
+              alwaysShowHelper={
+                !urlField.value.trim()
+                  ? 'Enter a website URL (e.g., example.com or https://example.com)'
+                  : 'URL format: must be a valid website address'
+              }
+            />
+          </Box>
 
-        {!user && audits.length > 0 && (
-          <Alert
-            severity="info"
-            icon={<Icon name="workspace_premium" />}
-            sx={{ display: 'none', mb: 4 }}
-            action={
-              <Button color="inherit" size="small" onClick={() => navigate('/pricing')}>
-                Sign Up Free
-              </Button>
-            }
-          >
-            Sign up for free to save up to 20 audits, pin important results, and track your progress over time!
-          </Alert>
-        )}
+          {apiError && (
+            <Alert severity={apiError.includes('cancelled') ? 'info' : 'error'} sx={{ mb: 3 }}>
+              {apiError}
+            </Alert>
+          )}
 
-        <Card sx={{ mb: 0, borderBottom: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}>
+          <Box component="span" role="status" aria-live="polite" sx={srOnly}>
+            {loading ? `Running audit for ${urlField.value}` : ''}
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            {loading ? (
+              <>
+                <ArrowButton
+                  disabled
+                  aria-busy="true"
+                  startIcon={<CircularProgress size={18} color="inherit" />}
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
+                >
+                  Running Audits...
+                </ArrowButton>
+                <Button
+                  variant="outlined"
+                  size="large"
+                  onClick={handleCancel}
+                  startIcon={<Icon name="close" />}
+                  sx={{ minWidth: 120, borderRadius: 999, width: { xs: '100%', sm: 'auto' } }}
+                >
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <ArrowButton type="submit" startIcon={<Icon name="search" />} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                Run Audit
+              </ArrowButton>
+            )}
+          </Box>
+        </Box>
+      </BezelCard>
+
+      {/* Tabs surface */}
+      <BezelCard
+        ref={tabsSurfaceRef}
+        component="section"
+        aria-labelledby="audit-page-title"
+        padding="none"
+        reveal={1}
+        sx={{ mt: { xs: 4, md: 6 }, overflow: 'hidden', scrollMarginTop: 88 }}
+      >
+        <Box sx={{ borderBottom: '1px solid', borderColor: 'divider', px: { xs: 1, sm: 2 } }}>
           <Tabs
             value={activeTab}
             variant="scrollable"
             scrollButtons
             allowScrollButtonsMobile
-            aria-label="scrollable force tabs example"
-            onChange={(_, newValue) => setActiveTab(newValue)}>
-            <Tab label="Audit History" />
-            <Tab label="Performance Metrics" />
-            <Tab label="What We Check" />
+            aria-label="Audit sections"
+            onChange={handleTabChange}
+          >
+            {TABS.map((tab) => (
+              <Tab
+                key={tab.value}
+                value={tab.value}
+                label={tab.label}
+                id={tabId(tab.value)}
+                aria-controls={tabPanelId(tab.value)}
+              />
+            ))}
           </Tabs>
-        </Card>
+        </Box>
 
-        {activeTab === 1 && (
-          <>
-            {metricsLoading ? (
-              <Box sx={{ py: 4 }}>
-                <LinearProgress />
-              </Box>
-            ) : audits.length === 0 ? (
-              <Card sx={{ borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
-                <CardContent sx={{ textAlign: 'center', py: 8 }}>
-                  <Box
-                    sx={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: '50%',
-                      bgcolor: 'action.hover',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mx: 'auto',
-                      mb: 3,
-                    }}
-                  >
-                    <Icon name="analytics" style={{ fontSize: 40, color: '#94A3B8' }} />
-                  </Box>
-                  <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
-                    No Metrics Available
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary">
-                    Run your first accessibility audit to start tracking performance metrics
-                  </Typography>
-                </CardContent>
-              </Card>
-            ) : (
-              <>
-                <Card sx={{ borderRadius: 0, pb: 1 }}>
-                  <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h5" sx={{ mb: 4, fontWeight: 600 }}>
-                      Latest Audit Scores
-                    </Typography>
-                    <Grid container spacing={4}>
-                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <ComplianceGauge
-                            score={latestAudit?.performance_score || 0}
-                            size={160}
-                            label=""
-                          />
-                          <Typography variant="h6" sx={{ mt: 2, fontWeight: 600 }}>
-                            Performance
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Speed & optimization
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <ComplianceGauge
-                            score={latestAudit?.accessibility_score || 0}
-                            size={160}
-                            label=""
-                          />
-                          <Typography variant="h6" sx={{ mt: 2, fontWeight: 600 }}>
-                            Accessibility
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            WCAG compliance
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <ComplianceGauge
-                            score={latestAudit?.best_practices_score || 0}
-                            size={160}
-                            label=""
-                          />
-                          <Typography variant="h6" sx={{ mt: 2, fontWeight: 600 }}>
-                            Best Practices
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Code quality
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <ComplianceGauge
-                            score={latestAudit?.seo_score || 0}
-                            size={160}
-                            label=""
-                          />
-                          <Typography variant="h6" sx={{ mt: 2, fontWeight: 600 }}>
-                            SEO
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Search optimization
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-
-                <Card sx={{ mb: 4, borderTop: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
-                  <CardContent sx={{ p: 4, flex: 1 }}>
-                    <Typography variant="h5" component="h2" sx={{ mb: 4 }}>
-                      Average Scores (Last {allAuditsForAverage.length} Audits)
-                    </Typography>
-                    <Grid container spacing={{ xs: 0, md: 4 }}>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <Box sx={{ mb: 3 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                              Performance
-                            </Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                              {averageScores.performance}/100
-                            </Typography>
-                          </Box>
-                          <LinearProgress
-                            variant="determinate"
-                            value={averageScores.performance}
-                            sx={{ height: 10, borderRadius: 5 }}
-                          />
-                        </Box>
-                        <Box sx={{ mb: 3 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                              Accessibility
-                            </Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 600, color: 'success.main' }}>
-                              {averageScores.accessibility}/100
-                            </Typography>
-                          </Box>
-                          <LinearProgress
-                            variant="determinate"
-                            value={averageScores.accessibility}
-                            color="success"
-                            sx={{ height: 10, borderRadius: 5 }}
-                          />
-                        </Box>
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <Box sx={{ mb: 3 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                              Best Practices
-                            </Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 600, color: 'warning.main' }}>
-                              {averageScores.bestPractices}/100
-                            </Typography>
-                          </Box>
-                          <LinearProgress
-                            variant="determinate"
-                            value={averageScores.bestPractices}
-                            color="warning"
-                            sx={{ height: 10, borderRadius: 5 }}
-                          />
-                        </Box>
-                        <Box sx={{ mb: 3 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                              SEO
-                            </Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 600, color: 'secondary.main' }}>
-                              {averageScores.seo}/100
-                            </Typography>
-                          </Box>
-                          <LinearProgress
-                            variant="determinate"
-                            value={averageScores.seo}
-                            color="secondary"
-                            sx={{ height: 10, borderRadius: 5 }}
-                          />
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </>
-            )}
-          </>
-        )}
-
-        {activeTab === 0 && (
-          <>
-            {metricsLoading ? (
-              <Box sx={{ py: 4 }}>
-                <LinearProgress />
-              </Box>
-            ) : audits.length === 0 ? (
-              <Card sx={{ borderTopLeftRadius: 0, borderTopRightRadius: 0, flex: 1 }}>
-                <CardContent sx={{ textAlign: 'center', py: 8, flex: 1 }}>
-                  <Box
-                    sx={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: '50%',
-                      bgcolor: 'action.hover',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mx: 'auto',
-                      mb: 3,
-                    }}
-                  >
-                    <Icon name="history" style={{ fontSize: 40, color: '#94A3B8' }} />
-                  </Box>
-                  <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
-                    No Audit History
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary">
-                    Run your first accessibility audit to start building your audit history
-                  </Typography>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card sx={{ borderTopLeftRadius: 0, borderTopRightRadius: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <CardContent sx={{ p: 4, display: 'flex', flexDirection: 'column', flex: 1 }}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
-                    <Typography variant="h5" component="h2">
-                      Audit History
-                    </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Total: {filteredAudits.length}
-                      </Typography>
-                  </Stack>
+        <Box sx={{ p: { xs: 2, sm: 3 }, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          {activeTab === 'history' && (
+            <Box
+              role="tabpanel"
+              id={tabPanelId('history')}
+              aria-labelledby={tabId('history')}
+              sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}
+            >
+              {metricsLoading ? (
+                <Box sx={{ py: 4 }}>
+                  <LinearProgress aria-label="Loading audit history" />
+                </Box>
+              ) : audits.length === 0 ? (
+                <EmptyState
+                  icon="history"
+                  title="No Audit History"
+                  description="Run your first accessibility audit to start building your audit history"
+                />
+              ) : (
+                <>
+                  <SectionHeader component="h3" dense title="Audit History" meta={`${filteredAudits.length} total`} />
 
                   {audits.length > 5 && (
                     <Box
                       sx={{
                         position: 'sticky',
                         top: 0,
-                        zIndex: 10,
-                        pb: { xs: 0, tiny: 2 },
-                        mb: 2,
+                        zIndex: 1,
+                        pb: 2,
+                        bgcolor: 'background.paper',
                       }}
                     >
                       <TextField
                         fullWidth
+                        size="small"
                         placeholder="Search by URL..."
                         value={searchQuery}
-                        onChange={(e) => {
-                          setSearchQuery(e.target.value);
-                          setCurrentPage(1);
-                        }}
+                        onChange={(e) => handleSearchChange(e.target.value)}
+                        inputProps={{ 'aria-label': 'Search audits by URL' }}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 999 } }}
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
@@ -601,46 +508,51 @@ export default function AccessibilityAudit() {
                           ),
                         }}
                       />
-
-                       {totalPages > 1 && (
-                        <Box sx={{ display: { xs: 'flex', tiny: 'none' }, justifyContent: 'space-evenly', mt: 2 }}>
-                          <Pagination
-                            count={totalPages}
-                            page={currentPage}
-                            onChange={handlePageChange}
-                            color="primary"
-                            size="small"
-                            showFirstButton
-                            showLastButton
-                          />
-                        </Box>
-                      )}
                     </Box>
                   )}
-                  
 
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
-                    {filteredAudits.length === 0 && searchQuery && (
-                      <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
-                        No audits found matching "{searchQuery}"
-                      </Typography>
-                    )}
+                  {filteredAudits.length === 0 && searchQuery ? (
+                    <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ py: 4 }}>
+                      No audits match “{searchQuery}”
+                    </Typography>
+                  ) : (
+                    <Box
+                      component="ul"
+                      sx={{
+                        listStyle: 'none',
+                        m: 0,
+                        p: 0,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 3,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {paginatedAudits.map((audit) => (
+                        <AuditHistoryCard
+                          key={audit.id}
+                          audit={audit}
+                          isPinned={pinnedAuditIds.has(audit.id)}
+                          onPinToggle={loadMetrics}
+                        />
+                      ))}
+                    </Box>
+                  )}
 
-                    {paginatedAudits.map((audit) => (
-                      <AuditHistoryCard
-                        key={audit.id}
-                        audit={audit}
-                        isPinned={pinnedAuditIds.has(audit.id)}
-                        onPinToggle={loadMetrics}
-                      />
-                    ))}
-                  </Box>
-
-                  {totalPages > 1 && audits.length > 5 && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, pt: 3, borderTop: 1, borderColor: 'divider' }}>
+                  {totalPages > 1 && (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        mt: 'auto',
+                        pt: 3,
+                        borderTop: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
                       <Pagination
                         count={totalPages}
-                        page={currentPage}
+                        page={Math.min(currentPage, totalPages)}
                         onChange={handlePageChange}
                         color="primary"
                         showFirstButton
@@ -648,48 +560,98 @@ export default function AccessibilityAudit() {
                       />
                     </Box>
                   )}
-                </CardContent>
-              </Card>
-            )}
-          </>
-        )}
+                </>
+              )}
+            </Box>
+          )}
 
-        {activeTab === 2 && (
-          <Card sx={{ borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h5" component="h2" sx={{ mb: 2, fontWeight: 600 }}>
-                What We Check
-              </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-            Powered by <a href="https://developer.chrome.com/docs/lighthouse/"><strong>Google Lighthouse</strong></a>, our audits use the same trusted open-source tool that developers and organizations worldwide rely on to measure website quality. Lighthouse scans your website and provides detailed insights on accessibility, performance, best practices, and SEO—giving you actionable recommendations to improve user experience and compliance.
-          </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {[
-                  { icon: 'contrast', title: 'Color Contrast', description: 'Ensures text is readable for users with visual impairments' },
-                  { icon: 'keyboard', title: 'Keyboard Navigation', description: 'Verifies all interactive elements are keyboard accessible' },
-                  { icon: 'image', title: 'Alternative Text', description: 'Checks images have descriptive alt text for screen readers' },
-                  { icon: 'language', title: 'ARIA Labels', description: 'Validates proper semantic markup and ARIA attributes' },
-                  { icon: 'text_fields', title: 'Form Labels', description: 'Ensures form inputs have associated labels' },
-                  { icon: 'article', title: 'Document Structure', description: 'Reviews heading hierarchy and page structure' },
-                ].map((item, index) => (
-                  <Box key={index} sx={{ display: 'flex', gap: 2 }}>
+          {activeTab === 'metrics' && (
+            <Box role="tabpanel" id={tabPanelId('metrics')} aria-labelledby={tabId('metrics')}>
+              {metricsLoading ? (
+                <Box sx={{ py: 4 }}>
+                  <LinearProgress aria-label="Loading performance metrics" />
+                </Box>
+              ) : audits.length === 0 ? (
+                <EmptyState
+                  icon="analytics"
+                  title="No Metrics Available"
+                  description="Run your first accessibility audit to start tracking performance metrics"
+                />
+              ) : (
+                <Stack gap={5}>
+                  <Box>
+                    <SectionHeader component="h3" dense title="Latest Audit Scores" />
                     <Box
                       sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 2,
-                        bgcolor: 'primary.main',
-                        color: 'primary.contrastText',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(9rem, 1fr))',
+                        gap: 3,
                       }}
                     >
-                      <Icon name={item.icon} style={{ fontSize: 20 }} />
+                      {LATEST_SCORE_CATEGORIES.map((category) => (
+                        <Box key={category.key} sx={{ textAlign: 'center' }}>
+                          <ComplianceGauge score={latestAudit?.[category.key] || 0} size={120} label="" />
+                          <Typography variant="subtitle1" sx={{ mt: 1.5, fontWeight: 600, lineHeight: 1.3 }}>
+                            {category.title}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {category.subtitle}
+                          </Typography>
+                        </Box>
+                      ))}
                     </Box>
-                    <Box>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  </Box>
+
+                  <Box>
+                    <SectionHeader
+                      component="h3"
+                      dense
+                      title="Average Scores"
+                      meta={`Last ${allAuditsForAverage.length} audits`}
+                    />
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+                        columnGap: 4,
+                        rowGap: 3,
+                      }}
+                    >
+                      <ScoreBar label="Performance" value={averageScores.performance} />
+                      <ScoreBar label="Accessibility" value={averageScores.accessibility} />
+                      <ScoreBar label="Best Practices" value={averageScores.bestPractices} />
+                      <ScoreBar label="SEO" value={averageScores.seo} />
+                    </Box>
+                  </Box>
+                </Stack>
+              )}
+            </Box>
+          )}
+
+          {activeTab === 'checks' && (
+            <Box role="tabpanel" id={tabPanelId('checks')} aria-labelledby={tabId('checks')}>
+              <SectionHeader component="h3" dense title="What We Check" />
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: '72ch' }}>
+                Powered by <a href="https://developer.chrome.com/docs/lighthouse/"><strong>Google Lighthouse</strong></a>, our audits use the same trusted open-source tool that developers and organizations worldwide rely on to measure website quality. Lighthouse scans your website and provides detailed insights on accessibility, performance, best practices, and SEO—giving you actionable recommendations to improve user experience and compliance.
+              </Typography>
+              <Box
+                component="ul"
+                sx={{
+                  listStyle: 'none',
+                  m: 0,
+                  p: 0,
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                  gap: 3,
+                }}
+              >
+                {CHECKS.map((item) => (
+                  <Box component="li" key={item.title} sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                    <Box aria-hidden="true" sx={iconCircleSx}>
+                      <Icon name={item.icon} />
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
                         {item.title}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
@@ -699,10 +661,10 @@ export default function AccessibilityAudit() {
                   </Box>
                 ))}
               </Box>
-            </CardContent>
-          </Card>
-        )}
-      </Container>
-    </Stack>
+            </Box>
+          )}
+        </Box>
+      </BezelCard>
+    </PageCanvas>
   );
 }

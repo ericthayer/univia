@@ -1,72 +1,116 @@
-import { useState, useEffect, useCallback } from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  TextField,
-  InputAdornment,
-  ToggleButtonGroup,
-  ToggleButton,
-  Chip,
-  Avatar,
-  IconButton,
-  Toolbar,
-  Grid,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-} from '@mui/material';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
+import ToggleButton from '@mui/material/ToggleButton';
+import Avatar from '@mui/material/Avatar';
+import IconButton from '@mui/material/IconButton';
+import Skeleton from '@mui/material/Skeleton';
 import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
+import type { Theme } from '@mui/material/styles';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
+import Icon from '../../components/ui/Icon';
+import { PageCanvas } from '../../components/ui/PageCanvas/PageCanvas';
+import { PageHeader } from '../../components/ui/PageHeader/PageHeader';
+import { BezelCard } from '../../components/ui/BezelCard/BezelCard';
+import { MetricTile } from '../../components/ui/MetricTile/MetricTile';
+import { EmptyState } from '../../components/ui/EmptyState/EmptyState';
+import { SectionHeader } from '../../components/ui/SectionHeader/SectionHeader';
+import { SegmentedToggleGroup } from '../../components/ui/SegmentedToggleGroup/SegmentedToggleGroup';
+import { UserCard, UserCardUser } from '../../components/admin/UserCard/UserCard';
+import { FilterSelect } from '../../components/admin/FilterSelect/FilterSelect';
+import { StatusPill, TierPill } from '../../components/admin/UserBadges/UserBadges';
 
-interface UserData {
-  id: string;
-  email: string;
-  full_name: string;
-  tier: string;
-  status: string;
-  last_login: string;
-  audit_count: number;
-  created_at: string;
-  activity_trend: number[];
-}
+type UserData = UserCardUser & { created_at: string };
 
 interface UserMetrics {
   new_users: number;
-  new_users_change: number;
   active_users: number;
-  active_users_change: number;
   churned_users: number;
-  total_revenue: number;
-  revenue_change: number;
 }
 
+type DirectoryView = 'cards' | 'table';
+
+const DEFAULT_VIEW: DirectoryView = 'cards';
+const DEFAULT_FILTER = 'all';
+const DIRECTORY_TITLE_ID = 'user-directory-title';
+
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'All' },
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'churned', label: 'Churned' },
+] as const;
+
+const TIER_OPTIONS = [
+  { value: 'all', label: 'All' },
+  { value: 'basic', label: 'Basic' },
+  { value: 'pro', label: 'Pro' },
+  { value: 'enterprise', label: 'Enterprise' },
+] as const;
+
+const eyebrowHeaderSx = {
+  fontSize: '0.6875rem',
+  fontWeight: 600,
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase',
+  color: 'text.secondary',
+} as const;
+
 export default function UserManagement() {
-  const [view, setView] = useState<'card' | 'grid'>('card');
   const [users, setUsers] = useState<UserData[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<UserData[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
   const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>([]);
   const [metrics, setMetrics] = useState<UserMetrics>({
     new_users: 0,
-    new_users_change: 0,
     active_users: 0,
-    active_users_change: 0,
     churned_users: 0,
-    total_revenue: 0,
-    revenue_change: 0,
   });
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [tierFilter, setTierFilter] = useState<string>('all');
+  const [searchParams, setSearchParams] = useSearchParams();
   const { profile } = useAuth();
+  const isAdmin = Boolean(profile?.is_admin);
 
-  const generateMockTrend = useCallback(() => {
-    return Array.from({ length: 7 }, () => Math.floor(Math.random() * 100));
-  }, []);
+  // URL-backed UI state (SPEC §4.5): defaults are omitted from the query string.
+  const viewParam = searchParams.get('view');
+  const view: DirectoryView = viewParam === 'table' ? 'table' : DEFAULT_VIEW;
+  const statusFilter = searchParams.get('status') ?? DEFAULT_FILTER;
+  const tierFilter = searchParams.get('tier') ?? DEFAULT_FILTER;
+  const searchQuery = searchParams.get('q') ?? '';
+
+  const updateParam = useCallback(
+    (key: string, value: string, defaultValue: string) => {
+      setSearchParams(
+        (current) => {
+          const next = new URLSearchParams(current);
+          if (value === defaultValue) {
+            next.delete(key);
+          } else {
+            next.set(key, value);
+          }
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
+
+  const clearFilters = useCallback(() => {
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete('status');
+        next.delete('tier');
+        next.delete('q');
+        return next;
+      },
+      { replace: true }
+    );
+  }, [setSearchParams]);
 
   const loadUsers = useCallback(async () => {
     const { data, error } = await supabase
@@ -79,20 +123,19 @@ export default function UserManagement() {
       return;
     }
 
-    const usersWithTrend = (data || []).map((user) => ({
-      id: user.id,
-      email: user.email,
-      full_name: user.full_name || 'Unknown',
-      tier: user.tier || 'basic',
-      status: user.status || 'active',
-      last_login: user.last_login || user.created_at,
-      audit_count: user.audit_count || 0,
-      created_at: user.created_at,
-      activity_trend: generateMockTrend(),
-    }));
-
-    setUsers(usersWithTrend);
-  }, [generateMockTrend]);
+    setUsers(
+      (data || []).map((user) => ({
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name || 'Unknown',
+        tier: user.tier || 'basic',
+        status: user.status || 'active',
+        last_login: user.last_login || user.created_at,
+        audit_count: user.audit_count || 0,
+        created_at: user.created_at,
+      }))
+    );
+  }, []);
 
   const loadMetrics = useCallback(async () => {
     const sevenDaysAgo = new Date();
@@ -115,88 +158,55 @@ export default function UserManagement() {
 
     setMetrics({
       new_users: newUsers || 0,
-      new_users_change: 24,
       active_users: activeUsers || 0,
-      active_users_change: 12,
       churned_users: churnedUsers || 0,
-      total_revenue: 1287500,
-      revenue_change: 3,
     });
   }, []);
 
-  const filterUsers = useCallback(() => {
-    let filtered = users;
+  useEffect(() => {
+    if (!isAdmin) return;
 
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (user) =>
-          user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+    let cancelled = false;
+    setLoading(true);
+    Promise.all([loadUsers(), loadMetrics()]).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
 
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter((user) => user.status === statusFilter);
-    }
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin, loadUsers, loadMetrics]);
 
-    if (tierFilter !== 'all') {
-      filtered = filtered.filter((user) => user.tier === tierFilter);
-    }
-
-    setFilteredUsers(filtered);
+  const filteredUsers = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return users.filter((user) => {
+      if (query && !user.email.toLowerCase().includes(query) && !user.full_name.toLowerCase().includes(query)) {
+        return false;
+      }
+      if (statusFilter !== DEFAULT_FILTER && user.status !== statusFilter) return false;
+      if (tierFilter !== DEFAULT_FILTER && user.tier !== tierFilter) return false;
+      return true;
+    });
   }, [users, searchQuery, statusFilter, tierFilter]);
 
-  useEffect(() => {
-    if (profile?.is_admin) {
-      loadUsers();
-      loadMetrics();
-    }
-  }, [profile, loadUsers, loadMetrics]);
+  const hasActiveFilters = statusFilter !== DEFAULT_FILTER || tierFilter !== DEFAULT_FILTER || searchQuery !== '';
 
-  useEffect(() => {
-    filterUsers();
-  }, [filterUsers]);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'inactive':
-        return 'warning';
-      case 'churned':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
-
-  const getTierColor = (tier: string) => {
-    switch (tier) {
-      case 'enterprise':
-        return 'primary';
-      case 'pro':
-        return 'secondary';
-      default:
-        return 'default';
-    }
-  };
-
-  const columns: GridColDef[] = [
+  const columns: GridColDef<UserData>[] = [
     {
       field: 'full_name',
-      headerName: 'USER',
+      headerName: 'User',
       flex: 1,
-      minWidth: 200,
+      minWidth: 260,
       renderCell: (params) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Avatar sx={{ width: 32, height: 32, fontSize: '0.875rem' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0, height: '100%' }}>
+          <Avatar sx={{ width: 36, height: 36, fontSize: '0.875rem', fontWeight: 600 }}>
             {params.row.full_name.charAt(0)}
           </Avatar>
-          <Box>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+          <Box sx={{ minWidth: 0, lineHeight: 1.3 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
               {params.row.full_name}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>
               {params.row.email}
             </Typography>
           </Box>
@@ -205,403 +215,355 @@ export default function UserManagement() {
     },
     {
       field: 'tier',
-      headerName: 'TIER',
-      width: 120,
+      headerName: 'Tier',
+      width: 130,
       renderCell: (params) => (
-        <Chip
-          label={params.value.toUpperCase()}
-          color={getTierColor(params.value)}
-          size="small"
-          sx={{ fontWeight: 500, fontSize: '0.75rem' }}
-        />
-      ),
-    },
-    {
-      field: 'status',
-      headerName: 'STATUS',
-      width: 120,
-      renderCell: (params) => (
-        <Chip
-          label={params.value.toUpperCase()}
-          color={getStatusColor(params.value)}
-          size="small"
-          sx={{ fontWeight: 500, fontSize: '0.75rem' }}
-        />
-      ),
-    },
-    {
-      field: 'audit_count',
-      headerName: 'AUDITS',
-      width: 100,
-      type: 'number',
-    },
-    {
-      field: 'activity_trend',
-      headerName: 'ACTIVITY',
-      width: 150,
-      sortable: false,
-      renderCell: (params) => (
-        <Box sx={{ width: '100%', height: 40 }}>
-          <svg width="120" height="40" viewBox="0 0 120 40">
-            <polyline
-              points={params.value
-                .map((val: number, idx: number) => `${idx * 20},${40 - (val / 100) * 35}`)
-                .join(' ')}
-              fill="none"
-              stroke={params.value[params.value.length - 1] > params.value[0] ? '#4caf50' : '#f44336'}
-              strokeWidth="2"
-            />
-          </svg>
+        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+          <TierPill tier={String(params.value)} />
         </Box>
       ),
     },
     {
-      field: 'last_login',
-      headerName: 'LAST ACTIVE',
-      width: 140,
+      field: 'status',
+      headerName: 'Status',
+      width: 130,
       renderCell: (params) => (
-        <Typography variant="body2" color="text.secondary">
-          {new Date(params.value).toLocaleDateString()}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+          <StatusPill status={String(params.value)} />
+        </Box>
       ),
+    },
+    {
+      field: 'audit_count',
+      headerName: 'Audits',
+      width: 110,
+      type: 'number',
+      align: 'center',
+      headerAlign: 'center',
+      cellClassName: 'UserDirectory-tabular',
+    },
+    {
+      field: 'last_login',
+      headerName: 'Last Active',
+      width: 150,
+      renderCell: (params) => {
+        const date = new Date(params.value);
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+              <time dateTime={date.toISOString()}>{date.toLocaleDateString()}</time>
+            </Typography>
+          </Box>
+        );
+      },
     },
     {
       field: 'actions',
       headerName: '',
-      width: 100,
+      width: 110,
       sortable: false,
+      filterable: false,
       renderCell: () => (
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <IconButton size="small" aria-label="Edit user">
-            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, height: '100%' }}>
+          <IconButton size="small" aria-label="Edit user" sx={{ width: 40, height: 40, color: 'text.secondary' }}>
+            <Icon name="edit" style={{ fontSize: 18 }} />
           </IconButton>
-          <IconButton size="small" aria-label="Delete user">
-            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-            </svg>
+          <IconButton
+            size="small"
+            aria-label="Delete user"
+            sx={{ width: 40, height: 40, color: 'text.secondary', '&:hover': { color: 'error.main' } }}
+          >
+            <Icon name="delete" style={{ fontSize: 18 }} />
           </IconButton>
         </Box>
       ),
     },
   ];
 
-  if (!profile?.is_admin) {
+  if (!isAdmin) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Typography variant="h5">Access Denied</Typography>
-        <Typography color="text.secondary">
-          You do not have permission to view this page.
-        </Typography>
-      </Box>
+      <PageCanvas maxWidth="xl">
+        <EmptyState
+          icon="shield"
+          title="Access denied"
+          description="You do not have permission to view this page."
+        />
+      </PageCanvas>
     );
   }
 
+  const churnTone = metrics.churned_users > 0 ? 'error' : 'neutral';
+
   return (
-    <Box sx={{ p: { xs: 2, sm: 3 } }}>
-      <Typography variant="h4" sx={{ mb: 3, fontWeight: 600 }}>
-        User Management
-      </Typography>
+    <PageCanvas maxWidth="xl">
+      <PageHeader
+        eyebrow="Admin"
+        title="User Management"
+        description="Accounts, tiers, and activity across Univia."
+        titleComponent="h1"
+      />
 
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                New Users
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                  {metrics.new_users}
-                </Typography>
-                <Chip
-                  label={`+${metrics.new_users_change}%`}
-                  size="small"
-                  color="success"
-                  sx={{ fontWeight: 500, height: 24 }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(14rem, 1fr))',
+          gap: 3,
+          mb: { xs: 4, md: 6 },
+        }}
+      >
+        <MetricTile
+          label="New Users"
+          value={metrics.new_users}
+          support="Last 7 days"
+          tone="neutral"
+          icon={<Icon name="person" />}
+          loading={loading}
+          reveal={0}
+        />
+        <MetricTile
+          label="Active Users"
+          value={metrics.active_users}
+          support="Currently active accounts"
+          tone="success"
+          icon={<Icon name="check_circle" />}
+          loading={loading}
+          reveal={1}
+        />
+        <MetricTile
+          label="Churned Users"
+          value={metrics.churned_users}
+          support="Accounts marked churned"
+          tone={churnTone}
+          icon={<Icon name="logout" />}
+          loading={loading}
+          reveal={2}
+        />
+      </Box>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Active Users
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                  {metrics.active_users}
-                </Typography>
-                <Chip
-                  label={`+${metrics.active_users_change}%`}
-                  size="small"
-                  color="success"
-                  sx={{ fontWeight: 500, height: 24 }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+      <BezelCard component="section" aria-labelledby={DIRECTORY_TITLE_ID} reveal={3}>
+        <SectionHeader
+          id={DIRECTORY_TITLE_ID}
+          title="Directory"
+          meta={
+            hasActiveFilters
+              ? `${filteredUsers.length} of ${users.length} users`
+              : `${users.length} ${users.length === 1 ? 'user' : 'users'}`
+          }
+        />
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Churned Users
-              </Typography>
-              <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                {metrics.churned_users}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Total Revenue
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                  ${metrics.total_revenue.toLocaleString()}
-                </Typography>
-                <Chip
-                  label={`+${metrics.revenue_change}%`}
-                  size="small"
-                  color="success"
-                  sx={{ fontWeight: 500, height: 24 }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      <Card>
-        <CardContent>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 3,
-              flexWrap: 'wrap',
-              gap: 2,
-            }}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 3,
+            flexWrap: 'wrap',
+            gap: 2,
+          }}
+        >
+          <SegmentedToggleGroup
+            value={view}
+            exclusive
+            onChange={(_, nextView: DirectoryView | null) => nextView && updateParam('view', nextView, DEFAULT_VIEW)}
+            size="small"
+            aria-label="Directory view"
           >
-            <ToggleButtonGroup
-              value={view}
-              exclusive
-              onChange={(_, newView) => newView && setView(newView)}
+            <ToggleButton value="cards" aria-label="Cards view">
+              <Icon name="grid_view" style={{ fontSize: 16 }} aria-hidden />
+              Cards
+            </ToggleButton>
+            <ToggleButton value="table" aria-label="Table view">
+              <Icon name="view_list" style={{ fontSize: 16 }} aria-hidden />
+              Table
+            </ToggleButton>
+          </SegmentedToggleGroup>
+
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap', flex: '1 1 auto', justifyContent: { md: 'flex-end' } }}>
+            <FilterSelect
+              id="user-status-filter"
+              label="Status"
+              value={statusFilter}
+              options={STATUS_OPTIONS}
+              onChange={(next) => updateParam('status', next, DEFAULT_FILTER)}
+            />
+            <FilterSelect
+              id="user-tier-filter"
+              label="Tier"
+              value={tierFilter}
+              options={TIER_OPTIONS}
+              onChange={(next) => updateParam('tier', next, DEFAULT_FILTER)}
+            />
+            <TextField
+              placeholder="Search users…"
               size="small"
-            >
-              <ToggleButton value="card" aria-label="Card view">
-                <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="8" x2="21" y1="6" y2="6" />
-                  <line x1="8" x2="21" y1="12" y2="12" />
-                  <line x1="8" x2="21" y1="18" y2="18" />
-                  <line x1="3" x2="3.01" y1="6" y2="6" />
-                  <line x1="3" x2="3.01" y1="12" y2="12" />
-                  <line x1="3" x2="3.01" y1="18" y2="18" />
-                </svg>
-                <Typography sx={{ ml: 1, fontSize: '0.875rem' }}>List</Typography>
-              </ToggleButton>
-              <ToggleButton value="grid" aria-label="Grid view">
-                <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect width="7" height="7" x="3" y="3" rx="1" />
-                  <rect width="7" height="7" x="14" y="3" rx="1" />
-                  <rect width="7" height="7" x="14" y="14" rx="1" />
-                  <rect width="7" height="7" x="3" y="14" rx="1" />
-                </svg>
-                <Typography sx={{ ml: 1, fontSize: '0.875rem' }}>Board</Typography>
-              </ToggleButton>
-            </ToggleButtonGroup>
-
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-              <FormControl size="small" sx={{ minWidth: 120 }}>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  value={statusFilter}
-                  label="Status"
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <MenuItem value="all">All</MenuItem>
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="inactive">Inactive</MenuItem>
-                  <MenuItem value="churned">Churned</MenuItem>
-                </Select>
-              </FormControl>
-
-              <FormControl size="small" sx={{ minWidth: 120 }}>
-                <InputLabel>Tier</InputLabel>
-                <Select
-                  value={tierFilter}
-                  label="Tier"
-                  onChange={(e) => setTierFilter(e.target.value)}
-                >
-                  <MenuItem value="all">All</MenuItem>
-                  <MenuItem value="basic">Basic</MenuItem>
-                  <MenuItem value="pro">Pro</MenuItem>
-                  <MenuItem value="enterprise">Enterprise</MenuItem>
-                </Select>
-              </FormControl>
-
-              <TextField
-                placeholder="Search users..."
-                size="small"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                InputProps={{
+              type="search"
+              value={searchQuery}
+              onChange={(e) => updateParam('q', e.target.value, '')}
+              slotProps={{
+                input: {
+                  'aria-label': 'Search users',
                   startAdornment: (
                     <InputAdornment position="start">
-                      <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="11" cy="11" r="8" />
-                        <path d="m21 21-4.3-4.3" />
-                      </svg>
+                      <Icon name="search" style={{ fontSize: 18 }} aria-hidden />
                     </InputAdornment>
                   ),
-                }}
-                sx={{ minWidth: 250 }}
-              />
-            </Box>
+                },
+              }}
+              sx={{
+                flex: { xs: '1 1 100%', sm: '0 1 260px' },
+                // The theme paints the field root with a square background; round it to match the pill outline.
+                borderRadius: 999,
+                '& .MuiOutlinedInput-root': { borderRadius: 999, minHeight: 44, pl: 1.75 },
+              }}
+            />
           </Box>
+        </Box>
 
-          {view === 'grid' ? (
-            <Box sx={{ height: 600, width: '100%' }}>
-              <DataGrid
-                rows={filteredUsers}
-                columns={columns}
-                checkboxSelection
-                disableRowSelectionOnClick
-                rowSelectionModel={selectedRows}
-                onRowSelectionModelChange={setSelectedRows}
-                pageSizeOptions={[10, 25, 50]}
-                initialState={{
-                  pagination: { paginationModel: { pageSize: 10 } },
-                }}
-                sx={{
-                  border: 'none',
-                  '& .MuiDataGrid-columnHeaders': {
-                    backgroundColor: 'action.hover',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                  },
-                }}
+        {loading ? (
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(18rem, 1fr))',
+              gap: 2.5,
+            }}
+            aria-busy="true"
+            aria-label="Loading users"
+          >
+            {[0, 1, 2].map((index) => (
+              <Skeleton
+                key={index}
+                variant="rounded"
+                height={196}
+                sx={{ borderRadius: (theme) => `${theme.surfaces.shellRadius}px` }}
               />
-              {selectedRows.length > 0 && (
-                <Toolbar
-                  sx={{
-                    position: 'fixed',
-                    bottom: 24,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    backgroundColor: 'background.paper',
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    borderRadius: 2,
-                    boxShadow: 3,
-                    minWidth: 400,
-                    justifyContent: 'center',
-                    gap: 2,
-                  }}
-                >
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {selectedRows.length} selected users
-                  </Typography>
-                  <Button size="small" variant="outlined">
+            ))}
+          </Box>
+        ) : filteredUsers.length === 0 ? (
+          <EmptyState
+            icon="people"
+            title={users.length === 0 ? 'No users yet' : 'No users match these filters'}
+            description={
+              users.length === 0
+                ? 'Accounts appear here as people sign up.'
+                : 'Try a different status, tier, or search term.'
+            }
+            action={
+              hasActiveFilters ? (
+                <Button variant="text" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              ) : undefined
+            }
+            compact
+          />
+        ) : view === 'table' ? (
+          <Box sx={{ width: '100%' }}>
+            <DataGrid
+              rows={filteredUsers}
+              columns={columns}
+              autoHeight
+              rowHeight={64}
+              checkboxSelection
+              disableRowSelectionOnClick
+              rowSelectionModel={selectedRows}
+              onRowSelectionModelChange={setSelectedRows}
+              pageSizeOptions={[10, 25, 50]}
+              initialState={{
+                pagination: { paginationModel: { pageSize: 10 } },
+              }}
+              sx={{
+                '--DataGrid-containerBackground': 'var(--mui-palette-action-hover)',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                '& .MuiDataGrid-columnHeaders': {
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                },
+                '& .MuiDataGrid-columnSeparator': { display: 'none' },
+                '& .MuiDataGrid-columnHeaderTitle': eyebrowHeaderSx,
+                '& .MuiDataGrid-cell': {
+                  borderColor: 'divider',
+                },
+                '& .MuiDataGrid-row': {
+                  transition: (theme: Theme) =>
+                    `background-color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}`,
+                },
+                '& .MuiDataGrid-row:hover': { bgcolor: 'action.hover' },
+                '& .MuiDataGrid-row.Mui-selected, & .MuiDataGrid-row.Mui-selected:hover': { bgcolor: 'action.selected' },
+                '& .UserDirectory-tabular': {
+                  fontVariantNumeric: 'tabular-nums',
+                  fontWeight: 600,
+                },
+                '& .MuiDataGrid-footerContainer': {
+                  borderTop: '1px solid',
+                  borderColor: 'divider',
+                },
+              }}
+            />
+            {selectedRows.length > 0 && (
+              <Box
+                role="toolbar"
+                aria-label="Bulk actions"
+                sx={{
+                  position: 'fixed',
+                  bottom: 24,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  zIndex: (theme) => theme.zIndex.snackbar,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  px: 1,
+                  py: 1,
+                  pl: 3,
+                  borderRadius: 999,
+                  bgcolor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  maxWidth: 'calc(100vw - 32px)',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                  {selectedRows.length} selected
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button size="small" variant="outlined" sx={{ borderRadius: 999 }}>
                     Engage
                   </Button>
-                  <Button size="small" variant="outlined">
+                  <Button size="small" variant="outlined" sx={{ borderRadius: 999 }}>
                     Export
                   </Button>
-                  <Button size="small" variant="outlined" color="error">
+                  <Button size="small" variant="outlined" color="error" sx={{ borderRadius: 999 }}>
                     Delete
                   </Button>
-                </Toolbar>
-              )}
-            </Box>
-          ) : (
-            <Grid container spacing={2}>
-              {filteredUsers.map((user) => (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={user.id}>
-                  <Card
-                    variant="outlined"
-                    sx={{
-                      '&:hover': {
-                        boxShadow: 2,
-                        borderColor: 'primary.main',
-                      },
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    <CardContent>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                        <Avatar sx={{ width: 48, height: 48 }}>
-                          {user.full_name.charAt(0)}
-                        </Avatar>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                            {user.full_name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {user.email}
-                          </Typography>
-                        </Box>
-                      </Box>
-
-                      <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                        <Chip
-                          label={user.tier.toUpperCase()}
-                          color={getTierColor(user.tier)}
-                          size="small"
-                        />
-                        <Chip
-                          label={user.status.toUpperCase()}
-                          color={getStatusColor(user.status)}
-                          size="small"
-                        />
-                      </Box>
-
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          pt: 2,
-                          borderTop: '1px solid',
-                          borderColor: 'divider',
-                        }}
-                      >
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
-                            Audits
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {user.audit_count}
-                          </Typography>
-                        </Box>
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
-                            Last Active
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {new Date(user.last_login).toLocaleDateString()}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          )}
-        </CardContent>
-      </Card>
-    </Box>
+                </Box>
+              </Box>
+            )}
+          </Box>
+        ) : (
+          <Box
+            component="ul"
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(18rem, 1fr))',
+              gap: 2.5,
+              listStyle: 'none',
+              m: 0,
+              p: 0,
+            }}
+          >
+            {filteredUsers.map((user, index) => (
+              <Box component="li" key={user.id} sx={{ minWidth: 0 }}>
+                <UserCard user={user} reveal={index} />
+              </Box>
+            ))}
+          </Box>
+        )}
+      </BezelCard>
+    </PageCanvas>
   );
 }

@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-  LinearProgress,
-  Chip,
-  Alert,
-} from '@mui/material';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
 import { useLocalStorageChecklists } from '../../hooks/useLocalStorageChecklists';
 import ChecklistItemCard from './ChecklistItemCard';
 import type { CustomChecklist, CustomChecklistItem } from '../../types';
 import Icon from '../ui/Icon';
+import { BezelCard } from '../ui/BezelCard/BezelCard';
+import { EmptyState } from '../ui/EmptyState/EmptyState';
+import { ScoreBar } from '../ui/ScoreBar/ScoreBar';
+import { TonePill } from '../ui/TonePill/TonePill';
 
 interface ChecklistViewProps {
   checklistId: string;
@@ -41,7 +41,7 @@ export default function ChecklistView({ checklistId, onBack, onEdit }: Checklist
         <Alert severity="error">
           Checklist not found
         </Alert>
-        <Button onClick={onBack} sx={{ mt: 2 }}>
+        <Button onClick={onBack} sx={{ mt: 2, minHeight: 44 }}>
           Back to Checklists
         </Button>
       </Box>
@@ -60,24 +60,24 @@ export default function ChecklistView({ checklistId, onBack, onEdit }: Checklist
       <Button
         startIcon={<Icon name="arrow_back" />}
         onClick={onBack}
-        sx={{ mb: 3 }}
+        sx={{ mb: 3, minHeight: 44 }}
       >
         Back to Checklists
       </Button>
 
-      <Box
-        sx={{
-          p: 4,
-          bgcolor: 'background.paper',
-          borderRadius: 2,
-          border: 1,
-          borderColor: 'divider',
-          mb: 4,
-        }}
-      >
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="h4" sx={{ fontWeight: 600, mb: 1 }}>
+      <BezelCard component="section" aria-labelledby="custom-checklist-title" sx={{ mb: 3 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            flexWrap: 'wrap',
+            gap: 2,
+            mb: 2,
+          }}
+        >
+          <Box sx={{ flex: '1 1 16rem', minWidth: 0 }}>
+            <Typography id="custom-checklist-title" variant="h4" component="h2" sx={{ fontWeight: 600, mb: 1 }}>
               {checklist.title}
             </Typography>
             {checklist.description && (
@@ -90,75 +90,64 @@ export default function ChecklistView({ checklistId, onBack, onEdit }: Checklist
             variant="outlined"
             startIcon={<Icon name="edit" />}
             onClick={onEdit}
+            sx={{ borderRadius: 999, minHeight: 44, px: 2.5 }}
           >
             Edit
           </Button>
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 3 }}>
-          {highPriorityItems.length > 0 && (
-            <Chip
-              icon={<Icon name="priority_high" style={{ fontSize: 16 }} />}
-              label={`${highPriorityItems.length} High Priority`}
-              color="error"
-              size="small"
-            />
-          )}
-          {overdueItems.length > 0 && (
-            <Chip
-              icon={<Icon name="schedule" style={{ fontSize: 16 }} />}
-              label={`${overdueItems.length} Overdue`}
-              color="warning"
-              size="small"
-            />
-          )}
-          {stats.completionPercentage === 100 && (
-            <Chip
-              icon={<Icon name="check_circle" style={{ fontSize: 16 }} />}
-              label="Complete"
-              color="success"
-              size="small"
-            />
-          )}
-        </Box>
-
-        <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              Progress
-            </Typography>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {stats.completedCount} / {stats.totalCount} ({stats.completionPercentage}%)
-            </Typography>
+        {(highPriorityItems.length > 0 || overdueItems.length > 0 || stats.completionPercentage === 100) && (
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 3 }}>
+            {highPriorityItems.length > 0 && (
+              <TonePill tone="error" dot>
+                {highPriorityItems.length} High Priority
+              </TonePill>
+            )}
+            {overdueItems.length > 0 && (
+              <TonePill tone="warning" dot>
+                {overdueItems.length} Overdue
+              </TonePill>
+            )}
+            {stats.completionPercentage === 100 && (
+              <TonePill tone="success" dot>
+                Complete
+              </TonePill>
+            )}
           </Box>
-          <LinearProgress
-            variant="determinate"
-            value={stats.completionPercentage}
-            sx={{ height: 8, borderRadius: 4 }}
-          />
-        </Box>
+        )}
 
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
+        <ScoreBar label={`Progress · ${stats.completedCount} / ${stats.totalCount}`} value={stats.completionPercentage} tone="neutral" />
+
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: 'block', mt: 2, fontVariantNumeric: 'tabular-nums' }}
+        >
           Last updated: {new Date(checklist.updated_at).toLocaleString()}
         </Typography>
-      </Box>
+      </BezelCard>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <BezelCard component="section" aria-label="Checklist items" padding="none" sx={{ overflow: 'hidden' }}>
         {items.length === 0 ? (
-          <Alert severity="info">
-            No items in this checklist. Click "Edit" to add items.
-          </Alert>
+          <EmptyState
+            compact
+            icon="playlist_add_check"
+            title="No items yet"
+            description='Click "Edit" to add items to this checklist.'
+          />
         ) : (
-          items.map((item) => (
-            <ChecklistItemCard
-              key={item.id}
-              checklistItem={item}
-              checklistId={checklistId}
-              onUpdate={loadChecklist}
-            />
-          ))
+          <Box component="ul" sx={{ m: 0, p: 0 }}>
+            {items.map((item) => (
+              <ChecklistItemCard
+                key={item.id}
+                checklistItem={item}
+                checklistId={checklistId}
+                onUpdate={loadChecklist}
+              />
+            ))}
+          </Box>
         )}
-      </Box>
+      </BezelCard>
     </Box>
   );
 }

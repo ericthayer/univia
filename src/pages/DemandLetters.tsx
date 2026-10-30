@@ -1,32 +1,40 @@
 import { useState, useEffect } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  Chip,
-  Alert,
-  Grid,
-  Tabs,
-  Tab,
-} from '@mui/material';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Skeleton from '@mui/material/Skeleton';
+import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
+import { Link as RouterLink } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { DemandLetter } from '../types';
 import { DocumentAnalysis } from '../components/documents/DocumentUploadDialog';
 import InlineDocumentUpload from '../components/documents/InlineDocumentUpload';
 import InlineAnalysisResults from '../components/documents/InlineAnalysisResults';
+import { LetterCard } from '../components/documents/LetterCard/LetterCard';
+import { ArrowButton } from '../components/ui/ArrowButton/ArrowButton';
+import { BezelCard } from '../components/ui/BezelCard/BezelCard';
+import { EmptyState } from '../components/ui/EmptyState/EmptyState';
 import Icon from '../components/ui/Icon';
+import { PageCanvas } from '../components/ui/PageCanvas/PageCanvas';
+import { PageHeader } from '../components/ui/PageHeader/PageHeader';
+import { SectionHeader } from '../components/ui/SectionHeader/SectionHeader';
 
-type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+const NEXT_STEPS = [
+  'Your document will be analyzed for key information',
+  'AI extracts dates, names, amounts, and violations',
+  'Legal analysis with risk assessment and potential defenses',
+  'Results are saved and can be shared with others',
+];
+
+const SKELETON_KEYS = ['a', 'b', 'c'];
 
 export default function DemandLetters() {
+  const theme = useTheme();
   const [letters, setLetters] = useState<DemandLetter[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<DocumentAnalysis | null>(null);
-  const [activeTab, setActiveTab] = useState(0);
 
   useEffect(() => {
     loadLetters();
@@ -52,294 +60,174 @@ export default function DemandLetters() {
     }
   };
 
-  const getRiskColor = (risk?: string): ChipColor => {
-    switch (risk) {
-      case 'critical':
-        return 'error';
-      case 'high':
-        return 'warning';
-      case 'medium':
-        return 'info';
-      case 'low':
-        return 'success';
-      default:
-        return 'default';
-    }
-  };
-
-  const getStatusColor = (status?: string): ChipColor => {
-    switch (status) {
-      case 'pending':
-        return 'warning';
-      case 'reviewed':
-        return 'info';
-      case 'responded':
-        return 'primary';
-      case 'resolved':
-        return 'success';
-      default:
-        return 'default';
-    }
-  };
-
-  const getDaysUntilDeadline = (deadline?: string) => {
-    if (!deadline) return null;
-    const today = new Date();
-    const deadlineDate = new Date(deadline);
-    const diffTime = deadlineDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
-
   const handleUploadComplete = (analysis: DocumentAnalysis) => {
     setAnalysisResult(analysis);
-    setActiveTab(1);
     loadLetters();
   };
 
   const handleNewUpload = () => {
     setAnalysisResult(null);
-    setActiveTab(0);
   };
 
+  const nestedCircleSx = {
+    width: 28,
+    height: 28,
+    borderRadius: '50%',
+    display: 'grid',
+    placeItems: 'center',
+    flexShrink: 0,
+    fontSize: '0.75rem',
+    fontWeight: 700,
+    fontVariantNumeric: 'tabular-nums',
+    color: 'text.primary',
+    bgcolor: 'action.hover',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.6)',
+    ...theme.applyStyles('dark', {
+      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+    }),
+  } as const;
+
   return (
-    <Box sx={{ py: 6 }}>
-      <Container maxWidth="lg" sx={{ pt: 1 }}>
-        <Box sx={{ mb: 6 }}>
-          <Typography variant="h3" component="h2" sx={{ mb: 2 }}>
-            Analyze Demand Letters
+    <PageCanvas maxWidth="lg">
+      <PageHeader
+        eyebrow="AI analysis"
+        title="Analyze Demand Letters"
+        titleId="letters-title"
+        description={
+          <>
+            Upload a PDF or image of your demand letter for AI-powered analysis. Your file is sent to Google
+            Gemini for analysis; review the results before relying on them.
+          </>
+        }
+      />
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 7fr) minmax(0, 5fr)' },
+          gap: 3,
+          alignItems: 'start',
+          mb: { xs: 6, md: 8 },
+        }}
+      >
+        <BezelCard component="section" aria-label="Upload a demand letter" reveal={0}>
+          {analysisResult ? (
+            <InlineAnalysisResults analysis={analysisResult} onNewUpload={handleNewUpload} />
+          ) : (
+            <InlineDocumentUpload onUploadComplete={handleUploadComplete} showNextSteps={false} />
+          )}
+        </BezelCard>
+
+        <BezelCard component="aside" aria-labelledby="next-steps-title" reveal={1}>
+          <Typography id="next-steps-title" variant="h6" component="h2" sx={{ mb: 2 }}>
+            What happens next?
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Upload a PDF or image of your demand letter for AI-powered analysis.
-          </Typography>
-        </Box>
-        <Grid container spacing={4}>
-          <Grid size={{ xs: 12, lg: 12 }}>
-            <Box sx={{ position: 'sticky', top: 24 }}>
-              <Tabs
-                value={activeTab}
-                onChange={(_, value) => setActiveTab(value)}
-                sx={{ display: 'none', mb: 3 }}
-              >
-                <Tab
-                  label="Upload Document"
-                  icon={<Icon name="upload_file" />}
-                  iconPosition="start"
-                />
-                <Tab
-                  label="Analysis Results"
-                  icon={<Icon name="analytics" />}
-                  iconPosition="start"
-                  disabled={!analysisResult}
-                />
-              </Tabs>
-
-              {activeTab === 0 && (
-                <InlineDocumentUpload onUploadComplete={handleUploadComplete} />
-              )}
-
-              {activeTab === 1 && analysisResult && (
-                <InlineAnalysisResults
-                  analysis={analysisResult}
-                  onNewUpload={handleNewUpload}
-                />
-              )}
-            </Box>
-          </Grid>
-
-          <Grid size={{ xs: 12, lg: 12 }}>
-            <Box sx={{ mb: 3, mt: { xs: 8, lg: 12 } }}>
-              <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-                Your Demand Letters
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                View and manage all uploaded demand letters
-              </Typography>
-            </Box>
-
-            {loadError && !loading ? (
-              <Alert severity="error" action={<Button color="inherit" size="small" onClick={loadLetters}>Retry</Button>}>
-                {loadError}
-              </Alert>
-            ) : letters.length === 0 && !loading ? (
-              <Card>
-                <CardContent sx={{ textAlign: 'center', py: 8 }}>
-                  <Box
-                    sx={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: '50%',
-                      bgcolor: 'action.hover',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mx: 'auto',
-                      mb: 3,
-                    }}
-                  >
-                    <Icon name="description" style={{ fontSize: 40, color: '#94A3B8' }} />
-                  </Box>
-                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                    No Demand Letters Yet
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                    Upload your first demand letter using the form on the left to get started
-                  </Typography>
-                </CardContent>
-              </Card>
-            ) : (
-              <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 2.5 }}>
-                {letters.map((letter) => {
-                  const daysLeft = getDaysUntilDeadline(letter.response_deadline);
-                  return (
-                    <Card
-                      key={letter.id}
-                      sx={{
-                        flex: '1 1 20rem',
-                        overflow: 'hidden',
-                        transition: 'transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease',
-                        '&:hover': {
-                          transform: 'translateY(-2px)',
-                          boxShadow: 6,
-                          borderColor: 'text.secondary',
-                        },
-                      }}
-                    >
-                      <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            flexDirection: { xs: 'column', sm: 'row' },
-                            justifyContent: 'space-between',
-                            alignItems: { xs: 'stretch', sm: 'flex-start' },
-                            gap: 2,
-                            mb: 2.5,
-                          }}
-                        >
-                          <Box sx={{ minWidth: 0, flex: 1 }}>
-                            <Typography
-                              variant="h6"
-                              sx={{ fontWeight: 600, lineHeight: 1.35, overflowWrap: 'anywhere' }}
-                            >
-                              {letter.file_name}
-                            </Typography>
-                            <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mt: 1.25 }}>
-                              <Chip
-                                label={letter.status?.toUpperCase() || 'PENDING'}
-                                color={getStatusColor(letter.status)}
-                                size="small"
-                              />
-                              <Chip
-                                label={`${letter.risk_level?.toUpperCase() || 'MEDIUM'} RISK`}
-                                color={getRiskColor(letter.risk_level)}
-                                size="small"
-                              />
-                              {daysLeft !== null && daysLeft <= 30 && (
-                                <Chip
-                                  label={`${daysLeft} days until deadline`}
-                                  color={daysLeft <= 7 ? 'error' : 'warning'}
-                                  size="small"
-                                  icon={<Icon name="schedule" />}
-                                />
-                              )}
-                              {letter.ai_model_version && (
-                                <Chip
-                                  label={letter.ai_model_version}
-                                  size="small"
-                                  variant="outlined"
-                                  icon={<Icon name="psychology" style={{ fontSize: 14 }} />}
-                                />
-                              )}
-                            </Box>
-                          </Box>
-                          <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
-                            <Button
-                              variant="outlined"
-                              size="small"
-                              startIcon={<Icon name="share" />}
-                            >
-                              Share
-                            </Button>
-                            <Button
-                              variant="outlined"
-                              size="small"
-                              endIcon={<Icon name="arrow_forward" />}
-                            >
-                              View
-                            </Button>
-                          </Box>
-                        </Box>
-
-                        <Grid container spacing={{ xs: 1.5, sm: 2 }}>
-                          {letter.plaintiff_name && (
-                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.25 }}>
-                                Plaintiff
-                              </Typography>
-                              <Typography variant="body1" sx={{ fontWeight: 500, overflowWrap: 'anywhere' }}>
-                                {letter.plaintiff_name}
-                              </Typography>
-                            </Grid>
-                          )}
-                          {letter.attorney_name && (
-                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.25 }}>
-                                Attorney
-                              </Typography>
-                              <Typography variant="body1" sx={{ fontWeight: 500, overflowWrap: 'anywhere' }}>
-                                {letter.attorney_name}
-                              </Typography>
-                            </Grid>
-                          )}
-                          {letter.response_deadline && (
-                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.25 }}>
-                                Deadline
-                              </Typography>
-                              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                {new Date(letter.response_deadline).toLocaleDateString()}
-                              </Typography>
-                            </Grid>
-                          )}
-                          {letter.settlement_amount && (
-                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.25 }}>
-                                Settlement Amount
-                              </Typography>
-                              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                ${letter.settlement_amount.toLocaleString()}
-                              </Typography>
-                            </Grid>
-                          )}
-                        </Grid>
-
-                        {letter.analysis_summary && (
-                          <Box sx={{ mt: 2.5, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
-                            <Typography variant="body2" color="text.secondary">
-                              {letter.analysis_summary}
-                            </Typography>
-                          </Box>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-
-                {letters.length > 0 && (
-                  <Alert severity="info" sx={{ flex: '1 1 100%' }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                      Need Legal Help?
-                    </Typography>
-                    <Typography variant="body2">
-                      Visit our Professional Resources directory to find experienced ADA attorneys who can help you respond to demand letters.
-                    </Typography>
-                  </Alert>
-                )}
+          <Box component="ol" sx={{ listStyle: 'none', m: 0, p: 0, display: 'grid', gap: 1.5 }}>
+            {NEXT_STEPS.map((step, index) => (
+              <Box component="li" key={step} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                <Box aria-hidden="true" sx={nestedCircleSx}>
+                  {index + 1}
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ pt: 0.5 }}>
+                  {step}
+                </Typography>
               </Box>
-            )}
-          </Grid>
-        </Grid>
-      </Container>
-    </Box>
+            ))}
+          </Box>
+
+          <Box
+            sx={{
+              mt: 3,
+              pt: 3,
+              borderTop: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+              <Box aria-hidden="true" sx={{ ...nestedCircleSx, width: 36, height: 36, fontSize: '1.125rem' }}>
+                <Icon name="people" />
+              </Box>
+              <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
+                Need legal help?
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+              Our Professional Resources directory lists experienced ADA attorneys who can help you respond.
+            </Typography>
+            <ArrowButton
+              variant="text"
+              component={RouterLink}
+              to="/resources"
+              sx={{ px: 1.5, minHeight: 40 }}
+            >
+              Browse professionals
+            </ArrowButton>
+          </Box>
+        </BezelCard>
+      </Box>
+
+      <Box component="section" aria-labelledby="letters-list-title">
+        <SectionHeader
+          id="letters-list-title"
+          title="Your Demand Letters"
+          meta={loading ? undefined : letters.length}
+        />
+
+        {loadError && !loading ? (
+          <Alert
+            severity="error"
+            action={
+              <Button color="inherit" size="small" onClick={loadLetters}>
+                Retry
+              </Button>
+            }
+          >
+            {loadError}
+          </Alert>
+        ) : loading ? (
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(20rem, 1fr))',
+              gap: 3,
+            }}
+            aria-busy="true"
+            aria-label="Loading demand letters"
+          >
+            {SKELETON_KEYS.map((key) => (
+              <BezelCard key={key}>
+                <Skeleton variant="text" width="70%" sx={{ fontSize: '1.25rem' }} />
+                <Box sx={{ display: 'flex', gap: 1, my: 1.5 }}>
+                  <Skeleton variant="rounded" width={72} height={24} />
+                  <Skeleton variant="rounded" width={96} height={24} />
+                </Box>
+                <Skeleton variant="rounded" height={88} />
+              </BezelCard>
+            ))}
+          </Box>
+        ) : letters.length === 0 ? (
+          <BezelCard>
+            <EmptyState
+              icon="description"
+              title="No Demand Letters Yet"
+              description="Upload your first demand letter above to get started."
+              compact
+            />
+          </BezelCard>
+        ) : (
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(20rem, 1fr))',
+              gap: 3,
+            }}
+          >
+            {letters.map((letter, index) => (
+              <LetterCard key={letter.id} letter={letter} reveal={index} />
+            ))}
+          </Box>
+        )}
+      </Box>
+    </PageCanvas>
   );
 }

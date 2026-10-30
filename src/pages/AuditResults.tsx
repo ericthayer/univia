@@ -1,26 +1,37 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import {
-  Box,
-  Container,
-  Typography,
-  Card,
-  CardContent,
-  Chip,
-  Button,
-  Alert,
-  CircularProgress,
-  Tabs,
-  Tab,
-  Grid,
-  Stack,
-  Link,
-} from '@mui/material';
+import { Link as RouterLink, useParams, useNavigate, useLocation } from 'react-router-dom';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
+import Link from '@mui/material/Link';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import ToggleButton from '@mui/material/ToggleButton';
+import Typography from '@mui/material/Typography';
 import { supabase } from '../services/supabaseClient';
 import { AccessibilityAudit, Violation } from '../types';
 import ComplianceGauge from '../components/ui/ComplianceGauge';
 import ViolationCard from '../components/ui/ViolationCard';
 import Icon from '../components/ui/Icon';
+import { ArrowButton } from '../components/ui/ArrowButton/ArrowButton';
+import { BezelCard } from '../components/ui/BezelCard/BezelCard';
+import { EmptyState } from '../components/ui/EmptyState/EmptyState';
+import { PageCanvas } from '../components/ui/PageCanvas/PageCanvas';
+import { PageHeader } from '../components/ui/PageHeader/PageHeader';
+import { SectionHeader } from '../components/ui/SectionHeader/SectionHeader';
+import { SegmentedToggleGroup } from '../components/ui/SegmentedToggleGroup/SegmentedToggleGroup';
+import { TonePill } from '../components/ui/TonePill/TonePill';
+import { SEVERITIES, severityTone } from '../components/ui/violationSeverity';
+
+const WIDE = '@container (min-width: 1000px)';
+
+const SCORE_CELLS: ReadonlyArray<{ key: 'performance_score' | 'accessibility_score' | 'best_practices_score' | 'seo_score'; label: string }> = [
+  { key: 'performance_score', label: 'Performance' },
+  { key: 'accessibility_score', label: 'Accessibility' },
+  { key: 'best_practices_score', label: 'Best Practices' },
+  { key: 'seo_score', label: 'SEO' },
+];
 
 export default function AuditResults() {
   const { id } = useParams<{ id: string }>();
@@ -95,250 +106,219 @@ export default function AuditResults() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-        <CircularProgress size={60} />
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80dvh' }}>
+        <CircularProgress size={60} aria-label="Loading audit results" />
       </Box>
     );
   }
 
   if (!mobileAudit && !desktopAudit) {
     return (
-      <Container maxWidth="md" sx={{ py: 8 }}>
-        <Alert severity="error">Audit not found</Alert>
-        <Button onClick={() => navigate('/audit')} sx={{ mt: 2 }}>
-          Back to Audit
-        </Button>
-      </Container>
+      <PageCanvas maxWidth="lg">
+        <EmptyState
+          icon="error"
+          title="Audit not found"
+          description="We couldn't find that audit. It may have been removed, or the link may be incorrect."
+          action={
+            <ArrowButton component={RouterLink} to="/audit">
+              Back to Audit
+            </ArrowButton>
+          }
+        />
+      </PageCanvas>
     );
   }
 
   const filteredViolations = getFilteredViolations();
+  const severityCounts = SEVERITIES.map((severity) => ({
+    severity,
+    count: currentViolations.filter((v) => v.severity === severity).length,
+  }));
+  const titleCase = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
   return (
-    <Box sx={{ py: 6 }}>
-      <Container maxWidth="lg">
-        <Box sx={{ mb: 4 }}>
-          <Button
-            startIcon={<Icon name="arrow_back" />}
-            onClick={() => navigate('/audit')}
-            sx={{ mb: 2 }}
+    <PageCanvas maxWidth="lg">
+      <Button
+        component={RouterLink}
+        to="/audit"
+        startIcon={<Icon name="arrow_back" />}
+        sx={{ alignSelf: 'flex-start', borderRadius: 999, minHeight: 44, px: 2, ml: -2, mb: 1, textDecoration: 'none !important' }}
+      >
+        Back to Audit
+      </Button>
+
+      <PageHeader
+        eyebrow="Lighthouse"
+        title="Accessibility Audit Results"
+        titleComponent="h1"
+        description={
+          currentAudit?.url_scanned ? (
+            <Link
+              href={currentAudit.url_scanned}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`${currentAudit.url_scanned} (opens in a new tab)`}
+              sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, overflowWrap: 'anywhere' }}
+            >
+              {currentAudit.url_scanned}
+              <Icon name="open_in_new" style={{ fontSize: 16, flexShrink: 0 }} aria-hidden />
+            </Link>
+          ) : undefined
+        }
+        actions={
+          <SegmentedToggleGroup
+            exclusive
+            size="small"
+            value={deviceTab}
+            onChange={(_, next: number | null) => next !== null && setDeviceTab(next)}
+            aria-label="Device"
           >
-            Back to Audits
-          </Button>
-          <Stack direction="row" flexWrap="wrap" alignItems="center" justifyContent="space-between" gap={2}>
-            <Typography variant="h3" sx={{ flex: '1 1 400px' }}>
-              Accessibility Audit Results
-            </Typography>
-              <Link variant="h6" href={currentAudit?.url_scanned} target="_blank" rel="noreferrer" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {currentAudit?.url_scanned}
-                <Icon name="open_in_new" />
-              </Link>
-          </Stack>
-          {partialAudit && (
-            <Alert severity="warning" role="status" sx={{ mt: 2 }}>
-              This report includes the device audit that completed successfully. The other device could not be audited and can be retried later.
-            </Alert>
+            <ToggleButton value={0} disabled={!mobileAudit} aria-label="Mobile results">
+              <Icon name="smartphone" style={{ fontSize: 16 }} aria-hidden />
+              Mobile
+            </ToggleButton>
+            <ToggleButton value={1} disabled={!desktopAudit} aria-label="Desktop results">
+              <Icon name="computer" style={{ fontSize: 16 }} aria-hidden />
+              Desktop
+            </ToggleButton>
+          </SegmentedToggleGroup>
+        }
+      />
+
+      {partialAudit && (
+        <Alert severity="warning" role="status" sx={{ mb: 3, mt: -2 }}>
+          This report includes the device audit that completed successfully. The other device could not be audited and can be retried later.
+        </Alert>
+      )}
+
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 3,
+          gridTemplateColumns: '1fr',
+          mb: { xs: 4, md: 6 },
+          [WIDE]: { gridTemplateColumns: 'minmax(0, 8fr) minmax(0, 4fr)' },
+        }}
+      >
+        <Box sx={{ display: 'grid', gap: 3, alignContent: 'start', minWidth: 0 }}>
+          <BezelCard component="section" aria-labelledby="audit-scores-title" reveal={0}>
+            <SectionHeader id="audit-scores-title" component="h2" title="Scores" dense />
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 3,
+                gridTemplateColumns: 'repeat(auto-fit, minmax(7.5rem, 1fr))',
+                justifyItems: 'center',
+              }}
+            >
+              {SCORE_CELLS.map(({ key, label }) => (
+                <Box key={key} sx={{ textAlign: 'center' }}>
+                  <ComplianceGauge score={currentAudit?.[key] || 0} size={100} label="" />
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    {label}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </BezelCard>
+
+          <BezelCard component="section" aria-labelledby="audit-severity-title" reveal={1}>
+            <SectionHeader id="audit-severity-title" component="h2" title="Issues by Severity" dense />
+            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+              {severityCounts.map(({ severity, count }) => (
+                <TonePill key={severity} tone={severityTone(severity)} dot>
+                  {severity}
+                  <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                    {count}
+                  </Box>
+                </TonePill>
+              ))}
+            </Box>
+          </BezelCard>
+        </Box>
+
+        <BezelCard component="section" aria-label="Page screenshot" reveal={2} sx={{ justifyContent: 'center' }}>
+          {currentAudit?.screenshot_url ? (
+            <Box
+              component="img"
+              src={currentAudit.screenshot_url}
+              alt={`Screenshot of ${currentAudit.url_scanned}`}
+              loading="lazy"
+              decoding="async"
+              sx={{
+                width: '100%',
+                height: 'auto',
+                maxHeight: 360,
+                objectFit: 'contain',
+                objectPosition: 'top center',
+                borderRadius: '10px',
+                border: 1,
+                borderColor: 'divider',
+              }}
+            />
+          ) : (
+            <EmptyState compact icon="image" title="No screenshot available" />
+          )}
+        </BezelCard>
+      </Box>
+
+      <BezelCard component="section" aria-labelledby="audit-issues-title" padding="none" reveal={3} sx={{ overflow: 'hidden' }}>
+        <Box sx={{ px: { xs: 2, sm: 3 }, pt: 3 }}>
+          <SectionHeader id="audit-issues-title" component="h2" title="Issues" meta={`${currentViolations.length} total`} dense />
+        </Box>
+        <Tabs
+          value={severityTab}
+          onChange={(_, newValue: number) => setSeverityTab(newValue)}
+          variant="scrollable"
+          scrollButtons
+          allowScrollButtonsMobile
+          aria-label="Filter issues by severity"
+          sx={{ borderBottom: 1, borderColor: 'divider', px: { xs: 1, sm: 2 } }}
+        >
+          <Tab
+            id="severity-tab-0"
+            aria-controls="severity-panel"
+            label={`All Issues (${currentViolations.length})`}
+          />
+          {severityCounts.map(({ severity, count }, index) => (
+            <Tab
+              key={severity}
+              id={`severity-tab-${index + 1}`}
+              aria-controls="severity-panel"
+              label={`${titleCase(severity)} (${count})`}
+            />
+          ))}
+        </Tabs>
+
+        <Box role="tabpanel" id="severity-panel" aria-labelledby={`severity-tab-${severityTab}`}>
+          {filteredViolations.length === 0 ? (
+            <EmptyState
+              compact
+              icon="check_circle"
+              title="No violations found in this category"
+              description="Great job!"
+            />
+          ) : (
+            <Box component="ul" sx={{ m: 0, p: 0 }}>
+              {filteredViolations.map((violation) => (
+                <ViolationCard key={violation.id} violation={violation} />
+              ))}
+            </Box>
           )}
         </Box>
+      </BezelCard>
 
-        <Card sx={{ mb: 4 }}>
-          <Tabs
-            value={deviceTab}
-            onChange={(_, newValue) => setDeviceTab(newValue)}
-            sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              px: 2,
-            }}
-          >
-            <Tab
-              icon={<Icon name="smartphone" />}
-              iconPosition="start"
-              label="Mobile"
-              disabled={!mobileAudit}
-            />
-            <Tab
-              icon={<Icon name="computer" />}
-              iconPosition="start"
-              label="Desktop"
-              disabled={!desktopAudit}
-            />
-          </Tabs>
-        </Card>
-
-        <Grid container spacing={4} sx={{ mb: 6 }}>
-          <Grid size={{ xs: 12, lg: 8 }}>
-            <Grid container spacing={3} sx={{ mb: 3 }}>
-              <Grid size={{ xs: 6, sm: 3 }}>
-                <Card>
-                  <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                    <ComplianceGauge
-                      score={currentAudit?.performance_score || 0}
-                      size={100}
-                      label=""
-                    />
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      Performance
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid size={{ xs: 6, sm: 3 }}>
-                <Card>
-                  <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                    <ComplianceGauge
-                      score={currentAudit?.accessibility_score || 0}
-                      size={100}
-                      label=""
-                    />
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      Accessibility
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid size={{ xs: 6, sm: 3 }}>
-                <Card>
-                  <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                    <ComplianceGauge
-                      score={currentAudit?.best_practices_score || 0}
-                      size={100}
-                      label=""
-                    />
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      Best Practices
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid size={{ xs: 6, sm: 3 }}>
-                <Card>
-                  <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                    <ComplianceGauge
-                      score={currentAudit?.seo_score || 0}
-                      size={100}
-                      label=""
-                    />
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      SEO
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-
-            <Card>
-              <CardContent>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                  Issues by Severity
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                  <Chip
-                    label={`Critical: ${currentViolations.filter((v) => v.severity === 'critical').length}`}
-                    color="error"
-                    variant="outlined"
-                  />
-                  <Chip
-                    label={`Serious: ${currentViolations.filter((v) => v.severity === 'serious').length}`}
-                    color="warning"
-                    variant="outlined"
-                  />
-                  <Chip
-                    label={`Moderate: ${currentViolations.filter((v) => v.severity === 'moderate').length}`}
-                    color="info"
-                    variant="outlined"
-                  />
-                  <Chip
-                    label={`Minor: ${currentViolations.filter((v) => v.severity === 'minor').length}`}
-                    color="success"
-                    variant="outlined"
-                  />
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid size={{ xs: 12, lg: 4 }} sx={{ display: 'flex', flex: 1 }}>
-            {currentAudit?.screenshot_url ? (
-              <Card sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                <CardContent sx={{ flex: 1, p: '1rem !important' }}>
-                  <Stack sx={{ flex: 1 }} justifyContent="center">
-                    <Box
-                      component="img"
-                      src={currentAudit.screenshot_url}
-                      alt={`Screenshot of ${currentAudit.url_scanned}`}
-                      sx={{
-                        width: '100%',
-                        height: 'auto',
-                        maxHeight: 280,
-                        objectFit: 'contain',
-                        objectFitPosition: 'top center',
-                        borderRadius: 1,
-                        border: 1,
-                        borderColor: 'divider',
-                      }}
-                    />
-                  </Stack>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent sx={{ textAlign: 'center', py: 8 }}>
-                  <Icon name="image" style={{ fontSize: 48, color: '#94A3B8' }} />
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                    No screenshot available
-                  </Typography>
-                </CardContent>
-              </Card>
-            )}
-          </Grid>
-        </Grid>
-
-        <Card sx={{ mb: 4 }}>
-          <Tabs
-            value={severityTab}
-            onChange={(_, newValue) => setSeverityTab(newValue)}
-            sx={{ borderBottom: 1, borderColor: 'divider' }}
-          >
-            <Tab label={`All Issues (${currentViolations.length})`} />
-            <Tab label={`Critical (${currentViolations.filter((v) => v.severity === 'critical').length})`} />
-            <Tab label={`Serious (${currentViolations.filter((v) => v.severity === 'serious').length})`} />
-            <Tab label={`Moderate (${currentViolations.filter((v) => v.severity === 'moderate').length})`} />
-            <Tab label={`Minor (${currentViolations.filter((v) => v.severity === 'minor').length})`} />
-          </Tabs>
-        </Card>
-
-        {filteredViolations.length === 0 ? (
-          <Alert severity="success" sx={{ mb: 4 }}>
-            No violations found in this category. Great job!
-          </Alert>
-        ) : (
-          <Grid container spacing={3}>
-            {filteredViolations.map((violation) => (
-              <Grid size={{ xs: 12 }} key={violation.id}>
-                <ViolationCard violation={violation} />
-              </Grid>
-            ))}
-          </Grid>
-        )}
-
-        <Box sx={{ mt: 6, display: 'flex', gap: 2, justifyContent: 'center' }}>
-          <Button
-            variant="contained"
-            size="large"
-            startIcon={<Icon name="file_download" />}
-          >
-            Export PDF Report
-          </Button>
-          <Button
-            variant="outlined"
-            size="large"
-            onClick={() => navigate('/audit')}
-          >
-            Run New Audit
-          </Button>
-        </Box>
-      </Container>
-    </Box>
+      <Box sx={{ mt: { xs: 4, md: 6 }, display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <Button
+          variant="outlined"
+          size="large"
+          startIcon={<Icon name="file_download" />}
+          sx={{ borderRadius: 999, minHeight: 48 }}
+        >
+          Export PDF Report
+        </Button>
+        <ArrowButton onClick={() => navigate('/audit')}>Run New Audit</ArrowButton>
+      </Box>
+    </PageCanvas>
   );
 }

@@ -39,6 +39,14 @@ export const primitiveTokens = {
       secondary: '#666666',
     },
     divider: '#E1E1E1',
+    // Foreground shades for tone-colored text. The `main` fills are built for
+    // bars and accents and fall short of 4.5:1 as small text on light surfaces.
+    toneText: {
+      success: '#166534',
+      warning: '#854d0e',
+      error: '#b91c1c',
+      info: '#01579b',
+    },
   },
   dark: {
     primary: {
@@ -80,5 +88,31 @@ export const primitiveTokens = {
       secondary: '#A3A3A3',
     },
     divider: '#333',
+    toneText: {
+      success: '#4ade80',
+      warning: '#facc15',
+      error: '#f87171',
+      info: '#4fc3f7',
+    },
   },
+} as const;
+
+/**
+ * Surface tokens for the nested-bezel card system (docs/specs/ui-refresh/SPEC.md §3.1).
+ * The core radius is derived from the shell radius minus the inset so the two
+ * curves stay concentric.
+ */
+export const surfaceTokens = {
+  shellRadius: 20,
+  shellInset: 6,
+  coreRadius: 14,
+} as const;
+
+/**
+ * Motion tokens (SPEC §3.4). `spring` simulates mass; `slow` is reserved for
+ * transform/shadow moves, while colors and borders use the standard duration.
+ */
+export const motionTokens = {
+  spring: 'cubic-bezier(0.32, 0.72, 0, 1)',
+  slow: 600,
 } as const;

@@ -1,22 +1,22 @@
 import { useState, useCallback } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  LinearProgress,
-  Alert,
-  IconButton,
-  ToggleButtonGroup,
-  ToggleButton,
-  Tooltip,
-  Collapse,
-} from '@mui/material';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Collapse from '@mui/material/Collapse';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import IconButton from '@mui/material/IconButton';
+import LinearProgress from '@mui/material/LinearProgress';
+import ToggleButton from '@mui/material/ToggleButton';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import Icon from '../ui/Icon';
 import LegalDisclaimer from '../ui/LegalDisclaimer';
+import { ArrowButton } from '../ui/ArrowButton/ArrowButton';
+import { SegmentedToggleGroup } from '../ui/SegmentedToggleGroup/SegmentedToggleGroup';
+import { srOnly } from '../ui/srOnly';
 import { ensureSession } from '../../services/session';
 import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from '../../services/supabaseFunctions';
 
@@ -257,11 +257,34 @@ export default function DocumentUploadDialog({
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          Upload Document for Analysis
-          <IconButton onClick={handleClose} size="small" disabled={uploading}>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: (theme) => `${theme.surfaces?.shellRadius ?? 20}px`,
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: 'none',
+            backgroundImage: 'none',
+          },
+        },
+      }}
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" gap={2}>
+          <Typography variant="h6" component="span" sx={{ letterSpacing: '-0.01em' }}>
+            Upload Document for Analysis
+          </Typography>
+          <IconButton
+            onClick={handleClose}
+            disabled={uploading}
+            aria-label="Close upload dialog"
+            sx={{ width: 44, height: 44, mr: -1 }}
+          >
             <Icon name="close" />
           </IconButton>
         </Box>
@@ -276,66 +299,76 @@ export default function DocumentUploadDialog({
         )}
 
         <Box
+          component="label"
+          htmlFor="file-upload"
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
           sx={{
-            border: '2px dashed',
-            borderColor: dragActive ? 'primary.main' : 'divider',
-            borderRadius: 2,
+            display: 'block',
+            border: '1.5px dashed',
+            borderColor: dragActive ? 'text.primary' : 'divider',
+            borderRadius: (theme) => `${theme.surfaces?.coreRadius ?? 14}px`,
             p: 4,
             textAlign: 'center',
             bgcolor: dragActive ? 'action.hover' : 'background.default',
-            transition: 'all 0.2s ease',
+            transition: (theme) =>
+              `border-color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}, background-color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}`,
             cursor: 'pointer',
             '&:hover': {
-              borderColor: 'primary.main',
+              borderColor: 'text.secondary',
               bgcolor: 'action.hover',
             },
+            '&:focus-within': {
+              outline: '2px solid',
+              outlineColor: 'primary.main',
+              outlineOffset: 2,
+            },
           }}
-          onClick={() => document.getElementById('file-upload')?.click()}
         >
           <input
             id="file-upload"
             type="file"
             accept=".pdf,.png,.jpg,.jpeg,.webp"
             onChange={handleFileSelect}
-            style={{ display: 'none' }}
+            style={srOnly}
           />
 
           {file ? (
             <Box>
               <Box
+                aria-hidden="true"
                 sx={{
                   width: 64,
                   height: 64,
                   borderRadius: '50%',
                   bgcolor: 'primary.main',
                   color: 'primary.contrastText',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  display: 'grid',
+                  placeItems: 'center',
                   mx: 'auto',
                   mb: 2,
+                  fontSize: '2rem',
                 }}
               >
-                <Icon name={file.type === 'application/pdf' ? 'picture_as_pdf' : 'image'} style={{ fontSize: 32 }} />
+                <Icon name={file.type === 'application/pdf' ? 'picture_as_pdf' : 'image'} />
               </Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5, overflowWrap: 'anywhere' }}>
                 {file.name}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
                 {formatFileSize(file.size)}
               </Typography>
               <Button
                 variant="text"
                 size="small"
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
                   setFile(null);
                 }}
-                sx={{ mt: 1 }}
+                sx={{ mt: 1, minHeight: 44, borderRadius: 999 }}
               >
                 Remove
               </Button>
@@ -343,19 +376,21 @@ export default function DocumentUploadDialog({
           ) : (
             <Box>
               <Box
+                aria-hidden="true"
                 sx={{
                   width: 64,
                   height: 64,
                   borderRadius: '50%',
                   bgcolor: 'action.hover',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  color: 'text.secondary',
+                  display: 'grid',
+                  placeItems: 'center',
                   mx: 'auto',
                   mb: 2,
+                  fontSize: '2rem',
                 }}
               >
-                <Icon name="cloud_upload" style={{ fontSize: 32, color: '#94A3B8' }} />
+                <Icon name="cloud_upload" />
               </Box>
               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
                 Drag and drop your document here
@@ -372,15 +407,20 @@ export default function DocumentUploadDialog({
 
         {uploading && (
           <Box sx={{ mt: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }} role="status" aria-live="polite">
               <Typography variant="body2" color="text.secondary">
                 {STAGE_MESSAGES[stage]}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
                 {STAGE_PROGRESS[stage]}%
               </Typography>
             </Box>
-            <LinearProgress variant="determinate" value={STAGE_PROGRESS[stage]} />
+            <LinearProgress
+              variant="determinate"
+              value={STAGE_PROGRESS[stage]}
+              aria-label="Analysis progress"
+              sx={{ height: 6, borderRadius: 999, '& .MuiLinearProgress-bar': { borderRadius: 999 } }}
+            />
           </Box>
         )}
 
@@ -388,28 +428,31 @@ export default function DocumentUploadDialog({
           <Button
             size="small"
             onClick={() => setShowAdvanced(!showAdvanced)}
+            aria-expanded={showAdvanced}
+            aria-controls="upload-advanced-options"
             endIcon={<Icon name={showAdvanced ? 'expand_less' : 'expand_more'} />}
-            sx={{ mb: 1 }}
+            sx={{ mb: 1, minHeight: 44, borderRadius: 999, px: 2, ml: -2 }}
           >
             Advanced Options
           </Button>
-          <Collapse in={showAdvanced}>
-            <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+          <Collapse in={showAdvanced} id="upload-advanced-options">
+            <Box sx={{ display: 'grid', gap: 2.5, pt: 1 }}>
+              <Box>
+                <Typography variant="eyebrow" component="p" sx={{ mb: 1 }}>
                   AI Model
                 </Typography>
-                <ToggleButtonGroup
+                <SegmentedToggleGroup
                   value={modelPreference}
                   exclusive
                   onChange={(_, value) => value && setModelPreference(value)}
                   size="small"
                   fullWidth
+                  aria-label="AI model"
                 >
                   <ToggleButton value="flash">
                     <Tooltip title="Faster analysis, good for most documents">
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Icon name="bolt" style={{ fontSize: 18 }} />
+                        <Icon name="flash_on" style={{ fontSize: 16 }} aria-hidden />
                         <span>Fast (Flash)</span>
                       </Box>
                     </Tooltip>
@@ -417,29 +460,30 @@ export default function DocumentUploadDialog({
                   <ToggleButton value="pro">
                     <Tooltip title="More thorough analysis, better for complex legal documents">
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Icon name="psychology" style={{ fontSize: 18 }} />
+                        <Icon name="psychology" style={{ fontSize: 16 }} aria-hidden />
                         <span>Pro</span>
                       </Box>
                     </Tooltip>
                   </ToggleButton>
-                </ToggleButtonGroup>
+                </SegmentedToggleGroup>
               </Box>
 
               <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                <Typography variant="eyebrow" component="p" sx={{ mb: 1 }}>
                   Analysis Depth
                 </Typography>
-                <ToggleButtonGroup
+                <SegmentedToggleGroup
                   value={analysisDepth}
                   exclusive
                   onChange={(_, value) => value && setAnalysisDepth(value)}
                   size="small"
                   fullWidth
+                  aria-label="Analysis depth"
                 >
                   <ToggleButton value="standard">
                     <Tooltip title="Extract key information and provide recommendations">
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Icon name="speed" style={{ fontSize: 18 }} />
+                        <Icon name="speed" style={{ fontSize: 16 }} aria-hidden />
                         <span>Standard</span>
                       </Box>
                     </Tooltip>
@@ -447,19 +491,19 @@ export default function DocumentUploadDialog({
                   <ToggleButton value="detailed">
                     <Tooltip title="In-depth legal analysis with risk assessment">
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Icon name="search" style={{ fontSize: 18 }} />
+                        <Icon name="search" style={{ fontSize: 16 }} aria-hidden />
                         <span>Detailed</span>
                       </Box>
                     </Tooltip>
                   </ToggleButton>
-                </ToggleButtonGroup>
+                </SegmentedToggleGroup>
               </Box>
             </Box>
           </Collapse>
         </Box>
 
-        <Box sx={{ mt: 3, p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+        <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid', borderColor: 'divider' }}>
+          <Typography variant="eyebrow" component="h3" sx={{ mb: 1 }}>
             What happens next?
           </Typography>
           <Typography variant="body2" color="text.secondary" component="ul" sx={{ pl: 2, m: 0 }}>
@@ -474,18 +518,21 @@ export default function DocumentUploadDialog({
           <LegalDisclaimer variant="compact" />
         </Box>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Button onClick={uploading ? handleCancel : handleClose}>
+      <DialogActions sx={{ px: 3, pb: 3, gap: 1, flexWrap: 'wrap' }}>
+        <Button
+          variant="outlined"
+          onClick={uploading ? handleCancel : handleClose}
+          sx={{ borderRadius: 999, minHeight: 48, px: 3 }}
+        >
           Cancel
         </Button>
-        <Button
-          variant="contained"
+        <ArrowButton
           onClick={handleUpload}
           disabled={!file || uploading}
           startIcon={<Icon name={uploading ? 'hourglass_empty' : 'analytics'} />}
         >
           {uploading ? 'Analyzing...' : 'Analyze Document'}
-        </Button>
+        </ArrowButton>
       </DialogActions>
     </Dialog>
   );

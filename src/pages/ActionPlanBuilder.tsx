@@ -1,30 +1,36 @@
 import { useState, useEffect, useCallback } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Chip,
-  Card,
-  CardContent,
-  Grid,
-  Alert,
-  Tabs,
-  Tab,
-} from '@mui/material';
-import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import FormControl from '@mui/material/FormControl';
+import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import type { Theme } from '@mui/material/styles';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabaseClient';
+import { dialogPaperSx } from '../components/checklist/dialogPaperSx';
+import { ArrowButton } from '../components/ui/ArrowButton/ArrowButton';
+import { BezelCard } from '../components/ui/BezelCard/BezelCard';
+import { EmptyState } from '../components/ui/EmptyState/EmptyState';
 import Icon from '../components/ui/Icon';
+import { MetricTile } from '../components/ui/MetricTile/MetricTile';
+import { PageCanvas } from '../components/ui/PageCanvas/PageCanvas';
+import { PageHeader } from '../components/ui/PageHeader/PageHeader';
+import { SectionHeader } from '../components/ui/SectionHeader/SectionHeader';
+import { TonePill } from '../components/ui/TonePill/TonePill';
+import type { Tone } from '../components/ui/tone';
 
 interface ActionPlan {
   id: string;
@@ -48,7 +54,38 @@ interface AuditViolation {
   wcag_guideline: string;
 }
 
-type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+const eyebrowHeaderSx = {
+  fontSize: '0.6875rem',
+  fontWeight: 600,
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase',
+  color: 'text.secondary',
+} as const;
+
+const SEVERITY_TONE: Record<string, Tone> = {
+  critical: 'error',
+  serious: 'warning',
+  moderate: 'neutral',
+};
+
+/** Priority by tone: critical and high carry color, medium is neutral, low is quiet. */
+function PriorityPill({ priority }: { priority: string }) {
+  if (priority === 'critical') return <TonePill tone="error" dot>{priority}</TonePill>;
+  if (priority === 'high') return <TonePill tone="warning" dot>{priority}</TonePill>;
+  if (priority === 'medium') return <TonePill>{priority}</TonePill>;
+  return <TonePill variant="outline">{priority}</TonePill>;
+}
+
+/** Status keeps the palette monochrome except for the two states that need attention. */
+function PlanStatusPill({ status }: { status: string }) {
+  const label = status.replace(/_/g, ' ');
+  if (status === 'completed') return <TonePill tone="success" dot>{label}</TonePill>;
+  if (status === 'blocked') return <TonePill tone="error" dot>{label}</TonePill>;
+  if (status === 'in_progress') return <TonePill dot>{label}</TonePill>;
+  return <TonePill variant="outline">{label}</TonePill>;
+}
+
+const pillButtonSx = { borderRadius: 999, minHeight: 44, px: 2.5, flexShrink: 0 } as const;
 
 export default function ActionPlanBuilder() {
   const { user } = useAuth();
@@ -214,93 +251,77 @@ export default function ActionPlanBuilder() {
     });
   };
 
-  const getPriorityColor = (priority: string): ChipColor => {
-    switch (priority) {
-      case 'critical':
-        return 'error';
-      case 'high':
-        return 'warning';
-      case 'medium':
-        return 'info';
-      case 'low':
-        return 'success';
-      default:
-        return 'default';
-    }
-  };
+  const cellCenter = { display: 'flex', alignItems: 'center', height: '100%' } as const;
 
-  const getStatusColor = (status: string): ChipColor => {
-    switch (status) {
-      case 'completed':
-        return 'success';
-      case 'in_progress':
-        return 'primary';
-      case 'blocked':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
-
-  const columns: GridColDef[] = [
+  const columns: GridColDef<ActionPlan>[] = [
     {
       field: 'title',
       headerName: 'Title',
       flex: 1,
-      minWidth: 200,
+      minWidth: 220,
+      renderCell: (params) => (
+        <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
+          {params.value}
+        </Typography>
+      ),
     },
     {
       field: 'priority',
       headerName: 'Priority',
-      width: 120,
+      width: 130,
       renderCell: (params) => (
-        <Chip
-          label={params.value.toUpperCase()}
-          color={getPriorityColor(params.value)}
-          size="small"
-        />
+        <Box sx={cellCenter}>
+          <PriorityPill priority={String(params.value)} />
+        </Box>
       ),
     },
     {
       field: 'status',
       headerName: 'Status',
-      width: 130,
+      width: 150,
       renderCell: (params) => (
-        <Chip
-          label={params.value.replace('_', ' ').toUpperCase()}
-          color={getStatusColor(params.value)}
-          size="small"
-        />
+        <Box sx={cellCenter}>
+          <PlanStatusPill status={String(params.value)} />
+        </Box>
       ),
     },
     {
       field: 'estimated_effort',
       headerName: 'Effort',
-      width: 100,
+      width: 110,
     },
     {
       field: 'due_date',
       headerName: 'Due Date',
-      width: 120,
+      width: 130,
       valueFormatter: (value) => (value ? new Date(value).toLocaleDateString() : ''),
+      cellClassName: 'ActionPlans-tabular',
     },
     {
       field: 'actions',
-      type: 'actions',
-      headerName: 'Actions',
-      width: 100,
-      getActions: (params) => [
-        <GridActionsCellItem
-          icon={<Icon name="edit" />}
-          label="Edit"
-          onClick={() => handleEdit(params.row)}
-        />,
-        <GridActionsCellItem
-          icon={<Icon name="delete" />}
-          label="Delete"
-          onClick={() => handleDelete(params.row.id)}
-        />,
-      ],
+      headerName: '',
+      width: 110,
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
+      renderCell: (params) => (
+        <Box sx={{ ...cellCenter, gap: 0.5 }}>
+          <IconButton
+            aria-label={`Edit ${params.row.title}`}
+            onClick={() => handleEdit(params.row)}
+            sx={{ width: 44, height: 44, color: 'text.secondary' }}
+          >
+            <Icon name="edit" style={{ fontSize: 18 }} />
+          </IconButton>
+          <IconButton
+            aria-label={`Delete ${params.row.title}`}
+            onClick={() => handleDelete(params.row.id)}
+            sx={{ width: 44, height: 44, color: 'text.secondary', '&:hover': { color: 'error.main' } }}
+          >
+            <Icon name="delete" style={{ fontSize: 18 }} />
+          </IconButton>
+        </Box>
+      ),
     },
   ];
 
@@ -312,151 +333,192 @@ export default function ActionPlanBuilder() {
     return true;
   });
 
+  const countByStatus = (status: ActionPlan['status']) => actionPlans.filter((p) => p.status === status).length;
+  const notStarted = countByStatus('not_started');
+  const inProgress = countByStatus('in_progress');
+  const completed = countByStatus('completed');
+  const blocked = countByStatus('blocked');
+
   if (!user) {
     return (
-      <Box sx={{ py: 6 }}>
-        <Container maxWidth="lg">
-          <Alert severity="info">
-            Please sign in to create and manage action plans.
-          </Alert>
-        </Container>
-      </Box>
+      <PageCanvas>
+        <EmptyState
+          icon="person"
+          title="Sign in to continue"
+          description="Please sign in to create and manage action plans."
+          action={
+            <ArrowButton component={RouterLink} to="/signin">
+              Sign in
+            </ArrowButton>
+          }
+        />
+      </PageCanvas>
     );
   }
 
+  const emptyCopy = actionPlans.length === 0
+    ? { title: 'No action plans yet', description: 'Create a plan from a recent violation, or start one from scratch.' }
+    : { title: 'No plans in this view', description: 'Switch tabs to see plans with a different status.' };
+
   return (
-    <Box sx={{ py: 6 }}>
-      <Container maxWidth="lg">
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 6 }}>
-          <Box>
-            <Typography variant="h3" sx={{ mb: 2, fontWeight: 700 }}>
-              Action Plan Builder
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Create and track remediation plans for accessibility issues
-            </Typography>
+    <PageCanvas>
+      <PageHeader
+        eyebrow="Remediation"
+        title="Action Plan Builder"
+        description="Create and track remediation plans for accessibility issues"
+        actions={<ArrowButton onClick={() => setDialogOpen(true)}>New Action Plan</ArrowButton>}
+      />
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(12rem, 1fr))',
+          gap: 3,
+          mb: { xs: 4, md: 6 },
+        }}
+      >
+        <MetricTile label="Not Started" value={notStarted} icon={<Icon name="schedule" />} loading={loading} reveal={0} />
+        <MetricTile label="In Progress" value={inProgress} icon={<Icon name="hourglass_empty" />} loading={loading} reveal={1} />
+        <MetricTile
+          label="Completed"
+          value={completed}
+          tone={completed > 0 ? 'success' : 'neutral'}
+          icon={<Icon name="check_circle" />}
+          loading={loading}
+          reveal={2}
+        />
+        <MetricTile
+          label="Blocked"
+          value={blocked}
+          tone={blocked > 0 ? 'error' : 'neutral'}
+          icon={<Icon name="error" />}
+          loading={loading}
+          reveal={3}
+        />
+      </Box>
+
+      {violations.length > 0 && (
+        <BezelCard
+          component="section"
+          aria-labelledby="violations-title"
+          padding="none"
+          reveal={4}
+          sx={{ mb: { xs: 4, md: 6 }, overflow: 'hidden' }}
+        >
+          <Box sx={{ px: { xs: 2, sm: 3 }, pt: 3, pb: 2 }}>
+            <SectionHeader id="violations-title" title="Create from Recent Violations" dense />
           </Box>
-          <Button
-            variant="contained"
-            size="large"
-            startIcon={<Icon name="add" />}
-            onClick={() => setDialogOpen(true)}
-          >
-            New Action Plan
-          </Button>
-        </Box>
-
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                  {actionPlans.filter((p) => p.status === 'not_started').length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Not Started
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                  {actionPlans.filter((p) => p.status === 'in_progress').length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  In Progress
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                  {actionPlans.filter((p) => p.status === 'completed').length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Completed
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                  {actionPlans.filter((p) => p.status === 'blocked').length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Blocked
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {violations.length > 0 && (
-          <Card sx={{ mb: 4 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                Create from Recent Violations
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {violations.slice(0, 5).map((violation) => (
-                  <Box
-                    key={violation.id}
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      p: 2,
-                      bgcolor: 'background.default',
-                      borderRadius: 1,
-                    }}
-                  >
-                    <Box>
-                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                        {violation.title}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {violation.wcag_guideline}
-                      </Typography>
-                    </Box>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => handleCreateFromViolation(violation)}
-                    >
-                      Create Plan
-                    </Button>
+          <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, borderTop: '1px solid', borderColor: 'divider' }}>
+            {violations.slice(0, 5).map((violation) => (
+              <Box
+                component="li"
+                key={violation.id}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 2,
+                  px: { xs: 2, sm: 3 },
+                  py: 2,
+                  '& + &': { borderTop: '1px solid', borderColor: 'divider' },
+                }}
+              >
+                <Box sx={{ flex: '1 1 16rem', minWidth: 0 }}>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    {violation.title}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
+                    <TonePill tone={SEVERITY_TONE[violation.severity] ?? 'neutral'} variant={SEVERITY_TONE[violation.severity] ? 'tonal' : 'outline'}>
+                      {violation.severity}
+                    </TonePill>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                      {violation.wcag_guideline}
+                    </Typography>
                   </Box>
-                ))}
+                </Box>
+                <Button
+                  variant="outlined"
+                  startIcon={<Icon name="add" />}
+                  onClick={() => handleCreateFromViolation(violation)}
+                  aria-label={`Create plan from ${violation.title}`}
+                  sx={pillButtonSx}
+                >
+                  Create Plan
+                </Button>
               </Box>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card>
-          <Tabs value={currentTab} onChange={(_, v) => setCurrentTab(v)}>
-            <Tab label={`All (${actionPlans.length})`} />
-            <Tab label={`Not Started (${actionPlans.filter((p) => p.status === 'not_started').length})`} />
-            <Tab label={`In Progress (${actionPlans.filter((p) => p.status === 'in_progress').length})`} />
-            <Tab label={`Completed (${actionPlans.filter((p) => p.status === 'completed').length})`} />
-          </Tabs>
-          <Box sx={{ height: 500 }}>
-            <DataGrid
-              rows={filteredPlans}
-              columns={columns}
-              loading={loading}
-              pageSizeOptions={[10, 25, 50]}
-              disableRowSelectionOnClick
-            />
+            ))}
           </Box>
-        </Card>
+        </BezelCard>
+      )}
 
-        <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+      <BezelCard component="section" aria-label="Action plans" padding="none" reveal={5} sx={{ overflow: 'hidden' }}>
+        <Tabs
+          value={currentTab}
+          onChange={(_, v) => setCurrentTab(v)}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          aria-label="Filter action plans by status"
+          sx={{ px: { xs: 1, sm: 2 }, borderBottom: '1px solid', borderColor: 'divider' }}
+        >
+          <Tab label={`All (${actionPlans.length})`} />
+          <Tab label={`Not Started (${notStarted})`} />
+          <Tab label={`In Progress (${inProgress})`} />
+          <Tab label={`Completed (${completed})`} />
+        </Tabs>
+
+        {!loading && filteredPlans.length === 0 ? (
+          <EmptyState
+            compact
+            icon="assignment"
+            title={emptyCopy.title}
+            description={emptyCopy.description}
+            action={
+              actionPlans.length === 0 ? (
+                <Button variant="outlined" startIcon={<Icon name="add" />} onClick={() => setDialogOpen(true)} sx={pillButtonSx}>
+                  New Action Plan
+                </Button>
+              ) : undefined
+            }
+          />
+        ) : (
+          <DataGrid
+            rows={filteredPlans}
+            columns={columns}
+            loading={loading}
+            autoHeight
+            rowHeight={64}
+            pageSizeOptions={[10, 25, 50]}
+            initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+            disableRowSelectionOnClick
+            sx={{
+              '--DataGrid-containerBackground': 'var(--mui-palette-action-hover)',
+              border: 0,
+              borderRadius: 0,
+              '& .MuiDataGrid-columnHeaders': { borderBottom: '1px solid', borderColor: 'divider' },
+              '& .MuiDataGrid-columnSeparator': { display: 'none' },
+              '& .MuiDataGrid-columnHeaderTitle': eyebrowHeaderSx,
+              '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center', borderColor: 'divider' },
+              '& .MuiDataGrid-row': {
+                transition: (theme: Theme) =>
+                  `background-color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}`,
+              },
+              '& .MuiDataGrid-row:hover': { bgcolor: 'action.hover' },
+              '& .ActionPlans-tabular': { fontVariantNumeric: 'tabular-nums' },
+              '& .MuiDataGrid-footerContainer': { borderTop: '1px solid', borderColor: 'divider' },
+            }}
+          />
+        )}
+      </BezelCard>
+
+        <Dialog
+          open={dialogOpen}
+          onClose={handleCloseDialog}
+          maxWidth="md"
+          fullWidth
+          slotProps={{ paper: { sx: dialogPaperSx } }}
+        >
           <DialogTitle>
             {editingPlan ? 'Edit Action Plan' : 'New Action Plan'}
           </DialogTitle>
@@ -480,8 +542,9 @@ export default function ActionPlanBuilder() {
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <FormControl fullWidth>
-                    <InputLabel>Priority</InputLabel>
+                    <InputLabel id="plan-priority-label">Priority</InputLabel>
                     <Select
+                      labelId="plan-priority-label"
                       value={formData.priority}
                       onChange={(e) => setFormData({ ...formData, priority: e.target.value as ActionPlan['priority'] })}
                       label="Priority"
@@ -495,8 +558,9 @@ export default function ActionPlanBuilder() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <FormControl fullWidth>
-                    <InputLabel>Status</InputLabel>
+                    <InputLabel id="plan-status-label">Status</InputLabel>
                     <Select
+                      labelId="plan-status-label"
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value as ActionPlan['status'] })}
                       label="Status"
@@ -525,7 +589,7 @@ export default function ActionPlanBuilder() {
                     type="date"
                     value={formData.due_date}
                     onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                    InputLabelProps={{ shrink: true }}
+                    slotProps={{ inputLabel: { shrink: true } }}
                     fullWidth
                   />
                 </Grid>
@@ -546,14 +610,13 @@ export default function ActionPlanBuilder() {
               />
             </Box>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button onClick={handleSave} variant="contained" disabled={!formData.title.trim()}>
+          <DialogActions sx={{ px: 3, pb: 2.5 }}>
+            <Button onClick={handleCloseDialog} sx={{ minHeight: 44 }}>Cancel</Button>
+            <Button onClick={handleSave} variant="contained" disabled={!formData.title.trim()} sx={pillButtonSx}>
               {editingPlan ? 'Update' : 'Create'}
             </Button>
           </DialogActions>
         </Dialog>
-      </Container>
-    </Box>
+    </PageCanvas>
   );
 }
