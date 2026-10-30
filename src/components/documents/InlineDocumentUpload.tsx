@@ -15,7 +15,9 @@ import {
   ListItemText,
   Divider as MuiDivider,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import Icon from '../ui/Icon';
+import { ArrowButton } from '../ui/ArrowButton/ArrowButton';
 import LegalDisclaimer from '../ui/LegalDisclaimer';
 import { DocumentAnalysis } from './DocumentUploadDialog';
 import { ensureSession } from '../../services/session';
@@ -23,7 +25,21 @@ import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from '../../servic
 
 interface InlineDocumentUploadProps {
   onUploadComplete: (analysis: DocumentAnalysis) => void;
+  /** Render the "What happens next?" block. Pages that show it elsewhere pass false. */
+  showNextSteps?: boolean;
 }
+
+const srOnlyInput = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+} as const;
 
 type AnalysisStage = 'idle' | 'uploading' | 'processing' | 'extracting' | 'analyzing' | 'complete' | 'error';
 
@@ -55,7 +71,8 @@ const ACCEPTED_TYPES = [
   'image/webp',
 ] as const;
 
-export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumentUploadProps) {
+export default function InlineDocumentUpload({ onUploadComplete, showNextSteps = true }: InlineDocumentUploadProps) {
+  const theme = useTheme();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -251,67 +268,81 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
 
       <Box sx={{ position: 'relative' }}>
         
-        {/* Upload Dropzone */}
+        {/* Upload Dropzone: a label wrapping a focusable (visually hidden) file input,
+            so it is keyboard operable without programmatic clicks. */}
         <Box
+          component="label"
+          htmlFor="file-upload-inline"
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
           sx={{
-            border: '2px dashed',
+            display: 'block',
+            position: 'relative',
+            border: '1.5px dashed',
             borderColor: dragActive ? 'primary.main' : 'divider',
-            borderRadius: 3,
-            pt: 3,
+            // Fallback keeps the component renderable under MUI's default theme (tests, storybook).
+            borderRadius: `${theme.surfaces?.coreRadius ?? 14}px`,
+            pt: 4,
             px: 4,
             pb: 4,
             textAlign: 'center',
-            bgcolor: dragActive ? 'action.hover' : 'background.paper',
-            transition: 'all 0.2s ease',
+            bgcolor: dragActive ? 'action.hover' : 'transparent',
+            transition: `border-color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}, background-color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}`,
             cursor: 'pointer',
             mb: 3,
             '&:hover': {
               borderColor: 'primary.main',
               bgcolor: 'action.hover',
             },
+            '&:focus-within': {
+              outline: '2px solid',
+              outlineColor: 'primary.main',
+              outlineOffset: 2,
+            },
           }}
-          onClick={() => document.getElementById('file-upload-inline')?.click()}
         >
-            <input
+            <Box
+              component="input"
               id="file-upload-inline"
               type="file"
               accept=".pdf,.png,.jpg,.jpeg,.webp"
               onChange={handleFileSelect}
-              style={{ display: 'none' }}
+              sx={srOnlyInput}
             />
-    
+
             {file ? (
               <Box>
                 <Box
+                  aria-hidden="true"
                   sx={{
-                    width: 80,
-                    height: 80,
+                    width: 72,
+                    height: 72,
                     borderRadius: '50%',
                     bgcolor: 'primary.main',
                     color: 'primary.contrastText',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    display: 'grid',
+                    placeItems: 'center',
                     mx: 'auto',
                     mb: 2,
+                    fontSize: '2rem',
+                    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.25)',
                   }}
                 >
-                  <Icon name={file.type === 'application/pdf' ? 'picture_as_pdf' : 'image'} style={{ fontSize: 40 }} />
+                  <Icon name={file.type === 'application/pdf' ? 'picture_as_pdf' : 'image'} />
                 </Box>
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, overflowWrap: 'anywhere' }}>
                   {file.name}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontVariantNumeric: 'tabular-nums' }}>
                   {formatFileSize(file.size)}
                 </Typography>
                 <Button
                   variant="text"
                   size="small"
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     setFile(null);
                   }}
@@ -322,19 +353,25 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
             ) : (
               <Box>
                 <Box
+                  aria-hidden="true"
                   sx={{
-                    width: 80,
-                    height: 80,
+                    width: 72,
+                    height: 72,
                     borderRadius: '50%',
                     bgcolor: 'action.hover',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    color: 'text.secondary',
+                    display: 'grid',
+                    placeItems: 'center',
                     mx: 'auto',
                     mb: 2,
+                    fontSize: '2rem',
+                    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.6)',
+                    ...theme.applyStyles('dark', {
+                      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+                    }),
                   }}
                 >
-                  <Icon name="cloud_upload" style={{ fontSize: 48, color: '#94A3B8' }} />
+                  <Icon name="cloud_upload" />
                 </Box>
                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
                   Drag and drop your document here
@@ -342,27 +379,39 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   or click to browse your files
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" component="p">
                   Supported formats: PDF, PNG, JPG, WebP (max 10MB)
+                </Typography>
+                <Typography variant="caption" color="text.secondary" component="p">
+                  Your file is sent to Google Gemini for analysis.
                 </Typography>
               </Box>
             )}
         </Box>
-  
-        
+
+
       </Box>
 
       {uploading && (
         <Box sx={{ mb: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Box
+            role="status"
+            aria-live="polite"
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
+          >
             <Typography variant="body2" color="text.secondary">
               {STAGE_MESSAGES[stage]}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
               {STAGE_PROGRESS[stage]}%
             </Typography>
           </Box>
-          <LinearProgress variant="determinate" value={STAGE_PROGRESS[stage]} />
+          <LinearProgress
+            variant="determinate"
+            value={STAGE_PROGRESS[stage]}
+            aria-label="Analysis progress"
+            sx={{ height: 6, borderRadius: 999 }}
+          />
         </Box>
       )}
 
@@ -548,25 +597,23 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
             </Button>
           </>
         ) : (
-          <Button
-            variant="contained"
+          <ArrowButton
             size="large"
             fullWidth
             onClick={handleUpload}
             startIcon={<Icon name="analytics" />}
+            sx={{ justifyContent: 'space-between' }}
           >
             Analyze Document
-          </Button>
+          </ArrowButton>
         )}
       </Box>
 
       {/* Disclaimer */}
       <LegalDisclaimer variant="compact" />
 
-                <Typography variant="body2" sx={{ mb: 2, display: 'none' }}>
-            Our document analysis feature, powered by Google Gemini AI, provides intelligent analysis of accessibility-related demand letters and legal notices. The system automatically extracts key information such as plaintiff details, attorney contact information, settlement amounts, and response deadlines. More importantly, it identifies specific web accessibility violations mentioned in the letter and provides actionable recommendations to resolve them. By understanding the exact accessibility issues cited, you can prioritize remediation efforts, allocate resources effectively, and develop a strategic response plan. This AI-assisted approach helps organizations transform compliance challenges into opportunities for creating a more accessible web experience for all users.
-          </Typography>
 
+      {showNextSteps && (
       <Box sx={{ mt: 3, p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
           What happens next?
@@ -586,6 +633,7 @@ export default function InlineDocumentUpload({ onUploadComplete }: InlineDocumen
           </Typography>
         </Box>
       </Box>
+      )}
     </>
   );
 }
