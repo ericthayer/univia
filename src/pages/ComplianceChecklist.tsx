@@ -1,27 +1,34 @@
 import { useState } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Checkbox,
-  TextField,
-  LinearProgress,
-  Chip,
-  Button,
-  Alert,
-  ToggleButtonGroup,
-  ToggleButton,
-} from '@mui/material';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import Box from '@mui/material/Box';
+import LinearProgress from '@mui/material/LinearProgress';
+import ToggleButton from '@mui/material/ToggleButton';
+import Typography from '@mui/material/Typography';
 import { WCAG_CHECKLIST, ChecklistCategory } from '../config/wcagChecklist';
 import CustomChecklistManager from '../components/checklist/CustomChecklistManager';
+import { WcagChecklistItem } from '../components/checklist/WcagChecklistItem/WcagChecklistItem';
 import { useWCAGProgress } from '../hooks/useWCAGProgress';
+import { ArrowButton } from '../components/ui/ArrowButton/ArrowButton';
+import { BezelCard } from '../components/ui/BezelCard/BezelCard';
 import Icon from '../components/ui/Icon';
+import { PageCanvas } from '../components/ui/PageCanvas/PageCanvas';
+import { PageHeader } from '../components/ui/PageHeader/PageHeader';
+import { ScoreBar } from '../components/ui/ScoreBar/ScoreBar';
+import { SectionHeader } from '../components/ui/SectionHeader/SectionHeader';
+import { SegmentedToggleGroup } from '../components/ui/SegmentedToggleGroup/SegmentedToggleGroup';
+import { TonePill } from '../components/ui/TonePill/TonePill';
 
 type ChecklistMode = 'wcag' | 'custom';
-type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+
+const WIDE = '@container (min-width: 900px)';
+
+const LEVEL_LEGEND = [
+  { level: 'A', variant: 'solid', label: 'Essential' },
+  { level: 'AA', variant: 'tonal', label: 'Target' },
+  { level: 'AAA', variant: 'outline', label: 'Enhanced' },
+] as const;
 
 export default function ComplianceChecklist() {
   const { progress, loading, toggleItem, updateNotes } = useWCAGProgress();
@@ -49,220 +56,183 @@ export default function ComplianceChecklist() {
     };
   };
 
-  const getLevelColor = (level: string): ChipColor => {
-    switch (level) {
-      case 'A':
-        return 'error';
-      case 'AA':
-        return 'warning';
-      case 'AAA':
-        return 'success';
-      default:
-        return 'default';
-    }
-  };
-
   const overall = getOverallProgress();
 
   if (loading) {
     return (
-      <Box sx={{ py: 6 }}>
-        <Container maxWidth="lg">
-          <LinearProgress />
-        </Container>
-      </Box>
+      <PageCanvas>
+        <LinearProgress aria-label="Loading checklist" />
+      </PageCanvas>
     );
   }
 
   return (
-    <Box sx={{ py: 6 }}>
-      <Container maxWidth="md">
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="h2" gutterBottom>
-            Compliance Checklist
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            {mode === 'wcag'
-              ? 'Work through this comprehensive checklist to ensure your website meets WCAG accessibility standards. Track your progress and add notes for each item.'
-              : 'Create and manage custom compliance checklists for your specific needs. Perfect for internal audits, project tracking, and tailored compliance workflows.'
-            }
-          </Typography>
-
-          <Box sx={{ display: 'none', gap: 2, flexWrap: 'wrap', mb: 4 }}>
-            <ToggleButtonGroup
+    <PageCanvas>
+      <PageHeader
+        eyebrow="Compliance"
+        title="Compliance Checklist"
+        description={
+          mode === 'wcag'
+            ? 'Work through this comprehensive checklist to ensure your website meets WCAG accessibility standards. Track your progress and add notes for each item.'
+            : 'Create and manage custom compliance checklists for your specific needs. Perfect for internal audits, project tracking, and tailored compliance workflows.'
+        }
+        actions={
+          <Box sx={{ display: 'none', gap: 2, flexWrap: 'wrap' }}>
+            <SegmentedToggleGroup
               value={mode}
               exclusive
-              onChange={(_, newMode) => newMode && setMode(newMode)}
-              aria-label="checklist mode"
+              onChange={(_, newMode: ChecklistMode | null) => newMode && setMode(newMode)}
+              aria-label="Checklist mode"
             >
               <ToggleButton value="wcag" aria-label="WCAG checklist">
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Icon name="fact_check" />
-                  WCAG Checklist
-                </Box>
+                <Icon name="fact_check" style={{ fontSize: 16 }} aria-hidden />
+                WCAG Checklist
               </ToggleButton>
-              <ToggleButton value="custom" aria-label="custom checklists" sx={{ display: 'none' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Icon name="playlist_add_check" />
-                  Custom Checklists
-                </Box>
+              <ToggleButton value="custom" aria-label="Custom checklists" sx={{ display: 'none' }}>
+                <Icon name="playlist_add_check" style={{ fontSize: 16 }} aria-hidden />
+                Custom Checklists
               </ToggleButton>
-            </ToggleButtonGroup>
+            </SegmentedToggleGroup>
 
             {mode === 'wcag' && (
-              <Button
-                variant="contained"
-                href="/audit"
-                startIcon={<Icon name="search" />}
-              >
+              <ArrowButton href="/audit" startIcon={<Icon name="search" />}>
                 Run Accessibility Audit
-              </Button>
+              </ArrowButton>
             )}
           </Box>
-        </Box>
+        }
+      />
 
-        
-          <Alert severity="info" sx={{ mb: 4 }}>
-            <strong>Note:</strong> Your WCAG checklist progress is stored locally in your browser. It will be cleared if you clear your browser data.
-          </Alert>
+      {mode === 'wcag' ? (
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 3,
+            gridTemplateColumns: '1fr',
+            alignItems: 'start',
+            [WIDE]: { gridTemplateColumns: 'minmax(0, 4fr) minmax(0, 8fr)' },
+          }}
+        >
+          <BezelCard
+            component="section"
+            aria-labelledby="checklist-progress-title"
+            reveal={0}
+            sx={{
+              [WIDE]: { position: 'sticky', top: 88 },
+            }}
+          >
+            <SectionHeader
+              id="checklist-progress-title"
+              title="Overall Progress"
+              meta={`${overall.completed} / ${overall.total}`}
+              dense
+            />
+            <ScoreBar label="Criteria completed" value={overall.percentage} tone="neutral" />
 
-        {mode === 'wcag' ? (
-          <>
-            <Box
-              sx={{
-                p: 4,
-                bgcolor: 'background.paper',
-                borderRadius: 2,
-                border: 1,
-                borderColor: 'divider',
-                mb: 4,
-              }}
-            >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Overall Progress
-                </Typography>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                  {overall.completed} / {overall.total}
-                </Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={overall.percentage}
-                sx={{ height: 8, borderRadius: 4 }}
-              />
-              <Box sx={{ display: 'flex', gap: 1, mt: 3 }}>
-                <Chip label="A: Essential" color="error" size="small" />
-                <Chip label="AA: Target" color="warning" size="small" />
-                <Chip label="AAA: Enhanced" color="success" size="small" />
-              </Box>
+            <Box component="ul" sx={{ listStyle: 'none', m: 0, mt: 3, p: 0, display: 'grid', gap: 1.25 }}>
+              {LEVEL_LEGEND.map(({ level, variant, label }) => (
+                <Box component="li" key={level} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <TonePill variant={variant}>{level}</TonePill>
+                  <Typography variant="body2" color="text.secondary">
+                    {label}
+                  </Typography>
+                </Box>
+              ))}
             </Box>
 
-            {WCAG_CHECKLIST.map((category) => {
-          const categoryProgress = getCategoryProgress(category);
-          return (
-            <Accordion
-              key={category.id}
-              expanded={expandedCategory === category.id}
-              onChange={(_, isExpanded) =>
-                setExpandedCategory(isExpanded ? category.id : false)
-              }
-              sx={{ mb: 2 }}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 1,
+                mt: 3,
+                pt: 2,
+                borderTop: '1px solid',
+                borderColor: 'divider',
+                color: 'text.secondary',
+              }}
             >
-              <AccordionSummary
-                expandIcon={<Icon name="expand_more" />}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%', pr: 2 }}>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      {category.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {category.description}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ minWidth: 100, textAlign: 'right' }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {categoryProgress.completed} / {categoryProgress.total}
-                    </Typography>
-                    <LinearProgress
-                      variant="determinate"
-                      value={categoryProgress.percentage}
-                      sx={{ height: 4, borderRadius: 2, mt: 0.5 }}
-                    />
-                  </Box>
-                </Box>
-              </AccordionSummary>
-              <AccordionDetails>
-                {category.items.map((item) => (
-                  <Box
-                    key={item.id}
+              <Icon name="info" style={{ fontSize: 16, marginTop: 3, flexShrink: 0 }} aria-hidden />
+              <Typography variant="caption" sx={{ lineHeight: 1.5 }}>
+                Your WCAG checklist progress is stored locally in your browser. It will be cleared if you clear your browser data.
+              </Typography>
+            </Box>
+          </BezelCard>
+
+          <Box sx={{ display: 'grid', gap: 3, minWidth: 0 }}>
+            {WCAG_CHECKLIST.map((category, index) => {
+              const categoryProgress = getCategoryProgress(category);
+              return (
+                <BezelCard key={category.id} padding="none" reveal={index + 1} sx={{ overflow: 'hidden' }}>
+                  <Accordion
+                    expanded={expandedCategory === category.id}
+                    onChange={(_, isExpanded) =>
+                      setExpandedCategory(isExpanded ? category.id : false)
+                    }
+                    disableGutters
+                    elevation={0}
+                    square
                     sx={{
-                      p: 2,
-                      mb: 2,
-                      bgcolor: progress[item.id]?.completed ? 'success.50' : 'background.default',
-                      borderRadius: 2,
-                      border: 1,
-                      borderColor: progress[item.id]?.completed ? 'success.main' : 'divider',
-                      transition: 'all 0.2s ease',
+                      bgcolor: 'transparent',
+                      backgroundImage: 'none',
+                      '&::before': { display: 'none' },
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                      <Checkbox
-                        checked={progress[item.id]?.completed || false}
-                        onChange={(e) => toggleItem(item.id, e.target.checked)}
-                      />
-                      <Box sx={{ flex: 1 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 600, flex: 1 }}>
-                            {item.title}
+                    <AccordionSummary
+                      expandIcon={<Icon name="expand_more" />}
+                      sx={{ px: { xs: 2, sm: 3 }, py: 1, minHeight: 72 }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%', pr: 1, minWidth: 0 }}>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
+                            {category.name}
                           </Typography>
-                          <Chip
-                            label={item.level}
-                            color={getLevelColor(item.level)}
-                            size="small"
+                          <Typography variant="body2" color="text.secondary">
+                            {category.description}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ minWidth: 72, textAlign: 'right', flexShrink: 0 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                            {categoryProgress.completed} / {categoryProgress.total}
+                          </Typography>
+                          <LinearProgress
+                            variant="determinate"
+                            value={categoryProgress.percentage}
+                            aria-label={`${category.name} progress`}
+                            sx={{
+                              height: 4,
+                              borderRadius: 999,
+                              mt: 0.75,
+                              bgcolor: 'action.hover',
+                              '& .MuiLinearProgress-bar': { borderRadius: 999, bgcolor: 'text.secondary' },
+                            }}
                           />
                         </Box>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                          {item.description}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            display: 'inline-block',
-                            px: 1,
-                            py: 0.5,
-                            bgcolor: 'action.hover',
-                            borderRadius: 1,
-                            mb: 2,
-                          }}
-                        >
-                          {item.wcagCriteria}
-                        </Typography>
-                        <TextField
-                          fullWidth
-                          multiline
-                          rows={2}
-                          placeholder="Add notes..."
-                          value={progress[item.id]?.notes || ''}
-                          onChange={(e) => updateNotes(item.id, e.target.value)}
-                          size="small"
-                          sx={{ mt: 1 }}
-                        />
                       </Box>
-                    </Box>
-                  </Box>
-                ))}
-              </AccordionDetails>
-            </Accordion>
-          );
-        })}
-          </>
-        ) : (
-          <CustomChecklistManager />
-        )}
-
-      </Container>
-    </Box>
+                    </AccordionSummary>
+                    <AccordionDetails sx={{ p: 0, borderTop: '1px solid', borderColor: 'divider' }}>
+                      <Box component="ul" sx={{ m: 0, p: 0 }}>
+                        {category.items.map((item) => (
+                          <WcagChecklistItem
+                            key={item.id}
+                            criterion={item}
+                            completed={progress[item.id]?.completed || false}
+                            notes={progress[item.id]?.notes || ''}
+                            onToggle={(checked) => toggleItem(item.id, checked)}
+                            onNotesChange={(value) => updateNotes(item.id, value)}
+                          />
+                        ))}
+                      </Box>
+                    </AccordionDetails>
+                  </Accordion>
+                </BezelCard>
+              );
+            })}
+          </Box>
+        </Box>
+      ) : (
+        <CustomChecklistManager />
+      )}
+    </PageCanvas>
   );
 }

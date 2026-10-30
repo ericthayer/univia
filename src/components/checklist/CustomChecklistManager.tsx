@@ -1,25 +1,24 @@
 import { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-  Card,
-  CardContent,
-  CardActions,
-  IconButton,
-  LinearProgress,
-  Chip,
-  Grid,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Alert,
-} from '@mui/material';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import IconButton from '@mui/material/IconButton';
+import LinearProgress from '@mui/material/LinearProgress';
+import Typography from '@mui/material/Typography';
 import { useLocalStorageChecklists } from '../../hooks/useLocalStorageChecklists';
 import ChecklistBuilder from './ChecklistBuilder';
 import ChecklistView from './ChecklistView';
+import { dialogPaperSx } from './dialogPaperSx';
 import Icon from '../ui/Icon';
+import { ArrowButton } from '../ui/ArrowButton/ArrowButton';
+import { BezelCard } from '../ui/BezelCard/BezelCard';
+import { EmptyState } from '../ui/EmptyState/EmptyState';
+import { ScoreBar } from '../ui/ScoreBar/ScoreBar';
+import { SectionHeader } from '../ui/SectionHeader/SectionHeader';
+import { TonePill } from '../ui/TonePill/TonePill';
 
 export default function CustomChecklistManager() {
   const {
@@ -72,7 +71,7 @@ export default function CustomChecklistManager() {
   if (loading) {
     return (
       <Box sx={{ py: 4 }}>
-        <LinearProgress />
+        <LinearProgress aria-label="Loading checklists" />
       </Box>
     );
   }
@@ -90,168 +89,169 @@ export default function CustomChecklistManager() {
   return (
     <>
       <Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-          <Box>
-            <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
-              Your Custom Checklists
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {checklists.length === 0
-                ? 'Create your first custom checklist to get started'
-                : `${checklists.length} checklist${checklists.length === 1 ? '' : 's'} stored locally`}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            {checklists.length > 0 && (
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<Icon name="delete_sweep" />}
-                onClick={() => setResetDialogOpen(true)}
-              >
-                Reset All
-              </Button>
-            )}
-            <Button
-              variant="contained"
-              startIcon={<Icon name="add" />}
-              onClick={handleCreateNew}
-            >
-              Create Checklist
-            </Button>
-          </Box>
-        </Box>
+        <SectionHeader
+          title="Your Custom Checklists"
+          meta={
+            checklists.length === 0
+              ? 'Create your first custom checklist to get started'
+              : `${checklists.length} checklist${checklists.length === 1 ? '' : 's'} stored locally`
+          }
+          action={
+            <>
+              {checklists.length > 0 && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<Icon name="delete_sweep" />}
+                  onClick={() => setResetDialogOpen(true)}
+                  sx={{ borderRadius: 999, minHeight: 44, px: 2.5 }}
+                >
+                  Reset All
+                </Button>
+              )}
+              <ArrowButton startIcon={<Icon name="add" />} onClick={handleCreateNew}>
+                Create Checklist
+              </ArrowButton>
+            </>
+          }
+        />
 
         {checklists.length === 0 ? (
+          <BezelCard>
+            <EmptyState
+              icon="playlist_add_check"
+              title="No Custom Checklists Yet"
+              description="Create custom checklists tailored to your specific compliance needs"
+              action={
+                <ArrowButton startIcon={<Icon name="add" />} onClick={handleCreateNew}>
+                  Create Your First Checklist
+                </ArrowButton>
+              }
+            />
+          </BezelCard>
+        ) : (
           <Box
+            component="ul"
             sx={{
-              p: 8,
-              textAlign: 'center',
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              border: 1,
-              borderColor: 'divider',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(18rem, 1fr))',
+              gap: 3,
+              listStyle: 'none',
+              m: 0,
+              p: 0,
             }}
           >
-            <Icon name="playlist_add_check" style={{ fontSize: 64, opacity: 0.3 }} />
-            <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
-              No Custom Checklists Yet
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Create custom checklists tailored to your specific compliance needs
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<Icon name="add" />}
-              onClick={handleCreateNew}
-            >
-              Create Your First Checklist
-            </Button>
-          </Box>
-        ) : (
-          <Grid container spacing={3}>
-            {checklists.map((checklist) => {
+            {checklists.map((checklist, index) => {
               const stats = getChecklistStats(checklist.id);
               return (
-                <Grid key={checklist.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                  <Card
-                    sx={{
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: 4,
-                      },
-                    }}
+                <Box component="li" key={checklist.id} sx={{ minWidth: 0 }}>
+                  <BezelCard
+                    component="article"
+                    aria-label={checklist.title}
+                    interactive
+                    reveal={index}
+                    sx={{ height: '100%' }}
                   >
-                    <CardContent sx={{ flex: 1 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 600, flex: 1 }}>
-                          {checklist.title}
-                        </Typography>
-                        <Chip
-                          label={`${stats.completionPercentage}%`}
-                          color={stats.completionPercentage === 100 ? 'success' : 'default'}
-                          size="small"
-                        />
-                      </Box>
-
-                      {checklist.description && (
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{
-                            mb: 2,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                          }}
-                        >
-                          {checklist.description}
-                        </Typography>
-                      )}
-
-                      <Box sx={{ mb: 2 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="caption" color="text.secondary">
-                            Progress
-                          </Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                            {stats.completedCount} / {stats.totalCount}
-                          </Typography>
-                        </Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={stats.completionPercentage}
-                          sx={{ height: 6, borderRadius: 3 }}
-                        />
-                      </Box>
-
-                      <Typography variant="caption" color="text.secondary">
-                        Updated {new Date(checklist.updated_at).toLocaleDateString()}
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1.5, mb: 2 }}>
+                      <Typography variant="h6" component="h3" sx={{ fontWeight: 600, flex: 1, minWidth: 0 }}>
+                        {checklist.title}
                       </Typography>
-                    </CardContent>
+                      <TonePill tone={stats.completionPercentage === 100 ? 'success' : 'neutral'}>
+                        {stats.completionPercentage}%
+                      </TonePill>
+                    </Box>
 
-                    <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
+                    {checklist.description && (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          mb: 2,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                        }}
+                      >
+                        {checklist.description}
+                      </Typography>
+                    )}
+
+                    <Box sx={{ mb: 2 }}>
+                      <ScoreBar
+                        size="sm"
+                        label={`Progress · ${stats.completedCount} / ${stats.totalCount}`}
+                        value={stats.completionPercentage}
+                        tone="neutral"
+                      />
+                    </Box>
+
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontVariantNumeric: 'tabular-nums', mb: 1 }}
+                    >
+                      Updated {new Date(checklist.updated_at).toLocaleDateString()}
+                    </Typography>
+
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mt: 'auto',
+                        pt: 1.5,
+                        borderTop: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
                       <Button
                         size="small"
                         startIcon={<Icon name="open_in_new" />}
                         onClick={() => setSelectedChecklistId(checklist.id)}
+                        sx={{ minHeight: 44 }}
                       >
                         Open
                       </Button>
-                      <Box>
+                      <Box sx={{ display: 'flex' }}>
                         <IconButton
-                          size="small"
                           onClick={() => handleEdit(checklist.id)}
-                          aria-label="edit checklist"
+                          aria-label={`Edit ${checklist.title}`}
+                          sx={{ width: 44, height: 44, color: 'text.secondary' }}
                         >
                           <Icon name="edit" />
                         </IconButton>
                         <IconButton
-                          size="small"
-                          color="error"
                           onClick={() => handleDelete(checklist.id)}
-                          aria-label="delete checklist"
+                          aria-label={`Delete ${checklist.title}`}
+                          sx={{ width: 44, height: 44, color: 'text.secondary', '&:hover': { color: 'error.main' } }}
                         >
                           <Icon name="delete" />
                         </IconButton>
                       </Box>
-                    </CardActions>
-                  </Card>
-                </Grid>
+                    </Box>
+                  </BezelCard>
+                </Box>
               );
             })}
-          </Grid>
+          </Box>
         )}
 
-        <Alert severity="info" sx={{ mt: 4 }}>
-          <strong>Note:</strong> Custom checklists are stored locally in your browser. They will be cleared if you clear your browser data or click "Reset All".
-        </Alert>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 1,
+            mt: 4,
+            color: 'text.secondary',
+          }}
+        >
+          <Icon name="info" style={{ fontSize: 16, marginTop: 3, flexShrink: 0 }} aria-hidden />
+          <Typography variant="caption" sx={{ lineHeight: 1.5 }}>
+            Custom checklists are stored locally in your browser. They will be cleared if you clear your browser data or click "Reset All".
+          </Typography>
+        </Box>
       </Box>
 
       <ChecklistBuilder
@@ -263,31 +263,53 @@ export default function CustomChecklistManager() {
         checklistId={editingChecklistId}
       />
 
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        slotProps={{ paper: { sx: dialogPaperSx } }}
+      >
         <DialogTitle>Delete Checklist?</DialogTitle>
         <DialogContent>
           <Typography>
             Are you sure you want to delete this checklist? This action cannot be undone.
           </Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button onClick={confirmDelete} color="error" variant="contained">
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setDeleteDialogOpen(false)} sx={{ minHeight: 44 }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={confirmDelete}
+            color="error"
+            variant="contained"
+            sx={{ borderRadius: 999, minHeight: 44, px: 2.5 }}
+          >
             Delete
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={resetDialogOpen} onClose={() => setResetDialogOpen(false)}>
+      <Dialog
+        open={resetDialogOpen}
+        onClose={() => setResetDialogOpen(false)}
+        slotProps={{ paper: { sx: dialogPaperSx } }}
+      >
         <DialogTitle>Reset All Custom Checklists?</DialogTitle>
         <DialogContent>
           <Typography>
             This will permanently delete all custom checklists and their data. This action cannot be undone.
           </Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setResetDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleResetAll} color="error" variant="contained">
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setResetDialogOpen(false)} sx={{ minHeight: 44 }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleResetAll}
+            color="error"
+            variant="contained"
+            sx={{ borderRadius: 999, minHeight: 44, px: 2.5 }}
+          >
             Reset All
           </Button>
         </DialogActions>
