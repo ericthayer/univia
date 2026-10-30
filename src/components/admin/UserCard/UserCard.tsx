@@ -1,10 +1,8 @@
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
 import Typography from '@mui/material/Typography';
 import { BezelCard } from '../../ui/BezelCard/BezelCard';
-
-export type ChipTone = 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error';
+import { StatusPill, TierPill } from '../UserBadges/UserBadges';
 
 export interface UserCardUser {
   id: string;
@@ -18,17 +16,15 @@ export interface UserCardUser {
 
 export interface UserCardProps {
   user: UserCardUser;
-  tierColor: ChipTone;
-  statusColor: ChipTone;
   /** Stagger index for the mount reveal. */
   reveal?: number;
 }
 
 /**
  * Directory card for one account: avatar, identity, tier/status, and the two
- * activity figures. Presentational; color mappings come from the page.
+ * activity figures. Presentational.
  */
-export function UserCard({ user, tierColor, statusColor, reveal }: UserCardProps) {
+export function UserCard({ user, reveal }: UserCardProps) {
   const lastActive = new Date(user.last_login);
 
   return (
@@ -46,8 +42,8 @@ export function UserCard({ user, tierColor, statusColor, reveal }: UserCardProps
       </Box>
 
       <Box sx={{ display: 'flex', gap: 1, mb: 2.5, flexWrap: 'wrap' }}>
-        <Chip label={user.tier.toUpperCase()} color={tierColor} size="small" />
-        <Chip label={user.status.toUpperCase()} color={statusColor} size="small" />
+        <TierPill tier={user.tier} />
+        <StatusPill status={user.status} />
       </Box>
 
       <Box

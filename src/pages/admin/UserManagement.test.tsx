@@ -99,7 +99,7 @@ describe('UserManagement', () => {
 
     expect(await screen.findByText('Grace Hopper')).toBeInTheDocument();
 
-    await user.click(screen.getByLabelText('Status'));
+    await user.click(screen.getByRole('combobox', { name: /status/i }));
     await user.click(await screen.findByRole('option', { name: 'Churned' }));
 
     await waitFor(() => {

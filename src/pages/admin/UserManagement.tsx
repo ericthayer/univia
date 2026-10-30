@@ -4,17 +4,12 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import ToggleButton from '@mui/material/ToggleButton';
-import Chip from '@mui/material/Chip';
 import Avatar from '@mui/material/Avatar';
 import IconButton from '@mui/material/IconButton';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
 import Skeleton from '@mui/material/Skeleton';
 import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
+import type { Theme } from '@mui/material/styles';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
@@ -24,7 +19,11 @@ import { PageHeader } from '../../components/ui/PageHeader/PageHeader';
 import { BezelCard } from '../../components/ui/BezelCard/BezelCard';
 import { MetricTile } from '../../components/ui/MetricTile/MetricTile';
 import { EmptyState } from '../../components/ui/EmptyState/EmptyState';
-import { UserCard, ChipTone, UserCardUser } from '../../components/admin/UserCard/UserCard';
+import { SectionHeader } from '../../components/ui/SectionHeader/SectionHeader';
+import { SegmentedToggleGroup } from '../../components/ui/SegmentedToggleGroup/SegmentedToggleGroup';
+import { UserCard, UserCardUser } from '../../components/admin/UserCard/UserCard';
+import { FilterSelect } from '../../components/admin/FilterSelect/FilterSelect';
+import { StatusPill, TierPill } from '../../components/admin/UserBadges/UserBadges';
 
 type UserData = UserCardUser & { created_at: string };
 
@@ -39,6 +38,20 @@ type DirectoryView = 'cards' | 'table';
 const DEFAULT_VIEW: DirectoryView = 'cards';
 const DEFAULT_FILTER = 'all';
 const DIRECTORY_TITLE_ID = 'user-directory-title';
+
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'All' },
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'churned', label: 'Churned' },
+] as const;
+
+const TIER_OPTIONS = [
+  { value: 'all', label: 'All' },
+  { value: 'basic', label: 'Basic' },
+  { value: 'pro', label: 'Pro' },
+  { value: 'enterprise', label: 'Enterprise' },
+] as const;
 
 const eyebrowHeaderSx = {
   fontSize: '0.6875rem',
@@ -178,30 +191,6 @@ export default function UserManagement() {
 
   const hasActiveFilters = statusFilter !== DEFAULT_FILTER || tierFilter !== DEFAULT_FILTER || searchQuery !== '';
 
-  const getStatusColor = (status: string): ChipTone => {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'inactive':
-        return 'warning';
-      case 'churned':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
-
-  const getTierColor = (tier: string): ChipTone => {
-    switch (tier) {
-      case 'enterprise':
-        return 'primary';
-      case 'pro':
-        return 'secondary';
-      default:
-        return 'default';
-    }
-  };
-
   const columns: GridColDef<UserData>[] = [
     {
       field: 'full_name',
@@ -229,7 +218,9 @@ export default function UserManagement() {
       headerName: 'Tier',
       width: 130,
       renderCell: (params) => (
-        <Chip label={String(params.value).toUpperCase()} color={getTierColor(params.value)} size="small" />
+        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+          <TierPill tier={String(params.value)} />
+        </Box>
       ),
     },
     {
@@ -237,7 +228,9 @@ export default function UserManagement() {
       headerName: 'Status',
       width: 130,
       renderCell: (params) => (
-        <Chip label={String(params.value).toUpperCase()} color={getStatusColor(params.value)} size="small" />
+        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+          <StatusPill status={String(params.value)} />
+        </Box>
       ),
     },
     {
@@ -245,6 +238,8 @@ export default function UserManagement() {
       headerName: 'Audits',
       width: 110,
       type: 'number',
+      align: 'center',
+      headerAlign: 'center',
       cellClassName: 'UserDirectory-tabular',
     },
     {
@@ -254,9 +249,11 @@ export default function UserManagement() {
       renderCell: (params) => {
         const date = new Date(params.value);
         return (
-          <Typography variant="body2" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-            <time dateTime={date.toISOString()}>{date.toLocaleDateString()}</time>
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+              <time dateTime={date.toISOString()}>{date.toLocaleDateString()}</time>
+            </Typography>
+          </Box>
         );
       },
     },
@@ -267,11 +264,15 @@ export default function UserManagement() {
       sortable: false,
       filterable: false,
       renderCell: () => (
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <IconButton size="small" aria-label="Edit user" sx={{ width: 40, height: 40 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, height: '100%' }}>
+          <IconButton size="small" aria-label="Edit user" sx={{ width: 40, height: 40, color: 'text.secondary' }}>
             <Icon name="edit" style={{ fontSize: 18 }} />
           </IconButton>
-          <IconButton size="small" aria-label="Delete user" sx={{ width: 40, height: 40 }}>
+          <IconButton
+            size="small"
+            aria-label="Delete user"
+            sx={{ width: 40, height: 40, color: 'text.secondary', '&:hover': { color: 'error.main' } }}
+          >
             <Icon name="delete" style={{ fontSize: 18 }} />
           </IconButton>
         </Box>
@@ -340,9 +341,15 @@ export default function UserManagement() {
       </Box>
 
       <BezelCard component="section" aria-labelledby={DIRECTORY_TITLE_ID} reveal={3}>
-        <Typography id={DIRECTORY_TITLE_ID} variant="h5" component="h2" sx={{ letterSpacing: '-0.01em', mb: 2.5 }}>
-          Directory
-        </Typography>
+        <SectionHeader
+          id={DIRECTORY_TITLE_ID}
+          title="Directory"
+          meta={
+            hasActiveFilters
+              ? `${filteredUsers.length} of ${users.length} users`
+              : `${users.length} ${users.length === 1 ? 'user' : 'users'}`
+          }
+        />
 
         <Box
           sx={{
@@ -354,65 +361,40 @@ export default function UserManagement() {
             gap: 2,
           }}
         >
-          <ToggleButtonGroup
+          <SegmentedToggleGroup
             value={view}
             exclusive
             onChange={(_, nextView: DirectoryView | null) => nextView && updateParam('view', nextView, DEFAULT_VIEW)}
             size="small"
             aria-label="Directory view"
-            sx={{
-              '& .MuiToggleButton-root': {
-                minHeight: 44,
-                px: 2,
-                gap: 1,
-                textTransform: 'none',
-                fontWeight: 550,
-              },
-            }}
           >
             <ToggleButton value="cards" aria-label="Cards view">
-              <Icon name="grid_view" style={{ fontSize: 18 }} aria-hidden />
+              <Icon name="grid_view" style={{ fontSize: 16 }} aria-hidden />
               Cards
             </ToggleButton>
             <ToggleButton value="table" aria-label="Table view">
-              <Icon name="view_list" style={{ fontSize: 18 }} aria-hidden />
+              <Icon name="view_list" style={{ fontSize: 16 }} aria-hidden />
               Table
             </ToggleButton>
-          </ToggleButtonGroup>
+          </SegmentedToggleGroup>
 
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-            <FormControl size="small" sx={{ minWidth: 130 }}>
-              <InputLabel id="user-status-filter-label">Status</InputLabel>
-              <Select
-                labelId="user-status-filter-label"
-                value={statusFilter}
-                label="Status"
-                onChange={(e) => updateParam('status', e.target.value, DEFAULT_FILTER)}
-              >
-                <MenuItem value="all">All</MenuItem>
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
-                <MenuItem value="churned">Churned</MenuItem>
-              </Select>
-            </FormControl>
-
-            <FormControl size="small" sx={{ minWidth: 130 }}>
-              <InputLabel id="user-tier-filter-label">Tier</InputLabel>
-              <Select
-                labelId="user-tier-filter-label"
-                value={tierFilter}
-                label="Tier"
-                onChange={(e) => updateParam('tier', e.target.value, DEFAULT_FILTER)}
-              >
-                <MenuItem value="all">All</MenuItem>
-                <MenuItem value="basic">Basic</MenuItem>
-                <MenuItem value="pro">Pro</MenuItem>
-                <MenuItem value="enterprise">Enterprise</MenuItem>
-              </Select>
-            </FormControl>
-
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap', flex: '1 1 auto', justifyContent: { md: 'flex-end' } }}>
+            <FilterSelect
+              id="user-status-filter"
+              label="Status"
+              value={statusFilter}
+              options={STATUS_OPTIONS}
+              onChange={(next) => updateParam('status', next, DEFAULT_FILTER)}
+            />
+            <FilterSelect
+              id="user-tier-filter"
+              label="Tier"
+              value={tierFilter}
+              options={TIER_OPTIONS}
+              onChange={(next) => updateParam('tier', next, DEFAULT_FILTER)}
+            />
             <TextField
-              placeholder="Search users..."
+              placeholder="Search users…"
               size="small"
               type="search"
               value={searchQuery}
@@ -428,9 +410,10 @@ export default function UserManagement() {
                 },
               }}
               sx={{
-                minWidth: 250,
+                flex: { xs: '1 1 100%', sm: '0 1 260px' },
+                // The theme paints the field root with a square background; round it to match the pill outline.
                 borderRadius: 999,
-                '& .MuiOutlinedInput-root': { borderRadius: 999 },
+                '& .MuiOutlinedInput-root': { borderRadius: 999, minHeight: 44, pl: 1.75 },
               }}
             />
           </Box>
@@ -489,15 +472,26 @@ export default function UserManagement() {
                 pagination: { paginationModel: { pageSize: 10 } },
               }}
               sx={{
-                border: 'none',
+                '--DataGrid-containerBackground': 'var(--mui-palette-action-hover)',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: '12px',
+                overflow: 'hidden',
                 '& .MuiDataGrid-columnHeaders': {
                   borderBottom: '1px solid',
                   borderColor: 'divider',
                 },
+                '& .MuiDataGrid-columnSeparator': { display: 'none' },
                 '& .MuiDataGrid-columnHeaderTitle': eyebrowHeaderSx,
                 '& .MuiDataGrid-cell': {
                   borderColor: 'divider',
                 },
+                '& .MuiDataGrid-row': {
+                  transition: (theme: Theme) =>
+                    `background-color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}`,
+                },
+                '& .MuiDataGrid-row:hover': { bgcolor: 'action.hover' },
+                '& .MuiDataGrid-row.Mui-selected, & .MuiDataGrid-row.Mui-selected:hover': { bgcolor: 'action.selected' },
                 '& .UserDirectory-tabular': {
                   fontVariantNumeric: 'tabular-nums',
                   fontWeight: 600,
@@ -564,12 +558,7 @@ export default function UserManagement() {
           >
             {filteredUsers.map((user, index) => (
               <Box component="li" key={user.id} sx={{ minWidth: 0 }}>
-                <UserCard
-                  user={user}
-                  tierColor={getTierColor(user.tier)}
-                  statusColor={getStatusColor(user.status)}
-                  reveal={index}
-                />
+                <UserCard user={user} reveal={index} />
               </Box>
             ))}
           </Box>

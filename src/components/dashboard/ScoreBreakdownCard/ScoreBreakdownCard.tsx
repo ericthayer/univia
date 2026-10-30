@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
 import ToggleButton from '@mui/material/ToggleButton';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import { BezelCard } from '../../ui/BezelCard/BezelCard';
+import { SegmentedToggleGroup } from '../../ui/SegmentedToggleGroup/SegmentedToggleGroup';
 import { ScoreBar } from '../../ui/ScoreBar/ScoreBar';
 import { SectionHeader } from '../../ui/SectionHeader/SectionHeader';
 import Icon from '../../ui/Icon';
@@ -57,38 +57,12 @@ export function ScoreBreakdownCard({ overall, desktop, mobile, reveal }: ScoreBr
         meta={`${active.count} ${active.count === 1 ? 'audit' : 'audits'}`}
         dense
         action={
-          <ToggleButtonGroup
+          <SegmentedToggleGroup
             exclusive
             size="small"
             value={dataset}
             onChange={(_, next: Dataset | null) => next && setDataset(next)}
             aria-label="Score dataset"
-            sx={{
-              bgcolor: 'action.hover',
-              borderRadius: 999,
-              p: 0.5,
-              gap: 0.5,
-              '& .MuiToggleButton-root': {
-                border: 0,
-                borderRadius: '999px !important',
-                px: 1.5,
-                minHeight: 36,
-                fontSize: '0.8125rem',
-                fontWeight: 600,
-                color: 'text.secondary',
-                gap: 0.75,
-                transition: (theme) =>
-                  `background-color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}, color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}`,
-                '&.Mui-selected': {
-                  bgcolor: 'background.paper',
-                  color: 'text.primary',
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
-                },
-                '&.Mui-selected:hover': {
-                  bgcolor: 'background.paper',
-                },
-              },
-            }}
           >
             {DATASETS.map(({ key, label, icon }) => (
               <ToggleButton key={key} value={key} disabled={sets[key].count === 0} aria-label={`${label} (${sets[key].count} audits)`}>
@@ -96,7 +70,7 @@ export function ScoreBreakdownCard({ overall, desktop, mobile, reveal }: ScoreBr
                 {label}
               </ToggleButton>
             ))}
-          </ToggleButtonGroup>
+          </SegmentedToggleGroup>
         }
       />
 
