@@ -11,7 +11,7 @@
 <ArrowButton variant="text" component={RouterLink} to="/audit">View all</ArrowButton>
 ```
 
-**Architecture:** `styled(Button)`; all `ButtonProps` except `endIcon` pass through, so `component`, `href`, `to`, `disabled`, `fullWidth`, and `startIcon` work as usual.
+**Architecture:** `styled(Button)` exported with MUI's `ExtendButton<ButtonTypeMap>` type, so `component={RouterLink} to="…"`, `href`, `disabled`, `fullWidth`, and `startIcon` type-check exactly like `Button`. `fullWidth` spreads label and arrow to the edges.
 
 **Accessibility:** The arrow glyph is `aria-hidden`; the visible label is the accessible name. Min height 48px. Press feedback is a 2% scale, never a color-only change.
 

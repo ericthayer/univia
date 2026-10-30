@@ -1,5 +1,5 @@
 import { forwardRef } from 'react';
-import Button, { ButtonProps } from '@mui/material/Button';
+import Button, { ButtonProps, ButtonTypeMap, ExtendButton } from '@mui/material/Button';
 import { styled } from '@mui/material/styles';
 import Icon from '../Icon';
 
@@ -18,6 +18,9 @@ const Root = styled(Button)(({ theme }) => {
     transition: `transform ${slow}, background-color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}`,
     '&:active': {
       transform: 'scale(0.98)',
+    },
+    '&.MuiButton-fullWidth': {
+      justifyContent: 'space-between',
     },
     '& .ArrowButton-arrow': {
       width: 32,
@@ -48,11 +51,7 @@ const Root = styled(Button)(({ theme }) => {
   };
 });
 
-/**
- * Primary CTA pill with the trailing arrow seated in its own circle. The arrow
- * nudges diagonally on hover; the button settles on press.
- */
-export const ArrowButton = forwardRef<HTMLButtonElement, ArrowButtonProps>(function ArrowButton(
+const ArrowButtonBase = forwardRef<HTMLButtonElement, ArrowButtonProps>(function ArrowButton(
   { children, variant = 'contained', ...props },
   ref
 ) {
@@ -65,5 +64,12 @@ export const ArrowButton = forwardRef<HTMLButtonElement, ArrowButtonProps>(funct
     </Root>
   );
 });
+
+/**
+ * Primary CTA pill with the trailing arrow seated in its own circle. The arrow
+ * nudges diagonally on hover; the button settles on press. Typed like MUI's
+ * Button, so `component={RouterLink} to="…"` and `href` type-check.
+ */
+export const ArrowButton = ArrowButtonBase as ExtendButton<ButtonTypeMap>;
 
 export default ArrowButton;

@@ -3,11 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '../components/ui/Icon';
 import InteractiveAbbr from '../components/ui/InteractiveAbbr';
 import UserAuditMetrics from '../components/audit/UserAuditMetrics';
+import { PageCanvas } from '../components/ui/PageCanvas/PageCanvas';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, isRegistered } = useAuth();
+
+  if (isRegistered && user) {
+    return (
+      <PageCanvas>
+        <UserAuditMetrics userId={user.id} enabled />
+      </PageCanvas>
+    );
+  }
 
   return (
     <Box>
@@ -90,16 +99,6 @@ export default function Dashboard() {
 
     <Container maxWidth="lg" sx={{ py: 'clamp(4rem, 6dvh, 8rem)', px: '2rem !important' }}>
 
-      {/* User Audit Metrics - Only shown when logged in */}
-      {isRegistered && user && (
-        <UserAuditMetrics
-          userId={user.id}
-          enabled={isRegistered}
-          fullWidth={false}
-        />
-      )}
-      
-        
         {/* Standards Overview */}
         {!isRegistered && (
       <>
