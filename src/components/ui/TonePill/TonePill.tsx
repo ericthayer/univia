@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { styled } from '@mui/material/styles';
-import { Tone, toneColor } from '../tone';
+import { Tone, toneColor, toneTextColor } from '../tone';
 
 export type TonePillVariant = 'tonal' | 'outline' | 'solid';
 
@@ -13,8 +13,6 @@ export interface TonePillProps {
   children: ReactNode;
 }
 
-type Colored = Exclude<Tone, 'neutral'>;
-
 interface RootProps {
   tone: Tone;
   pillVariant: TonePillVariant;
@@ -25,7 +23,6 @@ const Root = styled('span', {
 })<RootProps>(({ theme, tone, pillVariant }) => {
   const { palette } = theme.vars ?? theme;
   const color = toneColor(theme, tone);
-  const colored = tone !== 'neutral';
 
   const base = {
     display: 'inline-flex',
@@ -67,15 +64,12 @@ const Root = styled('span', {
     };
   }
 
-  // Tonal. Light mode uses the tone's dark shade so text clears 4.5:1 on its own tint.
+  // Tonal. Text uses the scheme-aware toneText foreground so it clears 4.5:1 on its own tint.
   return {
     ...base,
     backgroundColor: `color-mix(in srgb, ${color} 14%, transparent)`,
     borderColor: `color-mix(in srgb, ${color} 30%, transparent)`,
-    color: colored ? palette[tone as Colored].dark : palette.text.primary,
-    ...theme.applyStyles('dark', {
-      color: colored ? palette[tone as Colored].main : palette.text.primary,
-    }),
+    color: toneTextColor(theme, tone),
   };
 });
 

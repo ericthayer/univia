@@ -8,6 +8,14 @@ declare module '@mui/material/styles' {
     xxl: true;
   }
 
+  /** Contrast-safe foregrounds for tone-colored text (SPEC §3.3). */
+  interface Palette {
+    toneText: { success: string; warning: string; error: string; info: string };
+  }
+  interface PaletteOptions {
+    toneText?: { success: string; warning: string; error: string; info: string };
+  }
+
   /** Nested-bezel surface geometry (docs/specs/ui-refresh/SPEC.md §3.1). */
   interface Theme {
     surfaces: typeof surfaceTokens;

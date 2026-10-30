@@ -33,8 +33,9 @@ export function urgencyIcon(level: string): string {
 }
 
 /** Confidence score (0 to 1) to a label. */
-export function confidenceLabel(score?: number): string | null {
-  if (!score) return null;
+export function confidenceLabel(score?: number | null): string | null {
+  // 0 is a real (and important) score; only an absent value has no label.
+  if (score === undefined || score === null || Number.isNaN(score)) return null;
   if (score >= 0.9) return 'High';
   if (score >= 0.7) return 'Medium';
   return 'Low';

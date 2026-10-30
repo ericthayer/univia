@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import LinearProgress from '@mui/material/LinearProgress';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import { Tone, toneColor } from '../tone';
+import { Tone, toneColor, toneTextColor } from '../tone';
 import { clampScore, scoreTone } from './scoreTone';
 
 export interface ScoreBarProps {
@@ -21,7 +21,9 @@ export interface ScoreBarProps {
 export function ScoreBar({ label, value, tone, size = 'md' }: ScoreBarProps) {
   const theme = useTheme();
   const score = clampScore(value);
-  const color = toneColor(theme, tone ?? scoreTone(score));
+  const resolvedTone = tone ?? scoreTone(score);
+  const color = toneColor(theme, resolvedTone);
+  const textColor = toneTextColor(theme, resolvedTone);
   const height = size === 'sm' ? 4 : 6;
 
   return (
@@ -32,7 +34,7 @@ export function ScoreBar({ label, value, tone, size = 'md' }: ScoreBarProps) {
         </Typography>
         <Typography
           variant={size === 'sm' ? 'caption' : 'body2'}
-          sx={{ fontWeight: 700, fontVariantNumeric: 'tabular-nums', color }}
+          sx={{ fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: textColor }}
         >
           {score}%
         </Typography>

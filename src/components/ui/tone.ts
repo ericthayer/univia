@@ -17,3 +17,15 @@ export function toneColor(theme: Theme, tone: Tone): string {
   }
   return palette[tone].main;
 }
+
+/**
+ * Resolve a tone to a foreground color safe for small text in both schemes.
+ * Bars, rings and accents keep `toneColor`; numerals and pill labels use this.
+ */
+export function toneTextColor(theme: Theme, tone: Tone): string {
+  const palette = (theme.vars ?? theme).palette;
+  if (tone === 'neutral') {
+    return palette.text.primary;
+  }
+  return palette.toneText[tone];
+}

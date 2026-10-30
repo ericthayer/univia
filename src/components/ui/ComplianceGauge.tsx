@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import { toneColor } from './tone';
+import { toneColor, toneTextColor } from './tone';
 import { clampScore, scoreTone } from './ScoreBar/scoreTone';
 
 interface ComplianceGaugeProps {
@@ -14,7 +14,9 @@ interface ComplianceGaugeProps {
 export default function ComplianceGauge({ score, size = 200, label = 'Compliance Score' }: ComplianceGaugeProps) {
   const theme = useTheme();
   const value = clampScore(score);
-  const color = toneColor(theme, scoreTone(value));
+  const tone = scoreTone(value);
+  const color = toneColor(theme, tone);
+  const numeralColor = toneTextColor(theme, tone);
   const numeralSize = Math.max(1.5, size / 56);
 
   return (
@@ -71,7 +73,7 @@ export default function ComplianceGauge({ score, size = 200, label = 'Compliance
             component="div"
             sx={{
               fontWeight: 700,
-              color,
+              color: numeralColor,
               fontSize: `${numeralSize}rem`,
               lineHeight: 1,
               letterSpacing: '-0.03em',

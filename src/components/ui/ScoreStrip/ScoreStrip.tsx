@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import { toneColor } from '../tone';
+import { toneTextColor } from '../tone';
 import { clampScore, scoreTone } from '../ScoreBar/scoreTone';
 
 export interface ScoreStripScores {
@@ -75,7 +75,7 @@ export function ScoreStrip({ scores, size = 'md' }: ScoreStripProps) {
                 fontWeight: 700,
                 lineHeight: 1.1,
                 fontVariantNumeric: 'tabular-nums',
-                color: toneColor(theme, scoreTone(score)),
+                color: toneTextColor(theme, scoreTone(score)),
               }}
             >
               {score}

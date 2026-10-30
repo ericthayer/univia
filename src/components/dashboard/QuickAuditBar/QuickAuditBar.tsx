@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -10,12 +11,18 @@ import Icon from '../../ui/Icon';
 import { srOnly } from '../../ui/srOnly';
 import { useFormValidation } from '../../../hooks/useFormValidation';
 import { ensureSession } from '../../../services/session';
-import { hasFailedDevice, requestLighthouseAudit } from '../../../services/lighthouseAudit.service';
+import {
+  hasFailedDevice,
+  LighthouseAuditError,
+  requestLighthouseAudit,
+} from '../../../services/lighthouseAudit.service';
 
 export interface QuickAuditBarProps {
   /** Opens the document analysis drawer. */
   onAnalyzeDocs: () => void;
 }
+
+const GENERIC_ERROR = 'Failed to run audit. Please try again.';
 
 /**
  * Header actions for the signed-in dashboard: a pill URL field whose submit
@@ -25,10 +32,11 @@ export function QuickAuditBar({ onAnalyzeDocs }: QuickAuditBarProps) {
   const navigate = useNavigate();
   const { getFieldState, setFieldValue, validateFieldDebounced } = useFormValidation();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const urlField = getFieldState('url');
-  const showError = Boolean(urlField.error) && (urlField.isDirty || urlField.isTouched);
+  const showFieldError = Boolean(urlField.error) && (urlField.isDirty || urlField.isTouched);
   const canSubmit = Boolean(urlField.value.trim()) && !urlField.error && !loading;
 
   useEffect(() => () => abortControllerRef.current?.abort(), []);
@@ -37,10 +45,13 @@ export function QuickAuditBar({ onAnalyzeDocs }: QuickAuditBarProps) {
     event.preventDefault();
     if (!canSubmit) return;
 
-    const currentSession = await ensureSession();
+    // Lock the control before any await so a second submit cannot start a
+    // second audit, and keep the session lookup inside the guarded block.
     setLoading(true);
+    setError(null);
 
     try {
+      const currentSession = await ensureSession();
       abortControllerRef.current = new AbortController();
       const result = await requestLighthouseAudit(
         urlField.value,
@@ -51,9 +62,9 @@ export function QuickAuditBar({ onAnalyzeDocs }: QuickAuditBarProps) {
         state: { partialAudit: hasFailedDevice(result) },
       });
     } catch (err: unknown) {
-      if (!(err instanceof Error && err.name === 'AbortError')) {
-        console.error('Audit error:', err);
-      }
+      if (err instanceof Error && err.name === 'AbortError') return;
+      console.error('Audit error:', err);
+      setError(err instanceof LighthouseAuditError ? err.message : GENERIC_ERROR);
     } finally {
       setLoading(false);
       abortControllerRef.current = null;
@@ -74,13 +85,14 @@ export function QuickAuditBar({ onAnalyzeDocs }: QuickAuditBarProps) {
         autoComplete="url"
         inputMode="url"
         onChange={(e) => {
+          if (error) setError(null);
           setFieldValue('url', e.target.value);
           validateFieldDebounced('url', e.target.value, 'url');
         }}
         onBlur={() => validateFieldDebounced('url', urlField.value, 'url')}
         disabled={loading}
-        error={showError}
-        helperText={showError ? urlField.error?.message : undefined}
+        error={showFieldError}
+        helperText={showFieldError ? urlField.error?.message : undefined}
         slotProps={{
           htmlInput: { 'aria-label': 'Website address to audit' },
           input: {
@@ -138,6 +150,15 @@ export function QuickAuditBar({ onAnalyzeDocs }: QuickAuditBarProps) {
       >
         Analyze Docs
       </Button>
+      {error && (
+        <Alert
+          severity="error"
+          onClose={() => setError(null)}
+          sx={{ flexBasis: '100%', borderRadius: 3, py: 0, alignItems: 'center' }}
+        >
+          {error}
+        </Alert>
+      )}
       <Box role="status" aria-live="polite" sx={srOnly}>
         {loading ? `Running audit for ${urlField.value}` : ''}
       </Box>

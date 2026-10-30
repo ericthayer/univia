@@ -39,6 +39,14 @@ export const primitiveTokens = {
       secondary: '#666666',
     },
     divider: '#E1E1E1',
+    // Foreground shades for tone-colored text. The `main` fills are built for
+    // bars and accents and fall short of 4.5:1 as small text on light surfaces.
+    toneText: {
+      success: '#166534',
+      warning: '#854d0e',
+      error: '#b91c1c',
+      info: '#01579b',
+    },
   },
   dark: {
     primary: {
@@ -80,6 +88,12 @@ export const primitiveTokens = {
       secondary: '#A3A3A3',
     },
     divider: '#333',
+    toneText: {
+      success: '#4ade80',
+      warning: '#facc15',
+      error: '#f87171',
+      info: '#4fc3f7',
+    },
   },
 } as const;
 
