@@ -230,7 +230,6 @@ Phases 3, 4, 5 are independent once Phase 1 lands and may run in parallel.
 
 - Dashboard "Recent Audits" lists one row per device (two rows per run) because `useUserAudits` does not group by `audit_session_id`; the Site Audit page does group. Pre-existing; align the hook.
 - The `analyze-document` function returned "extracted text is heavily corrupted with OCR errors" for a clean text PDF resume; PDF text extraction in the Edge Function deserves a look.
-- `InlineAnalysisResults` header actions wrap awkwardly in the 7fr column; the component was out of scope.
 - Share / View on letter cards and Engage / Export / Delete in the admin bulk bar remain unwired.
 
 ## 9. Changelog
@@ -238,3 +237,4 @@ Phases 3, 4, 5 are independent once Phase 1 lands and may run in parallel.
 - 2026-10-29 — Initial draft after codebase review and direction/mock-data/sign-in decisions.
 - 2026-10-29 — Implementation complete; added §10 deviations and §11 follow-ups; checklist ticked.
 - 2026-10-29 — Removed diffused ambient shadows from BezelCard (rest and hover) and the admin bulk-action bar; §3.1 and the "diffused ambient shadows" wording in the direction notes no longer apply. Inset highlights stay.
+- 2026-10-29 — Rolled the language out to every remaining page (checklist, action plan, resources, help, pricing, settings, analyze report, audit results, auth, signed-out home, admin demos, pattern library) and the analysis components. Added `TonePill`, `SegmentedToggleGroup`, `FilterSelect`, `AuthShell`. Admin page re-reviewed with an admin account. §3.4 note: the audit found `transition: all` and outer shadows in about a dozen files; none remain.
