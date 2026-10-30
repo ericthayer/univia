@@ -1,142 +1,135 @@
-import { Card, CardContent, Typography, Chip, Box, Collapse, Button } from '@mui/material';
-import { useState } from 'react';
+import { useId, useState } from 'react';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Collapse from '@mui/material/Collapse';
+import Typography from '@mui/material/Typography';
 import { Violation } from '../../types';
+import Icon from './Icon';
+import { TonePill } from './TonePill/TonePill';
+import { severityTone } from './violationSeverity';
 
 interface ViolationCardProps {
   violation: Violation;
 }
 
-type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+function toStepText(step: unknown): string {
+  if (typeof step === 'string') {
+    try {
+      const parsed = JSON.parse(step);
+      if (typeof parsed === 'string') return parsed;
+      if (parsed && typeof parsed === 'object' && parsed.value) return String(parsed.value);
+      if (parsed && typeof parsed === 'object' && parsed.url) return String(parsed.url);
+      return JSON.stringify(parsed, null, 2);
+    } catch {
+      return step;
+    }
+  }
+  if (typeof step === 'object' && step !== null) {
+    const obj = step as Record<string, unknown>;
+    if (typeof obj.value === 'string') return obj.value;
+    if (typeof obj.url === 'string') return obj.url;
+    return JSON.stringify(obj, null, 2);
+  }
+  return String(step);
+}
 
+/**
+ * One violation as a flush list row. Render inside a `<ul>` that sits in a
+ * `BezelCard padding="none"`; rows separate themselves with a hairline.
+ */
 export default function ViolationCard({ violation }: ViolationCardProps) {
   const [expanded, setExpanded] = useState(false);
-
-  const getSeverityColor = (severity: string): ChipColor => {
-    switch (severity) {
-      case 'critical':
-        return 'error';
-      case 'serious':
-        return 'warning';
-      case 'moderate':
-        return 'info';
-      case 'minor':
-        return 'success';
-      default:
-        return 'default';
-    }
-  };
+  const panelId = useId();
 
   return (
-    <Card
+    <Box
+      component="li"
       sx={{
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: 6,
+        listStyle: 'none',
+        px: { xs: 2, sm: 3 },
+        py: 2.5,
+        '& + &': {
+          borderTop: '1px solid',
+          borderColor: 'divider',
         },
       }}
     >
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, flex: 1 }}>
-            {violation.title}
-          </Typography>
-          <Chip
-            label={violation.severity.toUpperCase()}
-            color={getSeverityColor(violation.severity)}
-            size="small"
-            sx={{ ml: 2, fontWeight: 600 }}
-          />
-        </Box>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, mb: 1.5 }}>
+        <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600, flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>
+          {violation.title}
+        </Typography>
+        <TonePill tone={severityTone(violation.severity)} dot>
+          {violation.severity}
+        </TonePill>
+      </Box>
 
-        <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-          <Chip
-            label={`WCAG ${violation.wcag_guideline}`}
-            size="small"
-            variant="outlined"
-          />
-          {violation.compliance_level && (
-            <Chip
-              label={`Level ${violation.compliance_level}`}
-              size="small"
-              variant="outlined"
-            />
+      <Box sx={{ display: 'flex', gap: 1, mb: 1.5, flexWrap: 'wrap' }}>
+        <TonePill variant="outline">WCAG {violation.wcag_guideline}</TonePill>
+        {violation.compliance_level && <TonePill variant="outline">Level {violation.compliance_level}</TonePill>}
+      </Box>
+
+      {violation.description && (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, overflowWrap: 'anywhere' }}>
+          {violation.description}
+        </Typography>
+      )}
+
+      {violation.affected_selector && (
+        <Typography
+          variant="body2"
+          component="code"
+          sx={{
+            display: 'block',
+            mb: 1.5,
+            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+            fontSize: '0.8125rem',
+            bgcolor: 'action.hover',
+            px: 1.5,
+            py: 1,
+            borderRadius: '10px',
+            overflowWrap: 'anywhere',
+          }}
+        >
+          Selector: {violation.affected_selector}
+        </Typography>
+      )}
+
+      <Button
+        size="small"
+        onClick={() => setExpanded((open) => !open)}
+        aria-expanded={expanded}
+        aria-controls={panelId}
+        endIcon={<Icon name={expanded ? 'expand_less' : 'expand_more'} />}
+        sx={{ borderRadius: 999, minHeight: 44, px: 1.5, ml: -1.5 }}
+      >
+        {expanded ? 'Hide' : 'Show'} remediation steps
+      </Button>
+
+      <Collapse in={expanded} id={panelId}>
+        <Box sx={{ mt: 1, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+          <Typography variant="eyebrow" component="p" sx={{ mb: 1 }}>
+            How to fix
+          </Typography>
+          {violation.remediation_steps && violation.remediation_steps.length > 0 ? (
+            <Box component="ol" sx={{ m: 0, pl: 3 }}>
+              {violation.remediation_steps.map((step, index) => (
+                <Typography
+                  key={index}
+                  component="li"
+                  variant="body2"
+                  sx={{ mb: 1, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                >
+                  {toStepText(step)}
+                </Typography>
+              ))}
+            </Box>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              Consult WCAG guidelines for detailed remediation steps.
+            </Typography>
           )}
         </Box>
-
-        {violation.description && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {violation.description}
-          </Typography>
-        )}
-
-        {violation.affected_selector && (
-          <Typography variant="body2" sx={{ mb: 2, fontFamily: 'monospace', backgroundColor: 'action.hover', p: 1, borderRadius: 1 }}>
-            Selector: {violation.affected_selector}
-          </Typography>
-        )}
-
-        <Button
-          size="small"
-          onClick={() => setExpanded(!expanded)}
-          sx={{ mb: 1 }}
-        >
-          {expanded ? 'Hide' : 'Show'} Remediation Steps
-        </Button>
-
-        <Collapse in={expanded}>
-          <Box sx={{ mt: 2, p: 2, backgroundColor: 'action.hover', borderRadius: 2 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-              How to Fix:
-            </Typography>
-            {violation.remediation_steps && violation.remediation_steps.length > 0 ? (
-              <Box component="ol" sx={{ m: 0, pl: 3 }}>
-                {violation.remediation_steps.map((step, index) => {
-                  let stepText = '';
-
-                  if (typeof step === 'string') {
-                    try {
-                      const parsed = JSON.parse(step);
-                      if (typeof parsed === 'string') {
-                        stepText = parsed;
-                      } else if (parsed && typeof parsed === 'object' && parsed.value) {
-                        stepText = String(parsed.value);
-                      } else if (parsed && typeof parsed === 'object' && parsed.url) {
-                        stepText = String(parsed.url);
-                      } else {
-                        stepText = JSON.stringify(parsed, null, 2);
-                      }
-                    } catch {
-                      stepText = step;
-                    }
-                  } else if (typeof step === 'object' && step !== null) {
-                    const obj = step as Record<string, unknown>;
-                    if (typeof obj.value === 'string') {
-                      stepText = obj.value;
-                    } else if (typeof obj.url === 'string') {
-                      stepText = obj.url;
-                    } else {
-                      stepText = JSON.stringify(obj, null, 2);
-                    }
-                  } else {
-                    stepText = String(step);
-                  }
-
-                  return (
-                    <Typography key={index} component="li" variant="body2" sx={{ mb: 1, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                      {stepText}
-                    </Typography>
-                  );
-                })}
-              </Box>
-            ) : (
-              <Typography variant="body2" color="text.secondary">
-                Consult WCAG guidelines for detailed remediation steps.
-              </Typography>
-            )}
-          </Box>
-        </Collapse>
-      </CardContent>
-    </Card>
+      </Collapse>
+    </Box>
   );
 }

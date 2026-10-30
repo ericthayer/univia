@@ -1,18 +1,16 @@
 import { useState, useRef } from 'react';
-import {
-  Box,
-  TextField,
-  Button,
-  Alert,
-  CircularProgress,
-  Stack,
-} from '@mui/material';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
+import TextField from '@mui/material/TextField';
 import { useNavigate } from 'react-router-dom';
 import { ensureSession } from '../../services/session';
 import { hasFailedDevice, LighthouseAuditError, requestLighthouseAudit } from '../../services/lighthouseAudit.service';
 import { useFormValidation } from '../../hooks/useFormValidation';
 import ValidationFeedback from '../validation/ValidationFeedback';
-import Icon from '../ui/Icon';
+import { ArrowButton } from '../ui/ArrowButton/ArrowButton';
+import { srOnly } from '../ui/srOnly';
 
 export default function QuickAuditForm() {
   const navigate = useNavigate();
@@ -75,97 +73,87 @@ export default function QuickAuditForm() {
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} autoComplete="on">
-      <Stack gap={3}>
-        
-        {apiError && (
-          <Alert severity="error" onClose={() => setApiError('')}>
-            {apiError}
-          </Alert>
-        )}
+    <Box component="form" onSubmit={handleSubmit} autoComplete="on" noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {apiError && (
+        <Alert severity={apiError.includes('cancelled') ? 'info' : 'error'} onClose={() => setApiError('')}>
+          {apiError}
+        </Alert>
+      )}
 
-        <Stack direction="row" gap={3}>
-          <Box sx={{ display: 'flex', flex: 1 }}>
-            <TextField
-              fullWidth
-              label="Website Address"
-              placeholder="yoursite.com"
-              value={urlField.value}
-              size="small"
-              autoComplete="url"
-              onChange={(e) => {
-                setFieldValue('url', e.target.value);
-                validateFieldDebounced('url', e.target.value, 'url');
-              }}
-              onBlur={() => {
-                validateFieldDebounced('url', urlField.value, 'url');
-              }}
-              disabled={loading}
-              error={!!urlField.error}
-              slotProps={{
-                htmlInput: {
-                  maxLength: MAX_URL_LENGTH,
-                  'aria-label': 'Website URL to audit',
-                  'aria-describedby': urlField.error ? 'url-error-text' : 'url-helper-text',
-                },
-              }}
-              sx={{
-                flex: 1,
-                '.MuiInputBase-root': {
-                  flex: 1
-                }
-              }}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'flex-start' }}>
+        <Box sx={{ flex: '1 1 18rem', minWidth: 0 }}>
+          <TextField
+            fullWidth
+            label="Website Address"
+            placeholder="yoursite.com"
+            value={urlField.value}
+            autoComplete="url"
+            onChange={(e) => {
+              setFieldValue('url', e.target.value);
+              validateFieldDebounced('url', e.target.value, 'url');
+            }}
+            onBlur={() => {
+              validateFieldDebounced('url', urlField.value, 'url');
+            }}
+            disabled={loading}
+            error={!!urlField.error}
+            slotProps={{
+              htmlInput: {
+                maxLength: MAX_URL_LENGTH,
+                inputMode: 'url',
+                'aria-describedby': urlField.error ? 'url-error-text' : 'url-helper-text',
+              },
+            }}
+            sx={{
+              // The theme paints the field root with a square background; round it to match the pill outline.
+              borderRadius: 999,
+              '& .MuiOutlinedInput-root': { borderRadius: 999, minHeight: 44, pl: 2 },
+            }}
+          />
+          {(urlField.error || (urlField.isDirty && urlField.isTouched && urlIsValid)) && (
+            <ValidationFeedback
+              error={urlField.error}
+              isValid={urlIsValid}
+              isDirty={urlField.isDirty}
+              isTouched={urlField.isTouched}
+              showCharacterCount={false}
+              label="URL"
             />
-            {(urlField.error || (urlField.isDirty && urlField.isTouched && urlIsValid)) && (
-              <ValidationFeedback
-                error={urlField.error}
-                isValid={urlIsValid}
-                isDirty={urlField.isDirty}
-                isTouched={urlField.isTouched}
-                showCharacterCount={false}
-                label="URL"
-              />
-            )}
-          </Box>
-  
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            {!loading && (
-              <>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={loading || !!urlField.error}
-                  startIcon={<Icon name="search" />}
-                  sx={{ flexGrow: { xs: 1, sm: 0 } }}
-                >
-                  Run Audit
-                </Button>
-                <Button
-                  type="button"
-                  variant="outlined"
-                  onClick={handleReset}
-                  disabled={loading}
-                  sx={{ flexGrow: { xs: 1, sm: 0 } }}
-                >
-                  Clear
-                </Button>
-              </>
-            )}
-            {loading && (
+          )}
+        </Box>
+
+        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', flex: { xs: '1 1 100%', sm: '0 0 auto' } }}>
+          {loading ? (
+            <Button
+              type="button"
+              variant="outlined"
+              onClick={handleCancel}
+              startIcon={<CircularProgress size={18} color="inherit" />}
+              sx={{ borderRadius: 999, minHeight: 48, flexGrow: { xs: 1, sm: 0 } }}
+            >
+              Cancel
+            </Button>
+          ) : (
+            <>
+              <ArrowButton type="submit" disabled={!!urlField.error} sx={{ flexGrow: { xs: 1, sm: 0 } }}>
+                Run Audit
+              </ArrowButton>
               <Button
                 type="button"
                 variant="outlined"
-                onClick={handleCancel}
-                startIcon={<CircularProgress size={20} />}
-                sx={{ flexGrow: { xs: 1, sm: 0 } }}
+                onClick={handleReset}
+                sx={{ borderRadius: 999, minHeight: 48, px: 3, flexGrow: { xs: 1, sm: 0 } }}
               >
-                Cancel
+                Clear
               </Button>
-            )}
-          </Box>
-        </Stack>
-        
-      </Stack>
+            </>
+          )}
+        </Box>
+      </Box>
+
+      <Box role="status" aria-live="polite" sx={srOnly}>
+        {loading ? `Running audit for ${urlField.value}` : ''}
+      </Box>
     </Box>
   );
 }
