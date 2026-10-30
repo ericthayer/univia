@@ -1,18 +1,37 @@
-import {
-  Container,
-  Box,
-  Typography,
-  Paper,
-  Button,
-  Stack,
-  Chip,
-  Grid,
-} from '@mui/material';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { UserTier } from '../types/auth';
 import { USER_TIERS } from '../config/tierConfig';
 import Icon from '../components/ui/Icon';
+import { PageCanvas } from '../components/ui/PageCanvas/PageCanvas';
+import { PageHeader } from '../components/ui/PageHeader/PageHeader';
+import { SectionHeader } from '../components/ui/SectionHeader/SectionHeader';
+import { BezelCard } from '../components/ui/BezelCard/BezelCard';
+import { ArrowButton } from '../components/ui/ArrowButton/ArrowButton';
+import { TonePill } from '../components/ui/TonePill/TonePill';
+
+const FAQS = [
+  {
+    question: 'Is the Basic plan really free forever?',
+    answer:
+      'Yes! Our Basic plan is completely free with no time limit. We believe everyone should have access to accessibility auditing tools.',
+  },
+  {
+    question: 'Can I upgrade or downgrade anytime?',
+    answer:
+      'Yes, you can change your plan at any time. Upgrades take effect immediately, and downgrades take effect at the end of your billing cycle.',
+  },
+  {
+    question: 'What payment methods do you accept?',
+    answer:
+      'We accept all major credit cards (Visa, MasterCard, American Express) and PayPal. Enterprise customers can arrange for invoice-based billing.',
+  },
+] as const;
 
 export default function Pricing() {
   const { user, profile } = useAuth();
@@ -34,93 +53,117 @@ export default function Pricing() {
   const tiers: UserTier[] = ['basic', 'pro', 'enterprise'];
 
   return (
-    <Container maxWidth="lg" sx={{ py: 6 }}>
-      <Box textAlign="center" mb={6}>
-        <Typography variant="h3" gutterBottom fontWeight={700}>
-          Choose Your Plan
-        </Typography>
-        <Typography variant="h6" color="text.secondary">
-          Start with our free Basic plan. Upgrade anytime for more features.
-        </Typography>
-      </Box>
+    <PageCanvas maxWidth="lg">
+      <PageHeader
+        eyebrow="Plans"
+        title="Choose Your Plan"
+        description="Start with our free Basic plan. Upgrade anytime for more features."
+      />
 
-      <Grid container spacing={4} justifyContent="center">
-        {tiers.map((tier) => {
+      <Box
+        component="ul"
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 18rem), 1fr))',
+          gap: 3,
+          listStyle: 'none',
+          m: 0,
+          p: 0,
+          mb: { xs: 6, md: 10 },
+        }}
+      >
+        {tiers.map((tier, index) => {
           const config = USER_TIERS[tier];
           const isCurrentTier = profile?.tier === tier;
           const isFree = tier === 'basic';
           const isPopular = tier === 'pro';
+          const price = isFree ? 'Free' : config.price.split('/')[0];
+          // "/month" only reads correctly after a numeric price ("$49"), not after "Custom".
+          const showPerMonth = !isFree && price.startsWith('$');
+          const titleId = `plan-${tier}-name`;
 
           return (
-            <Grid key={tier} size={{ xs: 12, md: 4 }}>
-              <Paper
-                elevation={isPopular ? 8 : 2}
-                sx={{
-                  p: 4,
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  position: 'relative',
-                  border: isPopular ? 2 : 0,
-                  borderColor: isPopular ? 'primary.main' : 'transparent',
-                }}
+            <Box component="li" key={tier} sx={{ display: 'flex', minWidth: 0 }}>
+              <BezelCard
+                component="article"
+                aria-labelledby={titleId}
+                accent={isPopular ? 'neutral' : undefined}
+                reveal={index}
+                sx={{ gap: 3 }}
+                style={{ width: '100%' }}
               >
-                {isPopular && (
-                  <Chip
-                    label="Most Popular"
-                    color="primary"
-                    size="small"
-                    sx={{
-                      position: 'absolute',
-                      top: 16,
-                      right: 16,
-                    }}
-                  />
-                )}
-
-                {isCurrentTier && (
-                  <Chip
-                    label="Current Plan"
-                    color="success"
-                    size="small"
-                    sx={{
-                      position: 'absolute',
-                      top: 16,
-                      left: 16,
-                    }}
-                  />
-                )}
-
-                <Typography variant="h5" fontWeight={700} gutterBottom>
-                  {config.name}
-                </Typography>
-
-                <Box mb={3}>
-                  <Typography variant="h3" fontWeight={700} component="span">
-                    {isFree ? 'Free' : config.price.split('/')[0]}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
+                  <Typography id={titleId} variant="h5" component="h2" sx={{ fontWeight: 700 }}>
+                    {config.name}
                   </Typography>
-                  {!isFree && (
-                    <Typography variant="h6" component="span" color="text.secondary">
-                      /month
+                  <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                    {isPopular && <TonePill variant="solid">Most Popular</TonePill>}
+                    {isCurrentTier && (
+                      <TonePill tone="success" dot>
+                        Current Plan
+                      </TonePill>
+                    )}
+                  </Box>
+                </Box>
+
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                    <Typography variant="metric" component="p">
+                      {price}
                     </Typography>
-                  )}
+                    {showPerMonth && (
+                      <Typography variant="body1" color="text.secondary" component="span">
+                        /month
+                      </Typography>
+                    )}
+                  </Box>
                   {isFree && (
-                    <Typography variant="body2" color="text.secondary" mt={1}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                       Forever
                     </Typography>
                   )}
                 </Box>
 
-                <Stack spacing={2} mb={4} flexGrow={1}>
-                  {config.features.map((feature: string, index: number) => (
-                    <Box key={index} display="flex" alignItems="flex-start" gap={1}>
-                      <Icon name="check_circle" style={{ fontSize: 20, color: '#2e7d32', marginTop: 2 }} />
+                <Box
+                  component="ul"
+                  sx={{
+                    listStyle: 'none',
+                    m: 0,
+                    p: 0,
+                    pt: 3,
+                    flexGrow: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1.5,
+                    borderTop: '1px solid',
+                    borderColor: 'divider',
+                  }}
+                >
+                  {config.features.map((feature: string) => (
+                    <Box component="li" key={feature} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                      <Box
+                        aria-hidden="true"
+                        sx={{
+                          width: 20,
+                          height: 20,
+                          mt: 0.25,
+                          borderRadius: '50%',
+                          display: 'grid',
+                          placeItems: 'center',
+                          flexShrink: 0,
+                          bgcolor: 'action.hover',
+                          color: 'success.main',
+                          fontSize: '0.875rem',
+                        }}
+                      >
+                        <Icon name="check_circle" />
+                      </Box>
                       <Typography variant="body2">{feature}</Typography>
                     </Box>
                   ))}
-                </Stack>
+                </Box>
 
-                <Button
+                <ArrowButton
                   variant={isPopular ? 'contained' : 'outlined'}
                   size="large"
                   fullWidth
@@ -134,50 +177,56 @@ export default function Pricing() {
                         ? 'Your Plan'
                         : 'Get Started'
                       : 'Upgrade'}
-                </Button>
-              </Paper>
-            </Grid>
+                </ArrowButton>
+              </BezelCard>
+            </Box>
           );
         })}
-      </Grid>
-
-      <Box mt={8} textAlign="center">
-        <Typography variant="h5" gutterBottom fontWeight={600}>
-          Frequently Asked Questions
-        </Typography>
-
-        <Stack spacing={3} mt={4} maxWidth="md" mx="auto">
-          <Paper sx={{ p: 3, textAlign: 'left' }}>
-            <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-              Is the Basic plan really free forever?
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Yes! Our Basic plan is completely free with no time limit. We believe everyone
-              should have access to accessibility auditing tools.
-            </Typography>
-          </Paper>
-
-          <Paper sx={{ p: 3, textAlign: 'left' }}>
-            <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-              Can I upgrade or downgrade anytime?
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Yes, you can change your plan at any time. Upgrades take effect immediately, and
-              downgrades take effect at the end of your billing cycle.
-            </Typography>
-          </Paper>
-
-          <Paper sx={{ p: 3, textAlign: 'left' }}>
-            <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-              What payment methods do you accept?
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              We accept all major credit cards (Visa, MasterCard, American Express) and PayPal.
-              Enterprise customers can arrange for invoice-based billing.
-            </Typography>
-          </Paper>
-        </Stack>
       </Box>
-    </Container>
+
+      <Box component="section" aria-labelledby="pricing-faq-title" sx={{ maxWidth: 800 }}>
+        <SectionHeader id="pricing-faq-title" title="Frequently Asked Questions" />
+        <BezelCard padding="none" sx={{ overflow: 'hidden' }}>
+          {FAQS.map(({ question, answer }) => (
+            <Accordion
+              key={question}
+              disableGutters
+              square
+              elevation={0}
+              slotProps={{ heading: { component: 'h3' } }}
+              sx={{
+                bgcolor: 'transparent',
+                backgroundImage: 'none',
+                border: 0,
+                '&::before': { display: 'none' },
+                '& + &': { borderTop: '1px solid', borderColor: 'divider' },
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<Icon name="expand_more" style={{ fontSize: 24 }} aria-hidden />}
+                sx={{
+                  minHeight: 64,
+                  px: 3,
+                  '& .MuiAccordionSummary-content': { my: 1.5 },
+                  '& .MuiAccordionSummary-expandIconWrapper': {
+                    transition: (theme) =>
+                      `transform ${theme.transitions.duration.slow}ms ${theme.transitions.easing.spring}`,
+                  },
+                }}
+              >
+                <Typography variant="subtitle1" component="span" sx={{ fontWeight: 600 }}>
+                  {question}
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails sx={{ px: 3, pt: 0, pb: 3 }}>
+                <Typography variant="body2" color="text.secondary">
+                  {answer}
+                </Typography>
+              </AccordionDetails>
+            </Accordion>
+          ))}
+        </BezelCard>
+      </Box>
+    </PageCanvas>
   );
 }
