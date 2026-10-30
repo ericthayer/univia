@@ -1,21 +1,23 @@
 import { useState } from 'react';
-import {
-  Container,
-  Box,
-  Typography,
-  Button,
-  Paper,
-  Alert,
-  LinearProgress,
-  Chip,
-  Divider,
-  Card,
-  CardContent,
-  Grid,
-} from '@mui/material';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import LinearProgress from '@mui/material/LinearProgress';
+import Typography from '@mui/material/Typography';
 import Icon from '../../components/ui/Icon';
+import { BezelCard } from '../../components/ui/BezelCard/BezelCard';
+import { EmptyState } from '../../components/ui/EmptyState/EmptyState';
+import { PageCanvas } from '../../components/ui/PageCanvas/PageCanvas';
+import { PageHeader } from '../../components/ui/PageHeader/PageHeader';
+import { ScoreBar } from '../../components/ui/ScoreBar/ScoreBar';
+import { SectionHeader } from '../../components/ui/SectionHeader/SectionHeader';
+import { TonePill } from '../../components/ui/TonePill/TonePill';
+import type { Tone } from '../../components/ui/tone';
+import { srOnly } from '../../components/ui/srOnly';
 import { ensureSession } from '../../services/session';
 import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from '../../services/supabaseFunctions';
+
+const WIDE = '@container (min-width: 900px)';
 
 interface AnalysisDebugInfo {
   analysisMethod: string;
@@ -130,117 +132,149 @@ export default function DocumentAnalysisTest() {
     }
   };
 
-  const getStatusColor = (status: boolean) => {
-    return status ? 'success' : 'error';
-  };
+  const urgencyTone = (level: string): Tone =>
+    level === 'critical' ? 'error' : level === 'high' ? 'warning' : 'success';
+
+  const extracted = result?.analysis?.extractedData;
+  const extractedRows: Array<[string, string]> = extracted
+    ? ([
+        ['Plaintiff', extracted.plaintiffName],
+        ['Attorney', extracted.attorneyName],
+        ['Law Firm', extracted.attorneyFirm],
+        ['Deadline', extracted.responseDeadline],
+        [
+          'Settlement Amount',
+          extracted.settlementAmount ? `$${extracted.settlementAmount.toLocaleString()}` : undefined,
+        ],
+      ] as Array<[string, string | undefined]>).filter((row): row is [string, string] => Boolean(row[1]))
+    : [];
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-          Document Analysis Test
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Test the document analysis feature and view debug information
-        </Typography>
-      </Box>
+    <PageCanvas>
+      <PageHeader
+        eyebrow="Admin"
+        title="Document Analysis Test"
+        description="Test the document analysis feature and view debug information. Uploaded files are sent to Google Gemini."
+      />
 
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-              Upload Test Document
-            </Typography>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 3,
+          gridTemplateColumns: '1fr',
+          alignItems: 'start',
+          [WIDE]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' },
+        }}
+      >
+        <Box sx={{ display: 'grid', gap: 3, minWidth: 0 }}>
+          <BezelCard component="section" aria-labelledby="test-upload-heading">
+            <SectionHeader id="test-upload-heading" title="Upload Test Document" dense />
 
             <Box
+              component="label"
+              htmlFor="test-file-upload"
               sx={{
-                border: '2px dashed',
+                display: 'block',
+                border: '1.5px dashed',
                 borderColor: 'divider',
-                borderRadius: 2,
+                borderRadius: (theme) => `${theme.surfaces.coreRadius}px`,
                 p: 3,
                 textAlign: 'center',
-                bgcolor: 'background.default',
-                mb: 3,
+                bgcolor: 'action.hover',
+                cursor: 'pointer',
+                mb: 2.5,
+                transition: (theme) =>
+                  `border-color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}`,
+                '&:hover': { borderColor: 'text.secondary' },
+                '&:focus-within': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
               }}
             >
-              <input
+              <Box
+                component="input"
                 id="test-file-upload"
                 type="file"
                 accept=".pdf,.png,.jpg,.jpeg,.webp"
                 onChange={handleFileSelect}
-                style={{ display: 'none' }}
+                sx={srOnly}
               />
-              <label htmlFor="test-file-upload">
-                <Button
-                  component="span"
-                  variant="outlined"
-                  startIcon={<Icon name="upload_file" />}
-                >
-                  Choose File
-                </Button>
-              </label>
-
-              {file && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    {file.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {file.type} • {(file.size / 1024).toFixed(1)} KB
-                  </Typography>
-                </Box>
-              )}
+              <Box
+                aria-hidden="true"
+                sx={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: '50%',
+                  display: 'grid',
+                  placeItems: 'center',
+                  mx: 'auto',
+                  mb: 1.5,
+                  bgcolor: 'background.paper',
+                  color: 'text.secondary',
+                  fontSize: '1.5rem',
+                }}
+              >
+                <Icon name="upload_file" />
+              </Box>
+              <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                {file ? file.name : 'Choose a file'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                {file ? `${file.type} • ${(file.size / 1024).toFixed(1)} KB` : 'PNG, JPG, WebP or PDF'}
+              </Typography>
             </Box>
 
             <Button
               variant="contained"
               fullWidth
-              size="large"
               onClick={handleTest}
               disabled={!file || uploading}
-              startIcon={<Icon name={uploading ? 'hourglass_empty' : 'bug_report'} />}
+              startIcon={<Icon name={uploading ? 'hourglass_empty' : 'tools'} />}
+              sx={{
+                borderRadius: 999,
+                minHeight: 48,
+                '&.Mui-disabled': { bgcolor: 'action.disabledBackground', color: 'text.disabled' },
+              }}
             >
-              {uploading ? 'Testing...' : 'Run Test'}
+              {uploading ? 'Testing…' : 'Run Test'}
             </Button>
 
-            {uploading && (
-              <Box sx={{ mt: 2 }}>
-                <LinearProgress />
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                  Check browser console for detailed logs
-                </Typography>
-              </Box>
-            )}
-          </Paper>
+            <Box role="status" aria-live="polite">
+              {uploading && (
+                <Box sx={{ mt: 2 }}>
+                  <LinearProgress aria-label="Running document analysis test" sx={{ borderRadius: 999 }} />
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    Check browser console for detailed logs
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </BezelCard>
 
-          <Paper sx={{ p: 3, mt: 3 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-              Instructions
-            </Typography>
-            <Box component="ol" sx={{ pl: 2.5 }}>
-              <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+          <BezelCard component="section" aria-labelledby="test-instructions-heading">
+            <SectionHeader id="test-instructions-heading" title="Instructions" dense />
+            <Box component="ol" sx={{ pl: 2.5, m: 0, display: 'grid', gap: 1 }}>
+              <Typography component="li" variant="body2">
                 Open browser DevTools (F12) and go to Console tab
               </Typography>
-              <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+              <Typography component="li" variant="body2">
                 Upload an image (PNG/JPG) or PDF document
               </Typography>
-              <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+              <Typography component="li" variant="body2">
                 Click "Run Test" and watch the console output
               </Typography>
-              <Typography component="li" variant="body2" sx={{ mb: 1 }}>
+              <Typography component="li" variant="body2">
                 Review the debug information on the right
               </Typography>
             </Box>
 
-            <Alert severity="info" sx={{ mt: 2 }}>
+            <Alert severity="info" sx={{ mt: 2.5, borderRadius: 3 }}>
               PDFs are not currently supported. Please convert to image format for testing.
             </Alert>
-          </Paper>
-        </Grid>
+          </BezelCard>
+        </Box>
 
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Box sx={{ display: 'grid', gap: 3, minWidth: 0 }}>
           {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
+            <Alert severity="error" sx={{ borderRadius: 3 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
                 Error
               </Typography>
@@ -252,202 +286,132 @@ export default function DocumentAnalysisTest() {
 
           {result && (
             <>
-              <Paper sx={{ p: 3, mb: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                  Debug Information
-                </Typography>
+              <BezelCard component="section" aria-labelledby="test-debug-heading">
+                <SectionHeader id="test-debug-heading" title="Debug Information" dense />
 
                 {result.debug && (
-                  <Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Analysis Method:
-                      </Typography>
-                      <Chip
-                        label={result.debug.analysisMethod}
-                        size="small"
-                        color={result.debug.analysisMethod.includes('gemini') ? 'success' : 'default'}
-                      />
+                  <Box
+                    component="dl"
+                    sx={{
+                      m: 0,
+                      display: 'grid',
+                      gap: 1.5,
+                      '& dt': { color: 'text.secondary', typography: 'body2' },
+                      '& dd': { m: 0, fontWeight: 600, typography: 'body2', textAlign: 'right' },
+                      '& .row': { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 },
+                    }}
+                  >
+                    <Box className="row">
+                      <dt>Analysis Method</dt>
+                      <dd>
+                        <TonePill tone={result.debug.analysisMethod.includes('gemini') ? 'success' : 'neutral'}>
+                          {result.debug.analysisMethod}
+                        </TonePill>
+                      </dd>
                     </Box>
-
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        AI Model:
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {result.debug.aiModel}
-                      </Typography>
+                    <Box className="row">
+                      <dt>AI Model</dt>
+                      <dd>{result.debug.aiModel}</dd>
                     </Box>
-
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Gemini API Key:
-                      </Typography>
-                      <Chip
-                        label={result.debug.hasGeminiKey ? 'Configured' : 'Not Configured'}
-                        size="small"
-                        color={getStatusColor(result.debug.hasGeminiKey)}
-                      />
+                    <Box className="row">
+                      <dt>Gemini API Key</dt>
+                      <dd>
+                        <TonePill tone={result.debug.hasGeminiKey ? 'success' : 'error'} dot>
+                          {result.debug.hasGeminiKey ? 'Configured' : 'Not Configured'}
+                        </TonePill>
+                      </dd>
                     </Box>
-
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        File Type:
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {result.debug.fileType}
-                      </Typography>
+                    <Box className="row">
+                      <dt>File Type</dt>
+                      <dd>{result.debug.fileType}</dd>
                     </Box>
-
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Timestamp:
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    <Box className="row">
+                      <dt>Timestamp</dt>
+                      <dd style={{ fontVariantNumeric: 'tabular-nums' }}>
                         {new Date(result.debug.timestamp).toLocaleTimeString()}
-                      </Typography>
+                      </dd>
                     </Box>
                   </Box>
                 )}
 
                 {result.errorType && (
-                  <Box sx={{ mt: 2 }}>
-                    <Alert severity="warning">
-                      <Typography variant="caption">
-                        Error Type: {result.errorType}
-                      </Typography>
-                    </Alert>
-                  </Box>
+                  <Alert severity="warning" sx={{ mt: 2, borderRadius: 3 }}>
+                    <Typography variant="caption">Error Type: {result.errorType}</Typography>
+                  </Alert>
                 )}
-              </Paper>
+              </BezelCard>
 
               {result.success && result.analysis && (
-                <>
-                  <Card sx={{ mb: 3 }}>
-                    <CardContent>
-                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                        Analysis Results
-                      </Typography>
+                <BezelCard component="section" aria-labelledby="test-results-heading">
+                  <SectionHeader id="test-results-heading" title="Analysis Results" dense />
 
-                      <Box sx={{ mb: 2 }}>
-                        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
-                          Document Type
-                        </Typography>
-                        <Chip label={result.analysis.documentType} color="primary" />
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2.5 }}>
+                    <TonePill>{result.analysis.documentType}</TonePill>
+                    <TonePill tone={urgencyTone(result.analysis.urgencyLevel)} dot>
+                      {result.analysis.urgencyLevel} urgency
+                    </TonePill>
+                  </Box>
+
+                  <Typography variant="eyebrow" component="p" sx={{ mb: 1 }}>
+                    Summary
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 2.5 }}>
+                    {result.analysis.documentSummary}
+                  </Typography>
+
+                  {extractedRows.length > 0 && (
+                    <>
+                      <Typography variant="eyebrow" component="p" sx={{ mb: 1 }}>
+                        Extracted Data
+                      </Typography>
+                      <Box component="dl" sx={{ m: 0, mb: 2.5, display: 'grid', gap: 0.75 }}>
+                        {extractedRows.map(([label, value]) => (
+                          <Box key={label} sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+                            <Typography component="dt" variant="body2" color="text.secondary">
+                              {label}
+                            </Typography>
+                            <Typography
+                              component="dd"
+                              variant="body2"
+                              sx={{ m: 0, fontWeight: 600, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+                            >
+                              {value}
+                            </Typography>
+                          </Box>
+                        ))}
                       </Box>
+                    </>
+                  )}
 
-                      <Box sx={{ mb: 2 }}>
-                        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
-                          Urgency Level
+                  {result.analysis.confidenceScores &&
+                    Object.keys(result.analysis.confidenceScores).length > 0 && (
+                      <>
+                        <Typography variant="eyebrow" component="p" sx={{ mb: 1.5 }}>
+                          Confidence Scores
                         </Typography>
-                        <Chip
-                          label={result.analysis.urgencyLevel}
-                          color={
-                            result.analysis.urgencyLevel === 'critical'
-                              ? 'error'
-                              : result.analysis.urgencyLevel === 'high'
-                              ? 'warning'
-                              : 'success'
-                          }
-                        />
-                      </Box>
-
-                      <Divider sx={{ my: 2 }} />
-
-                      <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                        Summary
-                      </Typography>
-                      <Typography variant="body2" sx={{ mb: 2 }}>
-                        {result.analysis.documentSummary}
-                      </Typography>
-
-                      {result.analysis.extractedData && (
-                        <>
-                          <Divider sx={{ my: 2 }} />
-                          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                            Extracted Data
-                          </Typography>
-                          {result.analysis.extractedData.plaintiffName && (
-                            <Typography variant="body2" sx={{ mb: 0.5 }}>
-                              <strong>Plaintiff:</strong> {result.analysis.extractedData.plaintiffName}
-                            </Typography>
-                          )}
-                          {result.analysis.extractedData.attorneyName && (
-                            <Typography variant="body2" sx={{ mb: 0.5 }}>
-                              <strong>Attorney:</strong> {result.analysis.extractedData.attorneyName}
-                            </Typography>
-                          )}
-                          {result.analysis.extractedData.attorneyFirm && (
-                            <Typography variant="body2" sx={{ mb: 0.5 }}>
-                              <strong>Law Firm:</strong> {result.analysis.extractedData.attorneyFirm}
-                            </Typography>
-                          )}
-                          {result.analysis.extractedData.responseDeadline && (
-                            <Typography variant="body2" sx={{ mb: 0.5 }}>
-                              <strong>Deadline:</strong> {result.analysis.extractedData.responseDeadline}
-                            </Typography>
-                          )}
-                          {result.analysis.extractedData.settlementAmount && (
-                            <Typography variant="body2" sx={{ mb: 0.5 }}>
-                              <strong>Settlement Amount:</strong> $
-                              {result.analysis.extractedData.settlementAmount.toLocaleString()}
-                            </Typography>
-                          )}
-                        </>
-                      )}
-
-                      {result.analysis.confidenceScores &&
-                        Object.keys(result.analysis.confidenceScores).length > 0 && (
-                          <>
-                            <Divider sx={{ my: 2 }} />
-                            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                              Confidence Scores
-                            </Typography>
-                            {Object.entries(result.analysis.confidenceScores).map(([key, value]) => (
-                              <Box key={key} sx={{ mb: 1 }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                  <Typography variant="caption">{key}</Typography>
-                                  <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                                    {(value * 100).toFixed(0)}%
-                                  </Typography>
-                                </Box>
-                                <LinearProgress
-                                  variant="determinate"
-                                  value={value * 100}
-                                  sx={{ height: 6, borderRadius: 1 }}
-                                />
-                              </Box>
-                            ))}
-                          </>
-                        )}
-                    </CardContent>
-                  </Card>
-                </>
+                        <Box sx={{ display: 'grid', gap: 1.5 }}>
+                          {Object.entries(result.analysis.confidenceScores).map(([key, value]) => (
+                            <ScoreBar key={key} label={key} value={value * 100} size="sm" />
+                          ))}
+                        </Box>
+                      </>
+                    )}
+                </BezelCard>
               )}
             </>
           )}
 
           {!result && !error && (
-            <Paper
-              sx={{
-                p: 6,
-                textAlign: 'center',
-                bgcolor: 'background.default',
-                border: '2px dashed',
-                borderColor: 'divider',
-              }}
-            >
-              <Icon name="science" style={{ fontSize: 64, color: '#94A3B8', marginBottom: 16 }} />
-              <Typography variant="h6" color="text.secondary">
-                No Test Results Yet
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Upload a document and run a test to see results
-              </Typography>
-            </Paper>
+            <BezelCard>
+              <EmptyState
+                icon="analytics"
+                title="No Test Results Yet"
+                description="Upload a document and run a test to see results"
+              />
+            </BezelCard>
           )}
-        </Grid>
-      </Grid>
-    </Container>
+        </Box>
+      </Box>
+    </PageCanvas>
   );
 }

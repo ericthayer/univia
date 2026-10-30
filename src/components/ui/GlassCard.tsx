@@ -6,15 +6,19 @@ interface GlassCardProps extends Omit<CardProps, 'children'> {
   blur?: number;
 }
 
+/**
+ * Frosted card for overlays and demos. Uses theme tokens so it holds up in both
+ * color schemes; there is no outer drop shadow (see docs/specs/ui-refresh/SPEC.md §3.1).
+ */
 export default function GlassCard({ children, blur = 20, sx, ...props }: GlassCardProps) {
   return (
     <Card
       sx={{
-        background: 'rgba(255, 255, 255, 0.9)',
+        backgroundColor: 'color-mix(in srgb, var(--mui-palette-background-paper) 88%, transparent)',
         backdropFilter: `blur(${blur}px)`,
         borderRadius: 4,
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-        border: '1px solid divider',
+        border: '1px solid',
+        borderColor: 'divider',
         ...sx,
       }}
       {...props}
