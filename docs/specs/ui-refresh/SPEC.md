@@ -206,16 +206,34 @@ Verification commands: `npm run typecheck`, `npm run lint`, `npm test`, `npm run
 
 ## 8. Implementation checklist
 
-- [ ] Phase 0 — theme tokens, typography variants, Icon paths
-- [ ] Phase 1 — primitives + tests (BezelCard, MetricTile, ScoreBar + scoreTone, ScoreStrip, PageHeader, SectionHeader, EmptyState, PageCanvas, ArrowButton)
-- [ ] Phase 2 — Dashboard (QuickAuditBar, LatestScoreCard, ScoreBreakdownCard, RecentAuditsList; UserAuditMetrics recomposed; AuditHistoryCard + ComplianceGauge updates)
-- [ ] Phase 3 — Site Audit (URL-synced tabs/page, first-error focus, live region)
-- [ ] Phase 4 — Analyze Letter (InlineDocumentUpload a11y + restyle, LetterCard, layout)
-- [ ] Phase 5 — User Management (fakes removed, URL filters, Icon swap, autoHeight table, cards)
-- [ ] Phase 6 — typecheck / lint / test / build; browser pass; live audit + resume analysis; commit per phase with Conventional Commits
+- [x] Phase 0 — theme tokens, typography variants, Icon paths
+- [x] Phase 1 — primitives + tests (BezelCard, MetricTile, ScoreBar + scoreTone, ScoreStrip, PageHeader, SectionHeader, EmptyState, PageCanvas, ArrowButton)
+- [x] Phase 2 — Dashboard (QuickAuditBar, LatestScoreCard, ScoreBreakdownCard, RecentAuditsList; UserAuditMetrics recomposed; AuditHistoryCard + ComplianceGauge updates)
+- [x] Phase 3 — Site Audit (URL-synced tabs/page, first-error focus, live region)
+- [x] Phase 4 — Analyze Letter (InlineDocumentUpload a11y + restyle, LetterCard, layout)
+- [x] Phase 5 — User Management (fakes removed, URL filters, Icon swap, autoHeight table, cards)
+- [x] Phase 6 — typecheck / lint / test / build green; browser pass on Dashboard, Site Audit, Analyze Letter (dark + light, desktop + 375px); one live audit (univia.help) and one resume analysis completed. User Management verified by its three tests only: the test account is not an admin, so the route guard blocks the page in the browser.
 
 Phases 3, 4, 5 are independent once Phase 1 lands and may run in parallel.
+
+## 10. Deviations from the draft (decided during implementation)
+
+- **Metric tile tones follow the value.** The three average tiles take `scoreTone(value)` instead of a fixed per-category color, so §3.3 holds for KPI tiles too. "Total Audits" stays neutral.
+- **Quick-audit submit is an `IconButton`, not an `ArrowButton` variant.** `ButtonProps.variant` is closed; a 32px filled circle inside the field reads the same and keeps `aria-label` / `aria-busy`.
+- **`ArrowButton` is typed as `ExtendButton<ButtonTypeMap>`** so `component={RouterLink} to` type-checks; `fullWidth` spreads label and arrow to the edges.
+- **`InlineDocumentUpload` guards `theme.surfaces?.coreRadius`** because its existing test renders without the project theme. New tests use `src/test/renderWithTheme.tsx`.
+- **User Management load effect depends on `Boolean(profile?.is_admin)`** rather than the `profile` object, which removed a reload loop on identity changes. Default view remains `cards`.
+- **`showNextSteps` prop on `InlineDocumentUpload`** (default `true`) keeps the drawer unchanged while the page renders the steps in its own column.
+- **Shared `srOnly` helper** at `src/components/ui/srOnly.ts` for live regions.
+
+## 11. Follow-ups noticed, not built
+
+- Dashboard "Recent Audits" lists one row per device (two rows per run) because `useUserAudits` does not group by `audit_session_id`; the Site Audit page does group. Pre-existing; align the hook.
+- The `analyze-document` function returned "extracted text is heavily corrupted with OCR errors" for a clean text PDF resume; PDF text extraction in the Edge Function deserves a look.
+- `InlineAnalysisResults` header actions wrap awkwardly in the 7fr column; the component was out of scope.
+- Share / View on letter cards and Engage / Export / Delete in the admin bulk bar remain unwired.
 
 ## 9. Changelog
 
 - 2026-10-29 — Initial draft after codebase review and direction/mock-data/sign-in decisions.
+- 2026-10-29 — Implementation complete; added §10 deviations and §11 follow-ups; checklist ticked.
