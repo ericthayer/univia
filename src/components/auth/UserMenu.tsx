@@ -1,21 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  IconButton,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  Divider,
-  Box,
-  Typography,
-  Chip,
-  Tooltip,
-} from '@mui/material';
+import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Divider from '@mui/material/Divider';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Tooltip from '@mui/material/Tooltip';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { flushSync } from 'react-dom';
 import { USER_TIERS } from '../../config/tierConfig';
 import Icon from '../ui/Icon';
+import { TonePill } from '../ui/TonePill/TonePill';
 
 export default function UserMenu() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -156,7 +154,8 @@ export default function UserMenu() {
   if (!user || !profile) return null;
 
   const tierConfig = USER_TIERS[profile.tier];
-  const tierColor = profile.tier === 'enterprise' ? 'secondary' : profile.tier === 'pro' ? 'primary' : 'default';
+  // Tier reads by visual weight, matching the admin directory: outline, tint, inverse.
+  const tierVariant = profile.tier === 'enterprise' ? 'solid' : profile.tier === 'pro' ? 'tonal' : 'outline';
 
   return (
     <>
@@ -166,6 +165,12 @@ export default function UserMenu() {
           ref={triggerRef}
           color="primary"
           onClick={handleClick}
+          sx={{
+            width: 44,
+            height: 44,
+            transition: (theme) =>
+              `background-color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}`,
+          }}
           aria-controls={open ? 'user-menu' : undefined}
           aria-haspopup="true"
           aria-expanded={open ? 'true' : undefined}
@@ -195,24 +200,43 @@ export default function UserMenu() {
           },
           paper: {
             ref: menuPaperRef,
-            elevation: 3,
+            elevation: 0,
             sx: {
-              minWidth: 240,
+              minWidth: 264,
               mt: 1.5,
               ml: '-0.5rem',
+              // Hairline surface, no outer shadow (ui-refresh SPEC §3.1). 4 × theme.shape.borderRadius = 16px.
+              borderRadius: 4,
+              border: '1px solid',
+              borderColor: 'divider',
+              boxShadow: 'none',
+              backgroundImage: 'none',
+              bgcolor: 'background.paper',
+              '& .MuiList-root': { p: 0.75 },
+              '& .MuiMenuItem-root': {
+                minHeight: 44,
+                borderRadius: 2,
+                px: 1.5,
+                gap: 0.5,
+                transition: (theme: { transitions: { duration: { standard: number }; easing: { easeOut: string } } }) =>
+                  `background-color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}`,
+              },
+              '& .MuiListItemIcon-root': { minWidth: 32, color: 'text.secondary' },
+              '& .MuiDivider-root': { my: 0.75, mx: 0.5 },
             },
           },
         }}
       >
-        <Box sx={{ px: 2, py: 1.5 }}>
-          <Typography variant="subtitle2" noWrap>
+        <Box sx={{ px: 1.5, pt: 1, pb: 1.25, minWidth: 0 }}>
+          <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
             {profile.full_name}
           </Typography>
-          <Typography variant="caption" color="text.secondary" noWrap>
+          <Typography variant="caption" color="text.secondary" noWrap display="block">
             {profile.email}
           </Typography>
-          <Box sx={{ mt: 1 }}>
-            <Chip label={tierConfig.name} size="small" color={tierColor} />
+          <Box sx={{ mt: 1.25, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <TonePill variant={tierVariant}>{tierConfig.name}</TonePill>
+            {profile.is_admin && <TonePill>Admin</TonePill>}
           </Box>
         </Box>
 
@@ -239,21 +263,7 @@ export default function UserMenu() {
             <Divider />
             <MenuItem onClick={() => handleAdminNavigation('/admin/users')}>
               <ListItemIcon>
-                <svg
-                  width={18}
-                  height={18}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
+                <Icon name="people" style={{ fontSize: 18 }} aria-hidden />
               </ListItemIcon>
               <ListItemText>User Management</ListItemText>
             </MenuItem>
@@ -268,6 +278,7 @@ export default function UserMenu() {
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  aria-hidden="true"
                 >
                   <rect width="20" height="14" x="2" y="5" rx="2" />
                   <line x1="2" x2="22" y1="10" y2="10" />
