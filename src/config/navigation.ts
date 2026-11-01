@@ -112,8 +112,18 @@ export const ROUTE_PATHS = {
   AUTH_CALLBACK: '/auth/callback',
 } as const;
 
+/** Signed-out header entry; signed-in users get the account menu instead. */
+const SIGN_IN_MENU_ITEM: MenuItem = {
+  id: 'sign-in',
+  text: 'Sign In',
+  icon: 'login',
+  path: ROUTE_PATHS.SIGN_IN,
+  ariaLabel: 'Sign in to your account',
+  showInHeader: true,
+};
+
 export function getHeaderMenuItems(isAuthenticated: boolean = false): MenuItem[] {
-  return MENU_ITEMS.filter(item => item.showInHeader).map(item => {
+  const items = MENU_ITEMS.filter(item => item.showInHeader).map(item => {
     if (item.id === 'dashboard') {
       return {
         ...item,
@@ -124,6 +134,7 @@ export function getHeaderMenuItems(isAuthenticated: boolean = false): MenuItem[]
     }
     return item;
   });
+  return isAuthenticated ? items : [...items, SIGN_IN_MENU_ITEM];
 }
 
 export function getSidebarMenuItems(isAuthenticated: boolean = false): MenuItem[] {

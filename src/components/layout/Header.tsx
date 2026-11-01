@@ -3,7 +3,7 @@ import type { Theme } from '@mui/material/styles';
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import logoUniviaUrl from '../../assets/images/logo-univia.svg';
-import { getHeaderMenuItems, ROUTE_PATHS, MenuItem } from '../../config/navigation';
+import { getHeaderMenuItems, MenuItem } from '../../config/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import UserMenu from '../auth/UserMenu';
 import Icon from '../ui/Icon';
@@ -41,7 +41,10 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
   const navigate = useNavigate();
   const location = useLocation();
   const { isRegistered, loading: authLoading } = useAuth();
-  const menuItems = getHeaderMenuItems(isRegistered);
+  // Hold back "Sign In" until auth resolves so signed-in users never see it flash.
+  const menuItems = getHeaderMenuItems(isRegistered).filter(
+    (item) => !(authLoading && item.id === 'sign-in'),
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -192,35 +195,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
 
         <Stack direction="row" gap={1.5} alignItems="center" sx={{ ml: 'auto' }}>
 
-          {!authLoading && (
-            <Box>
-              {isRegistered ? (
-                <UserMenu />
-              ) : (
-                <Stack direction="row" gap={1.5} sx={{ display: { xs: 'none', md: 'flex' } }}>
-                  <Button
-                    variant="text"
-                    onClick={() => navigate(ROUTE_PATHS.SIGN_IN)}
-                    sx={{
-                      ...controlButtonSx,
-                      px: 2,
-                      color: 'text.primary',
-                      '&:hover': { bgcolor: 'action.hover', color: 'text.primary' },
-                    }}
-                  >
-                    Sign In
-                  </Button>
-                  <Button
-                    variant="contained"
-                    onClick={() => navigate(ROUTE_PATHS.SIGN_UP)}
-                    sx={{ ...controlButtonSx, px: 2.5 }}
-                  >
-                    Register
-                  </Button>
-                </Stack>
-              )}
-            </Box>
-          )}
+          {!authLoading && isRegistered && <UserMenu />}
 
           <Tooltip title="Toggle Color Mode">
             <IconButton
