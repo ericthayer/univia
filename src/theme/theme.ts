@@ -265,6 +265,18 @@ const theme = createTheme({
         },
       },
     },
+    MuiDialog: {
+      styleOverrides: {
+        // Dark mode: drop the elevation overlay that lifts dialogs to mid-grey and
+        // sit them on the paper surface, separated from the backdrop by a hairline.
+        paper: ({ theme }) =>
+          theme.applyStyles('dark', {
+            backgroundImage: 'none',
+            backgroundColor: (theme.vars ?? theme).palette.background.paper,
+            border: `1px solid ${(theme.vars ?? theme).palette.divider}`,
+          }),
+      },
+    },
     MuiPopper: {
       styleOverrides: {
         root: {
