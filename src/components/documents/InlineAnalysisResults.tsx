@@ -12,10 +12,13 @@ import LegalDisclaimer from '../ui/LegalDisclaimer';
 import { ArrowButton } from '../ui/ArrowButton/ArrowButton';
 import { TonePill } from '../ui/TonePill/TonePill';
 import { controlRadius } from '../../theme/tokens';
+import { ShareLetterDialog } from './ShareLetterDialog/ShareLetterDialog';
 
 interface InlineAnalysisResultsProps {
   analysis: DocumentAnalysis;
-  onNewUpload: () => void;
+  onNewUpload?: () => void;
+  /** Recipient view of a shared link: hides the owner actions (upload, share, export). */
+  readOnly?: boolean;
 }
 
 interface AnalysisSectionProps {
@@ -105,8 +108,10 @@ const controlButtonSx = { borderRadius: controlRadius, minHeight: 44, px: 2.5 } 
 export default function InlineAnalysisResults({
   analysis,
   onNewUpload,
+  readOnly = false,
 }: InlineAnalysisResultsProps) {
   const [showEntities, setShowEntities] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [showLegalAnalysis, setShowLegalAnalysis] = useState(true);
   const uid = useId();
 
@@ -117,7 +122,7 @@ export default function InlineAnalysisResults({
   const scores = result.confidenceScores;
 
   const handleShare = () => {
-    console.log('Share functionality');
+    setShareOpen(true);
   };
 
   const handleExportPDF = () => {
@@ -153,16 +158,22 @@ export default function InlineAnalysisResults({
             </TonePill>
           )}
         </Box>
-        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-          <ArrowButton onClick={onNewUpload}>Upload Another</ArrowButton>
-          <Button variant="outlined" startIcon={<Icon name="share" />} onClick={handleShare} sx={controlButtonSx}>
-            Share
-          </Button>
-          <Button variant="outlined" startIcon={<Icon name="picture_as_pdf" />} onClick={handleExportPDF} sx={controlButtonSx}>
-            Export PDF
-          </Button>
-        </Box>
+        {!readOnly && (
+          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+            {onNewUpload && <ArrowButton onClick={onNewUpload}>Upload Another</ArrowButton>}
+            <Button variant="outlined" startIcon={<Icon name="share" />} onClick={handleShare} aria-haspopup="dialog" sx={controlButtonSx}>
+              Share
+            </Button>
+            <Button variant="outlined" startIcon={<Icon name="picture_as_pdf" />} onClick={handleExportPDF} sx={controlButtonSx}>
+              Export PDF
+            </Button>
+          </Box>
+        )}
       </Box>
+
+      {!readOnly && (
+        <ShareLetterDialog open={shareOpen} onClose={() => setShareOpen(false)} letterId={analysis.letter_id} />
+      )}
 
       <LegalDisclaimer variant="compact" />
 
@@ -172,34 +183,36 @@ export default function InlineAnalysisResults({
         </Typography>
       </AnalysisSection>
 
-      <AnalysisSection id={`${uid}-key`} title="Key Information">
-        <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0 }}>
-          {result.keyPoints.map((point, index) => (
-            <Box
-              component="li"
-              key={index}
-              sx={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 1.25,
-                py: 1.25,
-                '&:first-of-type': { pt: 0 },
-                '&:last-of-type': { pb: 0 },
-                '& + &': { borderTop: '1px solid', borderColor: 'divider' },
-              }}
-            >
-              <Icon
-                name="check_circle"
-                aria-hidden
-                style={{ fontSize: 18, marginTop: 2, flexShrink: 0, color: 'var(--mui-palette-text-secondary)' }}
-              />
-              <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
-                {point}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      </AnalysisSection>
+      {result.keyPoints?.length > 0 && (
+        <AnalysisSection id={`${uid}-key`} title="Key Information">
+          <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0 }}>
+            {result.keyPoints.map((point, index) => (
+              <Box
+                component="li"
+                key={index}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 1.25,
+                  py: 1.25,
+                  '&:first-of-type': { pt: 0 },
+                  '&:last-of-type': { pb: 0 },
+                  '& + &': { borderTop: '1px solid', borderColor: 'divider' },
+                }}
+              >
+                <Icon
+                  name="check_circle"
+                  aria-hidden
+                  style={{ fontSize: 18, marginTop: 2, flexShrink: 0, color: 'var(--mui-palette-text-secondary)' }}
+                />
+                <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
+                  {point}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </AnalysisSection>
+      )}
 
       {data && Object.values(data).some((v) => (Array.isArray(v) ? v.length > 0 : Boolean(v))) && (
         <AnalysisSection
@@ -390,45 +403,49 @@ export default function InlineAnalysisResults({
         </AnalysisSection>
       )}
 
-      <AnalysisSection id={`${uid}-actions`} title="Recommended Actions">
-        <Box component="ol" sx={{ listStyle: 'none', m: 0, p: 0, display: 'grid', gap: 1.5 }}>
-          {result.recommendedActions.map((action, index) => (
-            <Box component="li" key={index} sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-              <Box
-                aria-hidden="true"
-                sx={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: '50%',
-                  bgcolor: 'primary.main',
-                  color: 'primary.contrastText',
-                  display: 'grid',
-                  placeItems: 'center',
-                  flexShrink: 0,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {index + 1}
+      {result.recommendedActions?.length > 0 && (
+        <AnalysisSection id={`${uid}-actions`} title="Recommended Actions">
+          <Box component="ol" sx={{ listStyle: 'none', m: 0, p: 0, display: 'grid', gap: 1.5 }}>
+            {result.recommendedActions.map((action, index) => (
+              <Box component="li" key={index} sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+                <Box
+                  aria-hidden="true"
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    display: 'grid',
+                    placeItems: 'center',
+                    flexShrink: 0,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {index + 1}
+                </Box>
+                <Typography variant="body2" sx={{ pt: 0.5, overflowWrap: 'anywhere' }}>
+                  {action}
+                </Typography>
               </Box>
-              <Typography variant="body2" sx={{ pt: 0.5, overflowWrap: 'anywhere' }}>
-                {action}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      </AnalysisSection>
+            ))}
+          </Box>
+        </AnalysisSection>
+      )}
 
-      <AnalysisSection id={`${uid}-resources`} title="Additional Resources">
-        <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          {result.additionalResources.map((resource, index) => (
-            <Box component="li" key={index} sx={{ maxWidth: '100%' }}>
-              <TextChip label={resource} icon="link" />
-            </Box>
-          ))}
-        </Box>
-      </AnalysisSection>
+      {result.additionalResources?.length > 0 && (
+        <AnalysisSection id={`${uid}-resources`} title="Additional Resources">
+          <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            {result.additionalResources.map((resource, index) => (
+              <Box component="li" key={index} sx={{ maxWidth: '100%' }}>
+                <TextChip label={resource} icon="link" />
+              </Box>
+            ))}
+          </Box>
+        </AnalysisSection>
+      )}
 
       {debug && (
         <AnalysisSection id={`${uid}-debug`} title="Analysis Details">

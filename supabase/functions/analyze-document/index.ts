@@ -898,6 +898,8 @@ Deno.serve(async (req: Request) => {
       extracted_entities: analysis.extractedEntities || {},
       ai_model_version: aiModel,
       processing_status: 'completed',
+      // Full analysis, kept so saved letters can be reopened and shared.
+      analysis_result: analysis,
     };
 
     const { data: letterId, error: letterError } = await supabase.rpc('insert_demand_letter', {
