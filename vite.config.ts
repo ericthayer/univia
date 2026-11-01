@@ -1,7 +1,13 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import { resolveReleaseVersion } from './scripts/releaseVersion';
+
+const appVersion = process.env.VITE_APP_VERSION || resolveReleaseVersion();
 
 export default defineConfig({
+  define: appVersion
+    ? { 'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion) }
+    : {},
   plugins: [
     react()
   ],
