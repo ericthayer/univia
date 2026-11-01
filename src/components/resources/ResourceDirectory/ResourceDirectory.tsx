@@ -15,7 +15,7 @@ import { ArrowButton } from '../../ui/ArrowButton/ArrowButton';
 import { FilterSelect } from '../../admin/FilterSelect/FilterSelect';
 import { srOnly } from '../../ui/srOnly';
 import { ResourceCard } from '../ResourceCard/ResourceCard';
-import { CONTROL_RADIUS, autoGridSx } from '../resourceStyles';
+import { autoGridSx } from '../resourceStyles';
 
 const TYPE_OPTIONS = [
   { value: 'all', label: 'All Types' },
@@ -61,8 +61,7 @@ export function ResourceDirectory() {
             }}
             sx={{
               flex: '1 1 18rem',
-              borderRadius: CONTROL_RADIUS,
-              '& .MuiOutlinedInput-root': { borderRadius: CONTROL_RADIUS, minHeight: 44, pl: 1.75 },
+              '& .MuiOutlinedInput-root': { minHeight: 44, pl: 1.75 },
             }}
           />
           <FilterSelect
@@ -133,7 +132,7 @@ export function ResourceDirectory() {
               </>
             }
             action={
-              <ArrowButton component={RouterLink} to="/letters" sx={{ borderRadius: CONTROL_RADIUS }}>
+              <ArrowButton component={RouterLink} to="/letters">
                 Analyze a Letter
               </ArrowButton>
             }
@@ -152,7 +151,7 @@ export function ResourceDirectory() {
               <Button
                 variant="outlined"
                 onClick={clearFilters}
-                sx={{ borderRadius: CONTROL_RADIUS, minHeight: 44, px: 2.5 }}
+                sx={{ minHeight: 44, px: 2.5 }}
               >
                 Clear Filters
               </Button>

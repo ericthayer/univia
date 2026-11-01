@@ -7,7 +7,7 @@ import Icon from '../../ui/Icon';
 import { BezelCard } from '../../ui/BezelCard/BezelCard';
 import { TonePill } from '../../ui/TonePill/TonePill';
 import { srOnly } from '../../ui/srOnly';
-import { CONTROL_RADIUS, iconCircleSx } from '../resourceStyles';
+import { iconCircleSx } from '../resourceStyles';
 
 // Icon names must exist in `components/ui/Icon` (it renders nothing for unknown names).
 const TYPE_ICON: Record<ProfessionalResource['type'], string> = {
@@ -108,7 +108,7 @@ export function ResourceCard({ resource, reveal }: ResourceCardProps) {
               fullWidth
               href={`mailto:${resource.contact_email}`}
               startIcon={<Icon name="email" />}
-              sx={{ borderRadius: CONTROL_RADIUS, minHeight: 44 }}
+              sx={{ minHeight: 44 }}
             >
               Contact<Box component="span" sx={srOnly}>{` ${resource.name}`}</Box>
             </Button>
@@ -120,7 +120,7 @@ export function ResourceCard({ resource, reveal }: ResourceCardProps) {
               target="_blank"
               rel="noopener noreferrer"
               startIcon={<Icon name="language" />}
-              sx={{ borderRadius: CONTROL_RADIUS, minHeight: 44, flexShrink: 0 }}
+              sx={{ minHeight: 44, flexShrink: 0 }}
             >
               Website
               <Box component="span" sx={srOnly}>{` for ${resource.name} (opens in a new tab)`}</Box>

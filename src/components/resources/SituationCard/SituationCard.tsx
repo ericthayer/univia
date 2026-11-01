@@ -6,7 +6,7 @@ import Icon from '../../ui/Icon';
 import { ArrowButton } from '../../ui/ArrowButton/ArrowButton';
 import { BezelCard } from '../../ui/BezelCard/BezelCard';
 import { TonePill } from '../../ui/TonePill/TonePill';
-import { CONTROL_RADIUS, iconCircleSx } from '../resourceStyles';
+import { iconCircleSx } from '../resourceStyles';
 
 export interface SituationCardProps {
   path: SituationPath;
@@ -43,7 +43,7 @@ export function SituationCard({ path, reveal }: SituationCardProps) {
           component={RouterLink}
           to={path.action.to}
           fullWidth
-          sx={{ borderRadius: CONTROL_RADIUS }}
+         
         >
           {path.action.label}
         </ArrowButton>

@@ -1,9 +1,6 @@
 import type { Theme } from '@mui/material/styles';
 import type { SystemStyleObject } from '@mui/system';
 
-/** Interactive controls (buttons, inputs) use a 16px radius; cards and chips keep theirs. */
-export const CONTROL_RADIUS = '16px';
-
 /** Tinted icon well shared by the resources cards (matches HelpCategoryCard). */
 export const iconCircleSx =
   (size: number) =>

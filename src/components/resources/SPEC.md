@@ -16,7 +16,7 @@
 - `hooks/useProfessionalResources.ts`: fetch once, derive filtered/pro-bono/paid lists with `useMemo` (replaces the effect-driven `filteredResources` state).
 - `components/resources/ResourceCard`: extracted from the page. Contact is a `mailto:` link and Website an external link; each renders only when the listing has that field (they were dead buttons).
 - `components/resources/ReferenceLinkCard`, `SituationCard`: presentational, data from config.
-- Surfaces: `BezelCard`, `SectionHeader`, `TonePill`, `EmptyState` from the UI refresh (docs/specs/ui-refresh/SPEC.md). Interactive controls on this page use a 16px radius; cards and chips keep their radius.
+- Surfaces: `BezelCard`, `SectionHeader`, `TonePill`, `EmptyState` from the UI refresh (docs/specs/ui-refresh/SPEC.md). Control radius comes from the theme's global `controlRadius` token (16px); no page-local overrides.
 
 **Accessibility**
 
