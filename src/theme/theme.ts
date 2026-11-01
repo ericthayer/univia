@@ -1,6 +1,6 @@
 import { createTheme } from '@mui/material/styles';
 import type { CSSProperties } from 'react';
-import { motionTokens, primitiveTokens, surfaceTokens } from './tokens';
+import { controlRadius, motionTokens, primitiveTokens, surfaceTokens } from './tokens';
 
 declare module '@mui/material/styles' {
   interface BreakpointOverrides {
@@ -207,7 +207,7 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 6,
+          borderRadius: controlRadius,
           borderWidth: 2,
           fontSize: '1rem',
           fontWeight: 550,
@@ -318,7 +318,14 @@ const theme = createTheme({
       styleOverrides: {
         root: {          
           background: 'var(--mui-palette-background-default)',
-          borderRadius: 'var(--mui-shape-borderRadius)',
+          borderRadius: controlRadius,
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          borderRadius: controlRadius,
         },
       },
     },

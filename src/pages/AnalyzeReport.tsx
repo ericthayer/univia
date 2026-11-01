@@ -15,6 +15,7 @@ import { SectionHeader } from '../components/ui/SectionHeader/SectionHeader';
 import { TonePill } from '../components/ui/TonePill/TonePill';
 import { srOnly } from '../components/ui/srOnly';
 import { useGemini } from '../hooks/useGemini';
+import { controlRadius } from '../theme/tokens';
 
 const WIDE = '@container (min-width: 960px)';
 
@@ -110,7 +111,7 @@ export default function AnalyzeReport() {
                 onClick={handleClear}
                 disabled={busy || !prompt}
                 startIcon={<Icon name="delete" />}
-                sx={{ borderRadius: 999, minHeight: 48, px: 3 }}
+                sx={{ borderRadius: controlRadius, minHeight: 48, px: 3 }}
               >
                 Clear
               </Button>
@@ -178,7 +179,7 @@ export default function AnalyzeReport() {
                     justifyContent: 'flex-end',
                   }}
                 >
-                  <Button variant="text" size="small" onClick={handleCopy} sx={{ minHeight: 44, borderRadius: 999 }}>
+                  <Button variant="text" size="small" onClick={handleCopy} sx={{ minHeight: 44, borderRadius: controlRadius }}>
                     {copied ? 'Copied' : 'Copy to clipboard'}
                   </Button>
                 </Box>

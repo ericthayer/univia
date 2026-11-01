@@ -7,6 +7,7 @@ import { Violation } from '../../types';
 import Icon from './Icon';
 import { TonePill } from './TonePill/TonePill';
 import { severityTone } from './violationSeverity';
+import { controlRadius } from '../../theme/tokens';
 
 interface ViolationCardProps {
   violation: Violation;
@@ -100,7 +101,7 @@ export default function ViolationCard({ violation }: ViolationCardProps) {
         aria-expanded={expanded}
         aria-controls={panelId}
         endIcon={<Icon name={expanded ? 'expand_less' : 'expand_more'} />}
-        sx={{ borderRadius: 999, minHeight: 44, px: 1.5, ml: -1.5 }}
+        sx={{ borderRadius: controlRadius, minHeight: 44, px: 1.5, ml: -1.5 }}
       >
         {expanded ? 'Hide' : 'Show'} remediation steps
       </Button>

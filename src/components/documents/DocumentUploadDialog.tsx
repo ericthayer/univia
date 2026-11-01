@@ -19,6 +19,7 @@ import { SegmentedToggleGroup } from '../ui/SegmentedToggleGroup/SegmentedToggle
 import { srOnly } from '../ui/srOnly';
 import { ensureSession } from '../../services/session';
 import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from '../../services/supabaseFunctions';
+import { controlRadius } from '../../theme/tokens';
 
 interface DocumentUploadDialogProps {
   open: boolean;
@@ -368,7 +369,7 @@ export default function DocumentUploadDialog({
                   e.stopPropagation();
                   setFile(null);
                 }}
-                sx={{ mt: 1, minHeight: 44, borderRadius: 999 }}
+                sx={{ mt: 1, minHeight: 44, borderRadius: controlRadius }}
               >
                 Remove
               </Button>
@@ -431,7 +432,7 @@ export default function DocumentUploadDialog({
             aria-expanded={showAdvanced}
             aria-controls="upload-advanced-options"
             endIcon={<Icon name={showAdvanced ? 'expand_less' : 'expand_more'} />}
-            sx={{ mb: 1, minHeight: 44, borderRadius: 999, px: 2, ml: -2 }}
+            sx={{ mb: 1, minHeight: 44, borderRadius: controlRadius, px: 2, ml: -2 }}
           >
             Advanced Options
           </Button>
@@ -522,7 +523,7 @@ export default function DocumentUploadDialog({
         <Button
           variant="outlined"
           onClick={uploading ? handleCancel : handleClose}
-          sx={{ borderRadius: 999, minHeight: 48, px: 3 }}
+          sx={{ borderRadius: controlRadius, minHeight: 48, px: 3 }}
         >
           Cancel
         </Button>

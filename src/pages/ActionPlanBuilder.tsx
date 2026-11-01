@@ -31,6 +31,7 @@ import { PageHeader } from '../components/ui/PageHeader/PageHeader';
 import { SectionHeader } from '../components/ui/SectionHeader/SectionHeader';
 import { TonePill } from '../components/ui/TonePill/TonePill';
 import type { Tone } from '../components/ui/tone';
+import { controlRadius } from '../theme/tokens';
 
 interface ActionPlan {
   id: string;
@@ -85,7 +86,7 @@ function PlanStatusPill({ status }: { status: string }) {
   return <TonePill variant="outline">{label}</TonePill>;
 }
 
-const pillButtonSx = { borderRadius: 999, minHeight: 44, px: 2.5, flexShrink: 0 } as const;
+const controlButtonSx = { borderRadius: controlRadius, minHeight: 44, px: 2.5, flexShrink: 0 } as const;
 
 export default function ActionPlanBuilder() {
   const { user } = useAuth();
@@ -442,7 +443,7 @@ export default function ActionPlanBuilder() {
                   startIcon={<Icon name="add" />}
                   onClick={() => handleCreateFromViolation(violation)}
                   aria-label={`Create plan from ${violation.title}`}
-                  sx={pillButtonSx}
+                  sx={controlButtonSx}
                 >
                   Create Plan
                 </Button>
@@ -476,7 +477,7 @@ export default function ActionPlanBuilder() {
             description={emptyCopy.description}
             action={
               actionPlans.length === 0 ? (
-                <Button variant="outlined" startIcon={<Icon name="add" />} onClick={() => setDialogOpen(true)} sx={pillButtonSx}>
+                <Button variant="outlined" startIcon={<Icon name="add" />} onClick={() => setDialogOpen(true)} sx={controlButtonSx}>
                   New Action Plan
                 </Button>
               ) : undefined
@@ -612,7 +613,7 @@ export default function ActionPlanBuilder() {
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2.5 }}>
             <Button onClick={handleCloseDialog} sx={{ minHeight: 44 }}>Cancel</Button>
-            <Button onClick={handleSave} variant="contained" disabled={!formData.title.trim()} sx={pillButtonSx}>
+            <Button onClick={handleSave} variant="contained" disabled={!formData.title.trim()} sx={controlButtonSx}>
               {editingPlan ? 'Update' : 'Create'}
             </Button>
           </DialogActions>

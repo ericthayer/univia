@@ -14,6 +14,7 @@ import Icon from '../ui/Icon';
 import LegalDisclaimer from '../ui/LegalDisclaimer';
 import { ArrowButton } from '../ui/ArrowButton/ArrowButton';
 import { TonePill } from '../ui/TonePill/TonePill';
+import { controlRadius } from '../../theme/tokens';
 
 interface AnalysisResultsDialogProps {
   open: boolean;
@@ -259,7 +260,7 @@ export default function AnalysisResultsDialog({
         </DialogSection>
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2.5, gap: 1, flexWrap: 'wrap' }}>
-        <Button variant="outlined" onClick={onClose} sx={{ borderRadius: 999, minHeight: 48, px: 3 }}>
+        <Button variant="outlined" onClick={onClose} sx={{ borderRadius: controlRadius, minHeight: 48, px: 3 }}>
           Close
         </Button>
         <ArrowButton onClick={onClose}>View in Demand Letters</ArrowButton>

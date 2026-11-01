@@ -11,6 +11,7 @@ import type { CustomChecklistItem } from '../../types';
 import Icon from '../ui/Icon';
 import { TonePill } from '../ui/TonePill/TonePill';
 import type { Tone } from '../ui/tone';
+import { controlRadius } from '../../theme/tokens';
 
 interface ChecklistItemCardProps {
   checklistItem: CustomChecklistItem;
@@ -159,7 +160,7 @@ export default function ChecklistItemCard({ checklistItem, checklistId, onUpdate
                       size="small"
                       onClick={handleSaveNotes}
                       variant="contained"
-                      sx={{ borderRadius: 999, minHeight: 44, px: 2.5 }}
+                      sx={{ borderRadius: controlRadius, minHeight: 44, px: 2.5 }}
                     >
                       Save
                     </Button>
