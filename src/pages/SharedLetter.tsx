@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
 import Skeleton from '@mui/material/Skeleton';
 import { useLocation } from 'react-router-dom';
 import InlineAnalysisResults from '../components/documents/InlineAnalysisResults';
@@ -8,6 +9,7 @@ import { BezelCard } from '../components/ui/BezelCard/BezelCard';
 import { EmptyState } from '../components/ui/EmptyState/EmptyState';
 import { PageCanvas } from '../components/ui/PageCanvas/PageCanvas';
 import { PageHeader } from '../components/ui/PageHeader/PageHeader';
+import { srOnly } from '../components/ui/srOnly';
 import { usePrivatePageMeta } from '../hooks/usePrivatePageMeta';
 import {
   SharedLetterPayload,
@@ -15,6 +17,13 @@ import {
   readShareToken,
   toDocumentAnalysis,
 } from '../services/letterShare.service';
+
+const STATUS_MESSAGE: Record<SharedLetterState['status'], string> = {
+  loading: 'Loading shared analysis…',
+  ready: 'Shared analysis loaded.',
+  unavailable: 'This link is not available.',
+  error: 'The shared analysis could not be loaded.',
+};
 
 type SharedLetterState =
   | { status: 'loading' }
@@ -62,6 +71,10 @@ export default function SharedLetter() {
             : undefined
         }
       />
+
+      <Box role="status" aria-live="polite" sx={srOnly}>
+        {STATUS_MESSAGE[state.status]}
+      </Box>
 
       <BezelCard component="section" aria-labelledby="shared-letter-title" aria-busy={state.status === 'loading'}>
         {state.status === 'loading' && <Skeleton variant="rounded" height={320} />}

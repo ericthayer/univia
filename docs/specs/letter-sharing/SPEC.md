@@ -49,7 +49,7 @@ Dialog "Share analysis"
   Read-only TextField (the URL) + [Copy]  · status line "Link copied"
   Note: "Copy it now. For security we only store a fingerprint of this link."
   -- active links --
-  <ul> Created {date} · Expires {date} · {n} views   [Revoke]
+  <ul> Created {date} · Expires {date} · {n} views   [Revoke] → inline confirm [Keep] [Revoke]
   [Done]
 ```
 
@@ -76,3 +76,4 @@ Public route inside the app shell, no auth guard. `InlineAnalysisResults` gains 
 ## Changelog
 
 - 2026-11-01 — Created.
+- 2026-11-01 — Review fixes: two-step revoke, list-load error state (no false privacy claim), stale list responses ignored, created URL kept when revoke fails, 44px expiry toggles, live status on the share page.

@@ -17,6 +17,7 @@ import { useLetterShares } from '../../../hooks/useLetterShares';
 import { SHARE_EXPIRY_OPTIONS, ShareExpiryDays } from '../../../services/letterShare.service';
 import { SegmentedToggleGroup } from '../../ui/SegmentedToggleGroup/SegmentedToggleGroup';
 import Icon from '../../ui/Icon';
+import { ActiveLinkRow } from './ActiveLinkRow';
 import { formatShareDate } from './formatShareDate';
 
 export interface ShareLetterDialogProps {
@@ -40,7 +41,7 @@ export function ShareLetterDialog({ open, onClose, letterId, letterName }: Share
   const [days, setDays] = useState<ShareExpiryDays>(7);
   const [copyStatus, setCopyStatus] = useState('');
   const linkInputRef = useRef<HTMLInputElement>(null);
-  const { links, loading, busy, error, created, create, revoke } = useLetterShares(letterId, open);
+  const { links, loading, busy, error, listError, created, create, revoke } = useLetterShares(letterId, open);
 
   useEffect(() => {
     if (!open) setCopyStatus('');
@@ -94,9 +95,10 @@ export function ShareLetterDialog({ open, onClose, letterId, letterName }: Share
                 value={days}
                 onChange={(_, value: ShareExpiryDays | null) => value && setDays(value)}
                 aria-label="Link expires after"
+                sx={{ '& .MuiToggleButton-root': { minHeight: 44 } }}
               >
                 {SHARE_EXPIRY_OPTIONS.map((option) => (
-                  <ToggleButton key={option.days} value={option.days} sx={{ minHeight: 44 }}>
+                  <ToggleButton key={option.days} value={option.days}>
                     {option.label}
                   </ToggleButton>
                 ))}
@@ -107,7 +109,7 @@ export function ShareLetterDialog({ open, onClose, letterId, letterName }: Share
               variant="contained"
               startIcon={<Icon name="link" />}
               onClick={() => void create(days)}
-              disabled={busy}
+              disabled={busy || loading}
               sx={{ minHeight: 44 }}
             >
               {busy && !created ? 'Creating link…' : created ? 'Create another link' : 'Create link'}
@@ -160,48 +162,19 @@ export function ShareLetterDialog({ open, onClose, letterId, letterName }: Share
               </Typography>
               {loading ? (
                 <Skeleton variant="rounded" height={44} />
+              ) : listError ? (
+                <Typography variant="body2" color="error">
+                  We could not load your active links. {listError}
+                </Typography>
               ) : links.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
                   No active links. Nobody else can see this analysis.
                 </Typography>
               ) : (
                 <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0 }}>
-                  {links.map((link) => {
-                    const created = formatShareDate(link.createdAt);
-                    return (
-                      <Box
-                        component="li"
-                        key={link.id}
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 2,
-                          py: 1.25,
-                          '& + &': { borderTop: '1px solid', borderColor: 'divider' },
-                        }}
-                      >
-                        <Box sx={{ minWidth: 0 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            Created {created}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                            Expires {formatShareDate(link.expiresAt)} · {link.accessCount}{' '}
-                            {link.accessCount === 1 ? 'view' : 'views'}
-                          </Typography>
-                        </Box>
-                        <Button
-                          color="error"
-                          onClick={() => void revoke(link.id)}
-                          disabled={busy}
-                          aria-label={`Revoke link created ${created}`}
-                          sx={{ minHeight: 44, flexShrink: 0 }}
-                        >
-                          Revoke
-                        </Button>
-                      </Box>
-                    );
-                  })}
+                  {links.map((link) => (
+                    <ActiveLinkRow key={link.id} link={link} disabled={busy} onRevoke={(id) => void revoke(id)} />
+                  ))}
                 </Box>
               )}
             </Box>

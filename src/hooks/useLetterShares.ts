@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActiveShareLink,
   CreatedShareLink,
@@ -12,7 +12,10 @@ export interface UseLetterSharesResult {
   links: ActiveShareLink[];
   loading: boolean;
   busy: boolean;
+  /** Failure of the last create or revoke. */
   error: string | null;
+  /** Failure of the last list load; `links` is not trustworthy while set. */
+  listError: string | null;
   created: CreatedShareLink | null;
   create: (days: ShareExpiryDays) => Promise<void>;
   revoke: (linkId: string) => Promise<void>;
@@ -24,31 +27,36 @@ export function useLetterShares(letterId: string | undefined, enabled: boolean):
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedShareLink | null>(null);
+  // Only the newest list request may write state, so a slow earlier response
+  // can never overwrite a refresh that followed a create or revoke.
+  const listRequest = useRef(0);
 
-  const refresh = useCallback(async (): Promise<void> => {
+  const loadLinks = useCallback(async (): Promise<void> => {
     if (!letterId) return;
+    const requestId = ++listRequest.current;
     const result = await listShareLinks(letterId);
-    if (result.ok) setLinks(result.value);
-    else setError(result.message);
+    if (requestId !== listRequest.current) return;
+    if (result.ok) {
+      setLinks(result.value);
+      setListError(null);
+    } else {
+      setListError(result.message);
+    }
   }, [letterId]);
 
   useEffect(() => {
     if (!enabled || !letterId) return;
-    let cancelled = false;
-    setLoading(true);
     setError(null);
+    setListError(null);
     setCreated(null);
-    listShareLinks(letterId).then((result) => {
-      if (cancelled) return;
-      if (result.ok) setLinks(result.value);
-      else setError(result.message);
-      setLoading(false);
-    });
+    setLoading(true);
+    void loadLinks().finally(() => setLoading(false));
     return () => {
-      cancelled = true;
+      listRequest.current += 1;
     };
-  }, [enabled, letterId]);
+  }, [enabled, letterId, loadLinks]);
 
   const create = useCallback(
     async (days: ShareExpiryDays): Promise<void> => {
@@ -58,13 +66,13 @@ export function useLetterShares(letterId: string | undefined, enabled: boolean):
       const result = await createShareLink(letterId, days);
       if (result.ok) {
         setCreated(result.value);
-        await refresh();
+        await loadLinks();
       } else {
         setError(result.message);
       }
       setBusy(false);
     },
-    [letterId, refresh],
+    [letterId, loadLinks],
   );
 
   const revoke = useCallback(
@@ -72,13 +80,17 @@ export function useLetterShares(letterId: string | undefined, enabled: boolean):
       setBusy(true);
       setError(null);
       const result = await revokeShareLink(linkId);
-      if (!result.ok) setError(result.message);
-      if (created?.id === linkId) setCreated(null);
-      await refresh();
+      if (result.ok && result.value) {
+        // Keep the only copy of a fresh URL unless its link is really gone.
+        setCreated((current) => (current?.id === linkId ? null : current));
+      } else {
+        setError(result.ok ? 'This link was already revoked or has expired.' : result.message);
+      }
+      await loadLinks();
       setBusy(false);
     },
-    [created, refresh],
+    [loadLinks],
   );
 
-  return { links, loading, busy, error, created, create, revoke };
+  return { links, loading, busy, error, listError, created, create, revoke };
 }
