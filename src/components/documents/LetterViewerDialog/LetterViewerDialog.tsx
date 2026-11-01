@@ -37,6 +37,7 @@ export function LetterViewerDialog({ letter, onClose }: LetterViewerDialogProps)
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const titleId = useId();
+  const headerId = useId();
   const path = letter?.file_storage_path || null;
   const [state, setState] = useState<ViewerState>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0);
@@ -61,6 +62,22 @@ export function LetterViewerDialog({ letter, onClose }: LetterViewerDialogProps)
       cancelled = true;
     };
   }, [letter, path, attempt]);
+
+  // Signed URLs expire, so "Open in new tab" signs a fresh one on click. The tab
+  // is opened synchronously (before the await) so popup blockers allow it.
+  const openInNewTab = async (): Promise<void> => {
+    if (!path) return;
+    const tab = window.open('about:blank', '_blank');
+    if (tab) tab.opener = null;
+    try {
+      const url = await getLetterFileUrl(path);
+      if (tab) tab.location.href = url;
+    } catch (error: unknown) {
+      console.error('[LetterViewer] Unable to sign document URL', error);
+      tab?.close();
+      setState({ status: 'error' });
+    }
+  };
 
   const kind = path ? getLetterFileKind(path) : 'other';
   const fileName = letter?.file_name ?? 'Document';
@@ -87,7 +104,8 @@ export function LetterViewerDialog({ letter, onClose }: LetterViewerDialogProps)
         },
       }}
     >
-      <DialogTitle>
+      {/* Explicit id: MUI would otherwise reuse aria-labelledby here, duplicating titleId. */}
+      <DialogTitle id={headerId} component="div">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="eyebrow" component="p" sx={{ display: 'block', mb: 0.5 }}>
@@ -111,9 +129,11 @@ export function LetterViewerDialog({ letter, onClose }: LetterViewerDialogProps)
       <DialogContent
         dividers
         sx={{ borderColor: 'divider', p: 0, display: 'flex', flexDirection: 'column', bgcolor: 'action.hover' }}
+        aria-live="polite"
+        aria-busy={state.status === 'loading'}
       >
         {state.status === 'loading' && (
-          <Box sx={{ flex: 1, display: 'grid', placeItems: 'center', minHeight: 240 }} role="status">
+          <Box sx={{ flex: 1, display: 'grid', placeItems: 'center', minHeight: 240 }}>
             <CircularProgress size={32} aria-label="Loading document" />
           </Box>
         )}
@@ -160,6 +180,7 @@ export function LetterViewerDialog({ letter, onClose }: LetterViewerDialogProps)
               component="img"
               src={state.url}
               alt={`Uploaded demand letter: ${fileName}`}
+              onError={() => setState({ status: 'error' })}
               sx={{ maxWidth: '100%', height: 'auto', alignSelf: 'flex-start', borderRadius: 1, bgcolor: 'background.paper' }}
             />
           </Box>
@@ -184,10 +205,7 @@ export function LetterViewerDialog({ letter, onClose }: LetterViewerDialogProps)
         {state.status === 'ready' && (
           <Button
             variant="outlined"
-            component="a"
-            href={state.url}
-            target="_blank"
-            rel="noopener noreferrer"
+            onClick={() => void openInNewTab()}
             endIcon={<Icon name="open_in_new" />}
             sx={{ borderRadius: controlRadius, minHeight: 48, px: 3 }}
           >

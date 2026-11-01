@@ -225,6 +225,9 @@ export default function InlineDocumentUpload({ onUploadComplete, showNextSteps =
       setStage('analyzing');
 
       const resultData = await response.json();
+      // The letter is saved server-side once the response arrives, so there is
+      // nothing left to cancel: end the cancellable phase before storing.
+      setAbortController(null);
 
       if (!response.ok) {
         const errorMsg = resultData.error || 'Failed to analyze document';
@@ -601,6 +604,7 @@ export default function InlineDocumentUpload({ onUploadComplete, showNextSteps =
               variant="outlined"
               size="large"
               onClick={handleCancel}
+              disabled={!abortController}
               startIcon={<Icon name="close" />}
               sx={{ minWidth: 120 }}
             >
