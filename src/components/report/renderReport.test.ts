@@ -20,8 +20,10 @@ const report: ReportDocument = {
       id: 'issues',
       title: 'Issues',
       blocks: [
+        { kind: 'subheading', text: 'Critical' },
         {
           kind: 'issues',
+          headingLevel: 4,
           items: [
             {
               title: '<img src=x onerror=alert(1)>',
@@ -49,12 +51,15 @@ describe('renderReport', () => {
     expect(Array.from(document.querySelectorAll('h2')).map((h) => h.textContent)).toEqual(['Summary', 'Issues']);
     expect(document.querySelector('th[scope="row"]')?.textContent).toBe('SEO');
     expect(document.querySelector('section')?.getAttribute('aria-labelledby')).toBe('section-summary');
+    // Issues nest under their severity group: h2 section > h3 severity > h4 issue.
+    expect(document.querySelector('.subheading h3')?.textContent).toBe('Critical');
+    expect(document.querySelector('.issue h3')).toBeNull();
   });
 
   it('treats untrusted text as text and drops unsafe links', () => {
     renderReport(document, report);
     expect(document.querySelector('img[onerror]')).toBeNull();
-    expect(document.querySelector('.issue h3')?.textContent).toBe('<img src=x onerror=alert(1)>');
+    expect(document.querySelector('.issue h4')?.textContent).toBe('<img src=x onerror=alert(1)>');
     expect(document.querySelector('a[href^="javascript"]')).toBeNull();
     expect(document.querySelector('.issue .fix ol li')?.textContent).toBe('Add alt text');
   });

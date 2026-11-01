@@ -65,21 +65,23 @@ const issueKey = (violation: Violation): string => `${violation.wcag_guideline}:
 
 /** Merge both devices' violations; an issue found on both is listed once with both tags. */
 export function mergeIssues(input: AuditReportInput): ReportIssue[] {
+  const rank = (severity: string): number => {
+    const index = SEVERITIES.indexOf(severity as (typeof SEVERITIES)[number]);
+    return index === -1 ? SEVERITIES.length : index;
+  };
+
   const merged = new Map<string, { violation: Violation; devices: string[]; instances: Set<string> }>();
   for (const { key, label } of DEVICES) {
     for (const violation of input[key]?.violations ?? []) {
       const id = issueKey(violation);
       const entry = merged.get(id) ?? { violation, devices: [], instances: new Set<string>() };
+      // Severity is derived per device, so keep the most severe reading of a shared issue.
+      if (rank(violation.severity) < rank(entry.violation.severity)) entry.violation = violation;
       if (!entry.devices.includes(label)) entry.devices.push(label);
       toReportHowToFix(violation).instances?.forEach((text) => entry.instances.add(text));
       merged.set(id, entry);
     }
   }
-
-  const rank = (severity: string): number => {
-    const index = SEVERITIES.indexOf(severity as (typeof SEVERITIES)[number]);
-    return index === -1 ? SEVERITIES.length : index;
-  };
 
   return Array.from(merged.values())
     .sort((a, b) => rank(a.violation.severity) - rank(b.violation.severity))
@@ -155,10 +157,10 @@ export function buildAuditReport(input: AuditReportInput, now: Date = new Date()
     const group = issues.filter((issue) => issue.severity === severity);
     if (group.length === 0) continue;
     issueBlocks.push({ kind: 'subheading', text: titleCase(severity), meta: `${group.length} ${group.length === 1 ? 'issue' : 'issues'}` });
-    issueBlocks.push({ kind: 'issues', items: group });
+    issueBlocks.push({ kind: 'issues', items: group, headingLevel: 4 });
   }
   const other = issues.filter((issue) => !SEVERITIES.includes(issue.severity as (typeof SEVERITIES)[number]));
-  if (other.length) issueBlocks.push({ kind: 'subheading', text: 'Other' }, { kind: 'issues', items: other });
+  if (other.length) issueBlocks.push({ kind: 'subheading', text: 'Other' }, { kind: 'issues', items: other, headingLevel: 4 });
   if (issueBlocks.length === 0) issueBlocks.push({ kind: 'paragraph', text: 'No issues were found by the automated checks.' });
 
   const sections: ReportSection[] = [

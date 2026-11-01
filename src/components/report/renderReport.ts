@@ -105,10 +105,10 @@ function howToFix(doc: Document, fix: ReportHowToFix): HTMLElement {
   return box;
 }
 
-function issue(doc: Document, item: ReportIssue): HTMLElement {
+function issue(doc: Document, item: ReportIssue, headingLevel: 3 | 4): HTMLElement {
   const row = el(doc, 'li', { class: 'issue' }, [
     el(doc, 'div', { class: 'issue-head' }, [
-      el(doc, 'h3', {}, rich(doc, item.title)),
+      el(doc, headingLevel === 4 ? 'h4' : 'h3', {}, rich(doc, item.title)),
       pills(doc, [{ text: item.severity, tone: item.tone }], true),
     ]),
     pills(doc, item.tags.map((text) => ({ text, variant: 'outline' as const }))),
@@ -188,7 +188,7 @@ function block(doc: Document, item: ReportBlock): HTMLElement {
       ]);
     }
     case 'issues':
-      return el(doc, 'ul', { class: 'issues' }, item.items.map((entry) => issue(doc, entry)));
+      return el(doc, 'ul', { class: 'issues' }, item.items.map((entry) => issue(doc, entry, item.headingLevel ?? 3)));
   }
 }
 

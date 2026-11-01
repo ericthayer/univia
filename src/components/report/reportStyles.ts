@@ -45,7 +45,7 @@ body{margin:0;font-family:'DM Sans','Inter',-apple-system,'Segoe UI',Roboto,sans
 a{color:inherit;text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere}
 code,.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:8.5pt}
 code{background:${light.background.paper};padding:1px 4px;border-radius:4px}
-h1,h2,h3,p{margin:0}
+h1,h2,h3,h4,p{margin:0}
 .eyebrow{font-size:7.5pt;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:${light.text.secondary}}
 .muted{color:${light.text.secondary}}
 .num{font-variant-numeric:tabular-nums}
@@ -110,7 +110,7 @@ ul.issues{list-style:none;margin:0;padding:0}
 ul.issues>li{padding:14px 0;border-top:1px solid ${light.divider}}
 ul.issues>li:first-child{border-top:0;padding-top:4px}
 .issue-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:6px;break-after:avoid}
-.issue-head h3{font-size:10.5pt;font-weight:700;overflow-wrap:anywhere}
+.issue-head h3,.issue-head h4{font-size:10.5pt;font-weight:700;overflow-wrap:anywhere}
 .issue .pills{margin-bottom:6px}
 .issue .desc{color:${light.text.secondary};margin-bottom:6px;overflow-wrap:anywhere}
 .selector{display:block;padding:6px 10px;border-radius:8px;background:${light.background.paper};overflow-wrap:anywhere;margin-bottom:8px}

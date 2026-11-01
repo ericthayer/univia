@@ -44,6 +44,15 @@ describe('mergeIssues', () => {
     expect(issues[0].howToFix.instances).toEqual(['img.hero', 'img.logo']);
   });
 
+  it('keeps the most severe reading of an issue shared by both devices', () => {
+    const issues = mergeIssues({
+      mobile: { audit: audit('mobile', 80), violations: [violation({ severity: 'moderate' })] },
+      desktop: { audit: audit('desktop', 85), violations: [violation({ severity: 'critical' })] },
+    });
+    expect(issues).toHaveLength(1);
+    expect(issues[0].severity).toBe('critical');
+  });
+
   it('orders by severity', () => {
     const issues = mergeIssues({
       mobile: {

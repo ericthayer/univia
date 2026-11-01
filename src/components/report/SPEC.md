@@ -43,7 +43,7 @@ Data flow: page state (already loaded) → builder (pure, unit-tested) → rende
 
 1. Header: Univia logo, eyebrow "Accessibility Audit Report", scanned URL (link), audit date, generated date, devices.
 2. Summary: score table (Performance / Accessibility / Best Practices / SEO × Mobile / Desktop), each score colored by value (SPEC ui-refresh §3.3) with a bar; issues-by-severity table.
-3. Issues: grouped by severity (critical → minor). An issue found on both devices is listed once with both device tags (deduped by `wcag_guideline + title`). Each issue: title, severity pill, WCAG rule, level, description (links preserved), selector, **How to fix**.
+3. Issues: grouped by severity (critical → minor). An issue found on both devices is listed once with both device tags (deduped by `wcag_guideline + title`, keeping the most severe device reading). Each issue: title, severity pill, WCAG rule, level, description (links preserved), selector, **How to fix**.
 4. Closing note: automated checks do not find every barrier; pair with manual testing.
 
 ### How-to-fix extensibility
@@ -56,7 +56,7 @@ Legal disclaimer (top, always), document type + urgency pills, Summary, Key Info
 
 ## Accessibility
 
-- Report document: `lang="en"`, `<title>`, one `h1`, `h2` per section, `h3` per issue; `table` with `caption` and `th scope`; `dl` for facts; `ol`/`ul` for steps. Chromium emits a tagged PDF from this structure.
+- Report document: `lang="en"`, `<title>`, one `h1`, `h2` per section, `h3` per severity group, `h4` per issue; `table` with `caption` and `th scope`; `dl` for facts; `ol`/`ul` for steps. Chromium emits a tagged PDF from this structure.
 - Contrast: light palette `toneText` shades for colored text (≥ 4.5:1 on white); tone never carries meaning alone (pills carry the word).
 - Trigger: the button is disabled while preparing; a polite live region announces "Preparing PDF report…", and errors are shown in an `Alert` and announced.
 - Iframe is `aria-hidden` and `tabindex=-1` so it never takes focus.
@@ -86,3 +86,4 @@ Legal disclaimer (top, always), document type + urgency pills, Summary, Key Info
 
 - 2026-11-01: Initial spec.
 - 2026-11-01: QA pass in Chromium. Issue titles parse inline code; free-text pills (violations cited, entities) keep sentence case; label + pills and fix headings avoid page breaks.
+- 2026-11-01: Review fixes. Merged issues keep the highest severity across devices; issue headings are h4 under the h3 severity group.

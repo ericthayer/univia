@@ -85,7 +85,8 @@ export type ReportBlock =
   | { kind: 'callout'; title: string; text: string; tone: ReportTone }
   | { kind: 'image'; src: string; alt: string; caption?: string }
   | { kind: 'subheading'; text: string; meta?: string }
-  | { kind: 'issues'; items: ReportIssue[] };
+  /** `headingLevel` 4 when the list sits under a `subheading` (h3). */
+  | { kind: 'issues'; items: ReportIssue[]; headingLevel?: 3 | 4 };
 
 export interface ReportSection {
   id: string;
