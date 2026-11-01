@@ -2,6 +2,7 @@ import { ReactNode, useId, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import Alert from '@mui/material/Alert';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
@@ -11,6 +12,8 @@ import Icon from '../ui/Icon';
 import LegalDisclaimer from '../ui/LegalDisclaimer';
 import { ArrowButton } from '../ui/ArrowButton/ArrowButton';
 import { TonePill } from '../ui/TonePill/TonePill';
+import { srOnly } from '../ui/srOnly';
+import { useReportExport } from '../report/useReportExport';
 import { controlRadius } from '../../theme/tokens';
 
 interface InlineAnalysisResultsProps {
@@ -109,6 +112,7 @@ export default function InlineAnalysisResults({
   const [showEntities, setShowEntities] = useState(false);
   const [showLegalAnalysis, setShowLegalAnalysis] = useState(true);
   const uid = useId();
+  const report = useReportExport();
 
   if (!analysis?.analysis) return null;
 
@@ -121,7 +125,7 @@ export default function InlineAnalysisResults({
   };
 
   const handleExportPDF = () => {
-    console.log('Export PDF functionality');
+    void report.exportReport({ kind: 'letter', analysis });
   };
 
   const entityGroups: ReadonlyArray<{ label: string; items?: string[]; limit: number; format?: (v: string) => string; icon?: string }> = result.extractedEntities
@@ -158,10 +162,25 @@ export default function InlineAnalysisResults({
           <Button variant="outlined" startIcon={<Icon name="share" />} onClick={handleShare} sx={controlButtonSx}>
             Share
           </Button>
-          <Button variant="outlined" startIcon={<Icon name="picture_as_pdf" />} onClick={handleExportPDF} sx={controlButtonSx}>
+          <Button
+            variant="outlined"
+            startIcon={<Icon name="picture_as_pdf" />}
+            onClick={handleExportPDF}
+            disabled={report.status === 'preparing'}
+            aria-busy={report.status === 'preparing'}
+            sx={controlButtonSx}
+          >
             Export PDF
           </Button>
         </Box>
+        <Box role="status" aria-live="polite" sx={srOnly}>
+          {report.status === 'preparing' ? report.message : ''}
+        </Box>
+        {report.status === 'error' && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {report.message}
+          </Alert>
+        )}
       </Box>
 
       <LegalDisclaimer variant="compact" />
