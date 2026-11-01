@@ -12,6 +12,8 @@ export interface LetterCardProps {
   letter: DemandLetter;
   /** Stagger index for the mount reveal. */
   reveal?: number;
+  /** Opens the original uploaded document. */
+  onView?: (letter: DemandLetter) => void;
 }
 
 interface MetaItem {
@@ -25,7 +27,7 @@ const SUMMARY_CLAMP_LINES = 3;
  * One uploaded demand letter: file name, status / risk chips, extracted meta,
  * and the AI summary clamped to three lines with an expand toggle.
  */
-export function LetterCard({ letter, reveal }: LetterCardProps) {
+export function LetterCard({ letter, reveal, onView }: LetterCardProps) {
   const [expanded, setExpanded] = useState(false);
   const summaryId = useId();
   const daysLeft = getDaysUntilDeadline(letter.response_deadline);
@@ -71,7 +73,13 @@ export function LetterCard({ letter, reveal }: LetterCardProps) {
           <Button variant="outlined" size="small" startIcon={<Icon name="share" />}>
             Share
           </Button>
-          <Button variant="outlined" size="small" endIcon={<Icon name="arrow_forward" />}>
+          <Button
+            variant="outlined"
+            size="small"
+            endIcon={<Icon name="arrow_forward" />}
+            onClick={onView ? () => onView(letter) : undefined}
+            aria-label={`View ${letter.file_name}`}
+          >
             View
           </Button>
         </Box>

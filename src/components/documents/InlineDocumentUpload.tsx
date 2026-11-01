@@ -21,6 +21,7 @@ import { ArrowButton } from '../ui/ArrowButton/ArrowButton';
 import LegalDisclaimer from '../ui/LegalDisclaimer';
 import { DocumentAnalysis } from './DocumentUploadDialog';
 import { ensureSession } from '../../services/session';
+import { storeLetterFile } from '../../services/letterFiles.service';
 import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from '../../services/supabaseFunctions';
 
 interface InlineDocumentUploadProps {
@@ -224,12 +225,25 @@ export default function InlineDocumentUpload({ onUploadComplete, showNextSteps =
       setStage('analyzing');
 
       const resultData = await response.json();
+      // The letter is saved server-side once the response arrives, so there is
+      // nothing left to cancel: end the cancellable phase before storing.
+      setAbortController(null);
 
       if (!response.ok) {
         const errorMsg = resultData.error || 'Failed to analyze document';
         const hint = resultData.hint ? `\n\n${resultData.hint}` : '';
         const details = resultData.errorDetails ? `\n\nDetails: ${resultData.errorDetails}` : '';
         throw new Error(errorMsg + hint + details);
+      }
+
+      // Keep the original so the letter card can reopen it. The analysis is
+      // already saved, so a storage failure must not fail the upload.
+      if (resultData.letter_id) {
+        try {
+          await storeLetterFile(file, currentSession.user.id, resultData.letter_id);
+        } catch (storeError) {
+          console.warn('[Upload] Original document was not stored', storeError);
+        }
       }
 
       setStage('complete');
@@ -590,6 +604,7 @@ export default function InlineDocumentUpload({ onUploadComplete, showNextSteps =
               variant="outlined"
               size="large"
               onClick={handleCancel}
+              disabled={!abortController}
               startIcon={<Icon name="close" />}
               sx={{ minWidth: 120 }}
             >

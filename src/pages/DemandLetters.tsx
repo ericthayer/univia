@@ -12,6 +12,7 @@ import { DocumentAnalysis } from '../components/documents/DocumentUploadDialog';
 import InlineDocumentUpload from '../components/documents/InlineDocumentUpload';
 import InlineAnalysisResults from '../components/documents/InlineAnalysisResults';
 import { LetterCard } from '../components/documents/LetterCard/LetterCard';
+import { LetterViewerDialog } from '../components/documents/LetterViewerDialog/LetterViewerDialog';
 import { ArrowButton } from '../components/ui/ArrowButton/ArrowButton';
 import { BezelCard } from '../components/ui/BezelCard/BezelCard';
 import { EmptyState } from '../components/ui/EmptyState/EmptyState';
@@ -35,6 +36,7 @@ export default function DemandLetters() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<DocumentAnalysis | null>(null);
+  const [viewingLetter, setViewingLetter] = useState<DemandLetter | null>(null);
 
   useEffect(() => {
     loadLetters();
@@ -46,7 +48,7 @@ export default function DemandLetters() {
       setLoadError(null);
       const { data, error } = await supabase
         .from('demand_letters')
-        .select('id, file_name, upload_date, plaintiff_name, attorney_name, response_deadline, settlement_amount, analysis_summary, risk_level, status, ai_model_version, created_at')
+        .select('id, file_name, upload_date, plaintiff_name, attorney_name, response_deadline, settlement_amount, analysis_summary, risk_level, status, ai_model_version, file_storage_path, created_at')
         .order('upload_date', { ascending: false });
 
       if (error) throw error;
@@ -108,6 +110,16 @@ export default function DemandLetters() {
           gap: 3,
           alignItems: 'stretch',
           mb: { xs: 6, md: 8 },
+          // Results run long: pin the sidebar (the BezelCard shell, which is the
+          // grid item) below the fixed header while reading. Intake keeps the
+          // equal-height columns.
+          ...(analysisResult && {
+            '& > .letters-aside': {
+              alignSelf: { md: 'start' },
+              position: { md: 'sticky' },
+              top: { md: 88 },
+            },
+          }),
         }}
       >
         <BezelCard component="section" aria-label="Upload a demand letter" reveal={0}>
@@ -118,7 +130,12 @@ export default function DemandLetters() {
           )}
         </BezelCard>
 
-        <BezelCard component="aside" aria-labelledby="next-steps-title" reveal={1}>
+        <BezelCard
+          component="aside"
+          aria-labelledby="next-steps-title"
+          reveal={1}
+          className="letters-aside"
+        >
           <Typography id="next-steps-title" variant="h6" component="h2" sx={{ mb: 2 }}>
             What happens next?
           </Typography>
@@ -223,11 +240,13 @@ export default function DemandLetters() {
             }}
           >
             {letters.map((letter, index) => (
-              <LetterCard key={letter.id} letter={letter} reveal={index} />
+              <LetterCard key={letter.id} letter={letter} reveal={index} onView={setViewingLetter} />
             ))}
           </Box>
         )}
       </Box>
+
+      <LetterViewerDialog letter={viewingLetter} onClose={() => setViewingLetter(null)} />
     </PageCanvas>
   );
 }
