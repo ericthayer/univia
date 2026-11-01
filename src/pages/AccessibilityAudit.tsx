@@ -30,23 +30,15 @@ import { BezelCard } from '../components/ui/BezelCard/BezelCard';
 import { ArrowButton } from '../components/ui/ArrowButton/ArrowButton';
 import { EmptyState } from '../components/ui/EmptyState/EmptyState';
 import { ScoreBar } from '../components/ui/ScoreBar/ScoreBar';
+import { AuditChecksAside } from '../components/audit/AuditChecksAside/AuditChecksAside';
+import { controlRadius } from '../theme/tokens';
 
-type AuditTab = 'history' | 'metrics' | 'checks';
+type AuditTab = 'history' | 'metrics';
 
 const TABS: ReadonlyArray<{ value: AuditTab; label: string }> = [
   { value: 'history', label: 'Audit History' },
   { value: 'metrics', label: 'Performance Metrics' },
-  { value: 'checks', label: 'What We Check' },
 ];
-
-const CHECKS = [
-  { icon: 'contrast', title: 'Color Contrast', description: 'Ensures text is readable for users with visual impairments' },
-  { icon: 'keyboard', title: 'Keyboard Navigation', description: 'Verifies all interactive elements are keyboard accessible' },
-  { icon: 'image', title: 'Alternative Text', description: 'Checks images have descriptive alt text for screen readers' },
-  { icon: 'language', title: 'ARIA Labels', description: 'Validates proper semantic markup and ARIA attributes' },
-  { icon: 'text_fields', title: 'Form Labels', description: 'Ensures form inputs have associated labels' },
-  { icon: 'article', title: 'Document Structure', description: 'Reviews heading hierarchy and page structure' },
-] as const;
 
 const LATEST_SCORE_CATEGORIES = [
   { key: 'performance_score', title: 'Performance', subtitle: 'Speed & optimization' },
@@ -318,126 +310,186 @@ export default function AccessibilityAudit() {
         description="Run audits, track performance metrics, and monitor WCAG compliance over time."
       />
 
-      {/* Run Audit */}
-      <BezelCard component="section" aria-labelledby="run-audit-title" sx={{ containerType: 'inline-size' }}>
-        <SectionHeader id="run-audit-title" title="Run Audit" component="h2" dense />
-        <Box component="form" onSubmit={handleSubmit} autoComplete="on" noValidate>
-          <Box sx={{ mb: 3 }}>
-            <TextField
-              fullWidth
-              inputRef={inputRef}
-              label="Website Address"
-              placeholder="yoursite.com"
-              value={urlField.value}
-              autoComplete="url"
-              type="url"
-              inputMode="url"
-              onChange={(e) => {
-                setFieldValue('url', e.target.value);
-                validateFieldDebounced('url', e.target.value, 'url');
-              }}
-              onBlur={() => {
-                validateFieldDebounced('url', urlField.value, 'url');
-              }}
-              disabled={loading}
-              error={Boolean(urlField.error) && (urlField.isDirty || urlField.isTouched)}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 7fr) minmax(0, 5fr)' },
+          gap: 3,
+          alignItems: 'start',
+          mb: { xs: 6, md: 8 },
+        }}
+      >
+        <BezelCard component="section" aria-labelledby="run-audit-title" reveal={0}>
+          <Box component="form" onSubmit={handleSubmit} autoComplete="on" noValidate>
+            <Box
               sx={{
-                '& .MuiOutlinedInput-root': { borderRadius: 999, pl: 2 },
-                '& .MuiInputLabel-root': { ml: 1 },
+                border: '1.5px dashed',
+                borderColor: 'divider',
+                borderRadius: `${theme.surfaces?.coreRadius ?? 14}px`,
+                p: 4,
+                mb: 3,
+                textAlign: 'center',
               }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Icon name="language" style={{ color: 'var(--mui-palette-text-secondary)' }} />
-                  </InputAdornment>
-                ),
-                endAdornment: urlField.value && !loading ? (
-                  <InputAdornment position="end">
-                    <Button
-                      onClick={handleReset}
-                      sx={{
-                        minWidth: 'auto',
-                        width: 40,
-                        height: 40,
-                        p: 0,
-                        borderRadius: '50%',
-                        color: 'text.secondary',
-                        textDecoration: 'none !important',
-                        '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
-                      }}
-                      aria-label="Clear input"
-                    >
-                      <Icon name="close" style={{ fontSize: 20 }} />
-                    </Button>
-                  </InputAdornment>
-                ) : undefined,
-              }}
-            />
-            <ValidationFeedback
-              error={urlField.error}
-              isValid={!urlField.error}
-              isDirty={urlField.isDirty}
-              isTouched={urlField.isTouched}
-              characterCount={urlField.value.length}
-              maxLength={MAX_URL_LENGTH}
-              showCharacterCount={false}
-              label="URL"
-              alwaysShowHelper={
-                !urlField.value.trim()
-                  ? 'Enter a website URL (e.g., example.com or https://example.com)'
-                  : 'URL format: must be a valid website address'
-              }
-            />
-          </Box>
+            >
+              <Box aria-hidden="true" sx={{ ...iconCircleSx, width: 72, height: 72, fontSize: '2rem', mx: 'auto', mb: 2 }}>
+                <Icon name="language" />
+              </Box>
+              <Typography id="run-audit-title" variant="h6" component="h2" sx={{ fontWeight: 600, mb: 1 }}>
+                Audit a website
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textWrap: 'pretty' }}>
+                Enter an address and Lighthouse checks it on desktop and mobile.
+              </Typography>
+              <Box sx={{ textAlign: 'left' }}>
+                <TextField
+                  fullWidth
+                  inputRef={inputRef}
+                  label="Website Address"
+                  placeholder="yoursite.com"
+                  value={urlField.value}
+                  autoComplete="url"
+                  type="url"
+                  inputMode="url"
+                  onChange={(e) => {
+                    setFieldValue('url', e.target.value);
+                    validateFieldDebounced('url', e.target.value, 'url');
+                  }}
+                  onBlur={() => {
+                    validateFieldDebounced('url', urlField.value, 'url');
+                  }}
+                  disabled={loading}
+                  error={Boolean(urlField.error) && (urlField.isDirty || urlField.isTouched)}
+                  sx={{
+                    '& .MuiOutlinedInput-root': { borderRadius: controlRadius, pl: 1.5 },
+                  }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Icon name="language" style={{ color: 'var(--mui-palette-text-secondary)' }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: urlField.value && !loading ? (
+                      <InputAdornment position="end">
+                        <Button
+                          onClick={handleReset}
+                          sx={{
+                            minWidth: 'auto',
+                            width: 40,
+                            height: 40,
+                            p: 0,
+                            borderRadius: '50%',
+                            color: 'text.secondary',
+                            textDecoration: 'none !important',
+                            '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
+                          }}
+                          aria-label="Clear input"
+                        >
+                          <Icon name="close" style={{ fontSize: 20 }} />
+                        </Button>
+                      </InputAdornment>
+                    ) : undefined,
+                  }}
+                />
+                <ValidationFeedback
+                  error={urlField.error}
+                  isValid={!urlField.error}
+                  isDirty={urlField.isDirty}
+                  isTouched={urlField.isTouched}
+                  characterCount={urlField.value.length}
+                  maxLength={MAX_URL_LENGTH}
+                  showCharacterCount={false}
+                  label="URL"
+                  alwaysShowHelper={
+                    !urlField.value.trim()
+                      ? 'Enter a website URL (e.g., example.com or https://example.com)'
+                      : 'URL format: must be a valid website address'
+                  }
+                />
+              </Box>
+            </Box>
 
-          {apiError && (
-            <Alert severity={apiError.includes('cancelled') ? 'info' : 'error'} sx={{ mb: 3 }}>
-              {apiError}
-            </Alert>
-          )}
+            {apiError && (
+              <Alert severity={apiError.includes('cancelled') ? 'info' : 'error'} sx={{ mb: 3 }}>
+                {apiError}
+              </Alert>
+            )}
 
-          <Box component="span" role="status" aria-live="polite" sx={srOnly}>
-            {loading ? `Running audit for ${urlField.value}` : ''}
-          </Box>
+            <Box component="span" role="status" aria-live="polite" sx={srOnly}>
+              {loading ? `Running audit for ${urlField.value}` : ''}
+            </Box>
 
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             {loading ? (
-              <>
+              <Box sx={{ display: 'grid', gap: 1.5 }}>
                 <ArrowButton
+                  fullWidth
                   disabled
                   aria-busy="true"
                   startIcon={<CircularProgress size={18} color="inherit" />}
-                  sx={{ width: { xs: '100%', sm: 'auto' } }}
                 >
                   Running Audits...
                 </ArrowButton>
                 <Button
+                  fullWidth
                   variant="outlined"
-                  size="large"
                   onClick={handleCancel}
                   startIcon={<Icon name="close" />}
-                  sx={{ minWidth: 120, borderRadius: 999, width: { xs: '100%', sm: 'auto' } }}
+                  sx={{ minHeight: 48 }}
                 >
                   Cancel
                 </Button>
-              </>
+              </Box>
             ) : (
-              <ArrowButton type="submit" startIcon={<Icon name="search" />} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+              <ArrowButton fullWidth type="submit" startIcon={<Icon name="search" />}>
                 Run Audit
               </ArrowButton>
             )}
-          </Box>
-        </Box>
-      </BezelCard>
 
-      {/* Tabs surface */}
+            <Box
+              role="note"
+              sx={{
+                mt: 3,
+                p: 2,
+                display: 'flex',
+                gap: 1.5,
+                alignItems: 'flex-start',
+                borderRadius: `${theme.surfaces?.coreRadius ?? 14}px`,
+                border: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Box aria-hidden="true" sx={{ ...iconCircleSx, width: 32, height: 32, fontSize: '1rem' }}>
+                <Icon name="info" />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="subtitle2" component="p" sx={{ fontWeight: 600, mb: 0.5 }}>
+                  Powered by Google Lighthouse
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                  Audits use the open-source{' '}
+                  <a href="https://developer.chrome.com/docs/lighthouse/">Lighthouse</a> tool to score
+                  accessibility, performance, best practices, and SEO. Automated checks catch many issues, not all
+                  of them; pair results with manual testing.
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </BezelCard>
+
+        <AuditChecksAside />
+      </Box>
+
+      <Box component="section" aria-labelledby="audits-list-title">
+        <SectionHeader
+          id="audits-list-title"
+          title="Your Audits"
+          meta={metricsLoading ? undefined : audits.length}
+        />
+
       <BezelCard
         ref={tabsSurfaceRef}
-        component="section"
-        aria-labelledby="audit-page-title"
         padding="none"
-        reveal={1}
-        sx={{ mt: { xs: 4, md: 6 }, overflow: 'hidden', scrollMarginTop: 88 }}
+        reveal={2}
+        sx={{ overflow: 'hidden', scrollMarginTop: 88 }}
       >
         <Box sx={{ borderBottom: '1px solid', borderColor: 'divider', px: { xs: 1, sm: 2 } }}>
           <Tabs
@@ -499,7 +551,7 @@ export default function AccessibilityAudit() {
                         value={searchQuery}
                         onChange={(e) => handleSearchChange(e.target.value)}
                         inputProps={{ 'aria-label': 'Search audits by URL' }}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 999 } }}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: controlRadius } }}
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
@@ -628,43 +680,9 @@ export default function AccessibilityAudit() {
             </Box>
           )}
 
-          {activeTab === 'checks' && (
-            <Box role="tabpanel" id={tabPanelId('checks')} aria-labelledby={tabId('checks')}>
-              <SectionHeader component="h3" dense title="What We Check" />
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: '72ch' }}>
-                Powered by <a href="https://developer.chrome.com/docs/lighthouse/"><strong>Google Lighthouse</strong></a>, our audits use the same trusted open-source tool that developers and organizations worldwide rely on to measure website quality. Lighthouse scans your website and provides detailed insights on accessibility, performance, best practices, and SEO—giving you actionable recommendations to improve user experience and compliance.
-              </Typography>
-              <Box
-                component="ul"
-                sx={{
-                  listStyle: 'none',
-                  m: 0,
-                  p: 0,
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-                  gap: 3,
-                }}
-              >
-                {CHECKS.map((item) => (
-                  <Box component="li" key={item.title} sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-                    <Box aria-hidden="true" sx={iconCircleSx}>
-                      <Icon name={item.icon} />
-                    </Box>
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
-                        {item.title}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {item.description}
-                      </Typography>
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          )}
         </Box>
       </BezelCard>
+      </Box>
     </PageCanvas>
   );
 }
