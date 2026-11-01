@@ -41,3 +41,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run release
+      # Netlify builds the merge commit before the release tag exists, so that
+      # build still shows the previous version. When a release was cut, ask
+      # Netlify continuous deployment to rebuild main so the footer picks up
+      # the new tag. Inert until the NETLIFY_BUILD_HOOK_URL secret is set.
+      - name: Rebuild Netlify with the new release tag
+        env:
+          NETLIFY_BUILD_HOOK_URL: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
+        run: |
+          git fetch --tags --force --quiet
+          tag="$(git tag --points-at HEAD --list 'v[0-9]*' | head -n 1)"
+          if [ -z "$tag" ]; then
+            echo "No release tag on this commit; skipping Netlify rebuild."
+          elif [ -z "$NETLIFY_BUILD_HOOK_URL" ]; then
+            echo "Released $tag. NETLIFY_BUILD_HOOK_URL is not set; skipping Netlify rebuild."
+          else
+            curl -fsS -X POST -d '{}' "${NETLIFY_BUILD_HOOK_URL}?trigger_title=release%20${tag}"
+          fi

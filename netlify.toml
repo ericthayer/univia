@@ -1,5 +1,6 @@
 [build]
-  command = "npm run build"
+  # Fetch tags so the footer version comes from the latest release tag.
+  command = "(git fetch --tags --force --quiet || true) && npm run build"
   publish = "dist"
 
 [[redirects]]

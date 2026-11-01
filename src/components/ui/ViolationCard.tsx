@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Collapse from '@mui/material/Collapse';
@@ -8,30 +8,11 @@ import Icon from './Icon';
 import { TonePill } from './TonePill/TonePill';
 import { severityTone } from './violationSeverity';
 import { controlRadius } from '../../theme/tokens';
+import { getFixGuidance } from '../../config/fixGuides';
+import { FixGuide } from './FixGuide/FixGuide';
 
 interface ViolationCardProps {
   violation: Violation;
-}
-
-function toStepText(step: unknown): string {
-  if (typeof step === 'string') {
-    try {
-      const parsed = JSON.parse(step);
-      if (typeof parsed === 'string') return parsed;
-      if (parsed && typeof parsed === 'object' && parsed.value) return String(parsed.value);
-      if (parsed && typeof parsed === 'object' && parsed.url) return String(parsed.url);
-      return JSON.stringify(parsed, null, 2);
-    } catch {
-      return step;
-    }
-  }
-  if (typeof step === 'object' && step !== null) {
-    const obj = step as Record<string, unknown>;
-    if (typeof obj.value === 'string') return obj.value;
-    if (typeof obj.url === 'string') return obj.url;
-    return JSON.stringify(obj, null, 2);
-  }
-  return String(step);
 }
 
 /**
@@ -41,6 +22,8 @@ function toStepText(step: unknown): string {
 export default function ViolationCard({ violation }: ViolationCardProps) {
   const [expanded, setExpanded] = useState(false);
   const panelId = useId();
+  const guidance = useMemo(() => getFixGuidance(violation), [violation]);
+  const level = guidance.standards[0]?.level ?? violation.compliance_level;
 
   return (
     <Box
@@ -65,13 +48,23 @@ export default function ViolationCard({ violation }: ViolationCardProps) {
       </Box>
 
       <Box sx={{ display: 'flex', gap: 1, mb: 1.5, flexWrap: 'wrap' }}>
-        <TonePill variant="outline">WCAG {violation.wcag_guideline}</TonePill>
-        {violation.compliance_level && <TonePill variant="outline">Level {violation.compliance_level}</TonePill>}
+        {guidance.standards.length > 0 ? (
+          guidance.standards.map((standard) => (
+            <TonePill key={standard.id} variant="outline">
+              WCAG {standard.id}
+            </TonePill>
+          ))
+        ) : (
+          <TonePill variant="outline">
+            {guidance.category === 'accessibility' ? 'Best practice' : guidance.categoryLabel}
+          </TonePill>
+        )}
+        {level && <TonePill variant="outline">Level {level}</TonePill>}
       </Box>
 
-      {violation.description && (
+      {guidance.summary && (
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, overflowWrap: 'anywhere' }}>
-          {violation.description}
+          {guidance.summary}
         </Typography>
       )}
 
@@ -103,32 +96,12 @@ export default function ViolationCard({ violation }: ViolationCardProps) {
         endIcon={<Icon name={expanded ? 'expand_less' : 'expand_more'} />}
         sx={{ borderRadius: controlRadius, minHeight: 44, px: 1.5, ml: -1.5 }}
       >
-        {expanded ? 'Hide' : 'Show'} remediation steps
+        {expanded ? 'Hide' : 'Show'} how to fix
       </Button>
 
       <Collapse in={expanded} id={panelId}>
         <Box sx={{ mt: 1, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-          <Typography variant="eyebrow" component="p" sx={{ mb: 1 }}>
-            How to fix
-          </Typography>
-          {violation.remediation_steps && violation.remediation_steps.length > 0 ? (
-            <Box component="ol" sx={{ m: 0, pl: 3 }}>
-              {violation.remediation_steps.map((step, index) => (
-                <Typography
-                  key={index}
-                  component="li"
-                  variant="body2"
-                  sx={{ mb: 1, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
-                >
-                  {toStepText(step)}
-                </Typography>
-              ))}
-            </Box>
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              Consult WCAG guidelines for detailed remediation steps.
-            </Typography>
-          )}
+          <FixGuide guidance={guidance} />
         </Box>
       </Collapse>
     </Box>
