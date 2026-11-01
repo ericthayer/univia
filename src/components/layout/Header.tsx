@@ -7,6 +7,14 @@ import { useAuth } from '../../contexts/AuthContext';
 import UserMenu from '../auth/UserMenu';
 import Icon from '../ui/Icon';
 
+// Header controls use the same pill shape as buttons across the rest of the site.
+const pillButtonSx = {
+  borderRadius: 999,
+  minHeight: 40,
+  px: 2,
+  textDecoration: 'none !important',
+} as const;
+
 interface HeaderProps {
   onMobileMenuToggle?: () => void;
   mobileMenuOpen?: boolean;
@@ -144,10 +152,11 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                   }
 
                   sx={{
+                    ...pillButtonSx,
                     textTransform: 'none',
                     whiteSpace: 'nowrap',
                     fontSize: '1rem',
-                    px: 'clamp(0.35rem, 2cqw, 0.75rem)',
+                    px: 'clamp(0.75rem, 2cqw, 1rem)',
                     color: isActive ? 'primary.contrastText' : 'text.primary',
                     bgcolor: isActive ? 'primary.main' : 'transparent',
                     '&:hover': {
@@ -181,12 +190,18 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                   <Button
                     variant="text"
                     onClick={() => navigate(ROUTE_PATHS.SIGN_IN)}
+                    sx={{
+                      ...pillButtonSx,
+                      color: 'text.primary',
+                      '&:hover': { bgcolor: 'action.hover' },
+                    }}
                   >
                     Sign In
                   </Button>
                   <Button
                     variant="contained"
                     onClick={() => navigate(ROUTE_PATHS.SIGN_UP)}
+                    sx={pillButtonSx}
                   >
                     Register
                   </Button>
@@ -249,7 +264,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
               component="small"
               sx={{
                 bgcolor: 'primary.main',
-                borderRadius: 1.5,
+                borderRadius: 999,
                 py: 1,
                 px: 2,
               }}
