@@ -11,7 +11,8 @@ const MD_LINK = /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g;
 /**
  * Lighthouse descriptions are markdown: `Text. [Learn more about X](https://…)`.
  * Pull the links out so the UI can render them as real anchors and keep the
- * prose free of raw URLs. Inline backticks are dropped; the prose stays readable.
+ * prose free of raw URLs. "Learn…" links are removed; inline links keep their
+ * text. Inline backticks are dropped; the prose stays readable.
  */
 export function parseLighthouseDescription(description: string | undefined | null): ParsedDescription {
   if (!description) return { text: '', links: [] };
@@ -19,10 +20,13 @@ export function parseLighthouseDescription(description: string | undefined | nul
   const text = description
     .replace(MD_LINK, (_match, label: string, url: string) => {
       links.push({ label: label.trim(), url });
-      return '';
+      // Drop standalone "Learn more…" links; keep inline link text so sentences stay whole.
+      return /^learn\b/i.test(label.trim()) ? '' : label;
     })
     .replace(/`([^`]*)`/g, '$1')
     .replace(/\s+/g, ' ')
+    .replace(/\s+([.,;:])/g, '$1')
+    .replace(/([.!?])\.(?!\.)/g, '$1')
     .trim();
   return { text, links };
 }

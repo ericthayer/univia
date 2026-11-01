@@ -88,10 +88,14 @@ const serverSetup: FixGuide = {
   whoIsAffected: [ALL],
   steps: [
     'Turn on text compression (gzip or Brotli) with your host or CDN.',
-    'Set long cache lifetimes for images, fonts, CSS, and JS files.',
+    'Set long cache lifetimes (up to a year) only for files whose name changes when their content changes, such as app.3f9c2.js. Most build tools and CMSs do this automatically.',
+    'For files that keep the same name when updated, use a short cache lifetime or revalidation (no-cache), or visitors may keep old versions after you publish.',
     'Turn on page caching or a CDN if the server itself is slow.',
   ],
-  example: { language: 'http', after: 'Cache-Control: public, max-age=31536000, immutable\nContent-Encoding: br' },
+  example: {
+    language: 'http',
+    after: '# /assets/app.3f9c2.js (versioned file name)\nCache-Control: public, max-age=31536000, immutable\n\n# /logo.png (same name on every update)\nCache-Control: public, max-age=86400, must-revalidate',
+  },
   owner: 'hosting',
   effort: 'quick',
 };
@@ -143,7 +147,19 @@ export const performanceGuides: Record<string, FixGuide> = {
   'modern-image-formats': images,
   'efficient-animated-content': images,
   'image-delivery-insight': images,
-  'total-byte-weight': images,
+  'total-byte-weight': {
+    ...images,
+    summary: 'The page downloads too much data in total: images, scripts, styles, fonts, and video combined.',
+    steps: [
+      'Look at the files under "Where we found it"; they are the largest downloads. Start with the biggest, whatever type it is.',
+      'Images: resize and convert to WebP or AVIF. Video: do not autoplay large files; use a poster image and load on click.',
+      'Scripts and styles: remove unused plugins and third-party tools, and turn on minification.',
+      'Fonts: use fewer weights and the woff2 format.',
+    ],
+    example: undefined,
+    owner: 'developer',
+    effort: 'moderate',
+  },
   'unused-javascript': unusedCode,
   'unused-css-rules': unusedCode,
   'unminified-javascript': unusedCode,

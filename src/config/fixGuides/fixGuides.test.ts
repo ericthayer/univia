@@ -49,3 +49,25 @@ describe('getFixGuidance', () => {
     }
   });
 });
+
+describe('review fixes', () => {
+  it('categorizes uncurated SEO and performance rules', () => {
+    expect(getFixGuidance({ wcag_guideline: 'plugins', title: 'x' }).category).toBe('seo');
+    expect(getFixGuidance({ wcag_guideline: 'some-new-insight', title: 'x' }).category).toBe('performance');
+    expect(getFixGuidance({ wcag_guideline: 'unknown', title: 'x' }, 'seo').category).toBe('seo');
+  });
+
+  it('keeps best-practice rules free of WCAG claims and maps meter and duplicate labels correctly', () => {
+    for (const id of ['tabindex', 'aria-allowed-role', 'aria-text', 'aria-dialog-name', 'aria-treeitem-name', 'skip-link']) {
+      expect(getFixGuidance({ wcag_guideline: id, title: 'x' }).standards, id).toEqual([]);
+    }
+    expect(getFixGuidance({ wcag_guideline: 'aria-meter-name', title: 'x' }).standards.map((s) => s.id)).toEqual(['1.1.1']);
+    expect(getFixGuidance({ wcag_guideline: 'form-field-multiple-labels', title: 'x' }).standards.map((s) => s.id)).toEqual(['3.3.2']);
+  });
+
+  it('does not tell SVG or role=img graphics to use alt', () => {
+    const g = getFixGuidance({ wcag_guideline: 'svg-img-alt', title: 'x' });
+    expect(g.example?.after).toContain('aria-label');
+    expect(g.example?.after).not.toContain('alt=');
+  });
+});

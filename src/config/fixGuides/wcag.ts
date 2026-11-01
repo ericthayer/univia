@@ -18,6 +18,7 @@ const CRITERIA: Record<string, { name: string; level: WcagLevel; slug: string }>
   '2.5.8': { name: 'Target Size (Minimum)', level: 'AA', slug: 'target-size-minimum' },
   '3.1.1': { name: 'Language of Page', level: 'A', slug: 'language-of-page' },
   '3.1.2': { name: 'Language of Parts', level: 'AA', slug: 'language-of-parts' },
+  '3.3.2': { name: 'Labels or Instructions', level: 'A', slug: 'labels-or-instructions' },
   '4.1.2': { name: 'Name, Role, Value', level: 'A', slug: 'name-role-value' },
 };
 

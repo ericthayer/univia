@@ -36,12 +36,13 @@ const securityHeaders: FixGuide = {
   whoIsAffected: [ALL],
   steps: [
     'Ask your developer or host to add the header named in this issue. Most hosts let you set headers in a config file (netlify.toml, _headers, .htaccess, or nginx config).',
-    'Start a Content-Security-Policy in report-only mode first, so nothing breaks while you tune it.',
-    'Re-run the audit to confirm.',
+    'For a Content-Security-Policy, roll it out in two stages: run it in report-only mode for a short trial to see what it would block, then switch to the enforcing Content-Security-Policy header. Report-only mode alone does not protect anything.',
+    'Re-run the audit once the enforcing headers are live.',
   ],
   example: {
     language: 'http',
-    after: 'Strict-Transport-Security: max-age=31536000; includeSubDomains\nX-Frame-Options: SAMEORIGIN\nContent-Security-Policy-Report-Only: default-src \'self\'',
+    after: 'Strict-Transport-Security: max-age=31536000; includeSubDomains\nX-Frame-Options: SAMEORIGIN\nContent-Security-Policy: default-src \'self\'; object-src \'none\'; base-uri \'self\'',
+    note: 'A real policy must also list every outside domain your site legitimately loads from (analytics, fonts, payment widgets). Test it in report-only mode first.',
   },
   owner: 'hosting',
   effort: 'moderate',

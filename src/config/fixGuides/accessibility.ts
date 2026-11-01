@@ -28,6 +28,21 @@ const imageAlt: FixGuide = {
   effort: 'quick',
 };
 
+const graphicName: FixGuide = {
+  ...imageAlt,
+  summary: 'Some graphics (inline SVGs or elements marked role="img") have no text description.',
+  steps: [
+    'Find each graphic under "Where we found it". The alt attribute does not work on these; they need a different label.',
+    'If the graphic carries information, give it role="img" and an aria-label describing it, or an SVG <title> referenced by aria-labelledby.',
+    'If it is decoration, hide it with aria-hidden="true" instead.',
+  ],
+  example: {
+    language: 'html',
+    before: '<svg role="img" viewBox="0 0 24 24">…</svg>',
+    after: '<svg role="img" aria-label="5 out of 5 stars" viewBox="0 0 24 24">…</svg>\n<svg aria-hidden="true" viewBox="0 0 24 24">…</svg>',
+  },
+};
+
 const contrast: FixGuide = {
   summary: 'Some text is too faint against its background to read comfortably.',
   whyItMatters:
@@ -159,7 +174,8 @@ const ariaValid: FixGuide = {
   example: {
     language: 'html',
     before: '<div role="button" aria-expanded="yes" onclick="toggle()">Menu</div>',
-    after: '<button type="button" aria-expanded="false" aria-controls="main-menu">Menu</button>',
+    after: '<button type="button" aria-expanded="false" aria-controls="main-menu" onclick="toggle()">Menu</button>',
+    note: 'Keep the existing click handler; the script should also flip aria-expanded between "true" and "false".',
   },
   wcag: ['4.1.2'],
   owner: 'developer',
@@ -337,7 +353,6 @@ const tabindex: FixGuide = {
     'If the order still feels wrong, reorder the HTML to match the visual layout instead.',
   ],
   example: { language: 'html', before: '<a href="/sale" tabindex="3">Sale</a>', after: '<a href="/sale">Sale</a>' },
-  wcag: ['2.4.3'],
   owner: 'developer',
   effort: 'quick',
 };
@@ -447,9 +462,22 @@ const tables: FixGuide = {
 export const accessibilityGuides: Record<string, FixGuide> = {
   'image-alt': imageAlt,
   'input-image-alt': imageAlt,
-  'object-alt': { ...imageAlt, summary: 'Some embedded objects have no text alternative.' },
-  'role-img-alt': imageAlt,
-  'svg-img-alt': imageAlt,
+  'object-alt': {
+    ...imageAlt,
+    summary: 'Some embedded objects (<object> elements, such as PDFs or Flash-era embeds) have no text alternative.',
+    steps: [
+      'Find each <object> under "Where we found it".',
+      'Add an aria-label or title describing what it shows, or put fallback text inside the <object> element.',
+      'Better still, replace it with a plain link to the file ("Download the 2025 price list (PDF)").',
+    ],
+    example: {
+      language: 'html',
+      before: '<object data="/menu.pdf" type="application/pdf"></object>',
+      after: '<object data="/menu.pdf" type="application/pdf" aria-label="Dinner menu">\n  <a href="/menu.pdf">Download the dinner menu (PDF)</a>\n</object>',
+    },
+  },
+  'role-img-alt': graphicName,
+  'svg-img-alt': graphicName,
   'image-redundant-alt': {
     ...imageAlt,
     summary: 'Some image descriptions repeat the text right next to them, so screen readers say the same thing twice.',
@@ -462,14 +490,35 @@ export const accessibilityGuides: Record<string, FixGuide> = {
   'input-button-name': buttonName,
   label: formLabel,
   'select-name': formLabel,
-  'form-field-multiple-labels': formLabel,
+  'form-field-multiple-labels': {
+    ...formLabel,
+    summary: 'Some form fields have more than one label, so screen readers may read the wrong one or both.',
+    steps: [
+      'Find each field under "Where we found it".',
+      'Keep one <label> per field. Remove or merge the extra one; extra hint text can be connected with aria-describedby instead.',
+    ],
+    example: {
+      language: 'html',
+      before: '<label for="phone">Phone</label>\n<label for="phone">Include area code</label>\n<input id="phone" type="tel">',
+      after: '<label for="phone">Phone</label>\n<p id="phone-hint">Include area code</p>\n<input id="phone" type="tel" aria-describedby="phone-hint">',
+    },
+    wcag: ['3.3.2'],
+  },
   'html-has-lang': pageLang,
   'html-lang-valid': pageLang,
-  'html-xml-lang-mismatch': pageLang,
+  'html-xml-lang-mismatch': {
+    ...pageLang,
+    summary: 'The page declares two different languages (lang and xml:lang disagree), so assistive technology cannot tell which one is right.',
+    steps: [
+      'Open the template that contains the <html> tag.',
+      'Make xml:lang match lang exactly, or remove xml:lang; ordinary HTML pages do not need it.',
+    ],
+    example: { language: 'html', before: '<html lang="en" xml:lang="fr">', after: '<html lang="en">' },
+  },
   'valid-lang': { ...pageLang, summary: 'A section of the page declares a language code that is not valid.', wcag: ['3.1.2'] },
   'document-title': docTitle,
   'aria-allowed-attr': ariaValid,
-  'aria-allowed-role': ariaValid,
+  'aria-allowed-role': { ...ariaValid, wcag: [] },
   'aria-conditional-attr': ariaValid,
   'aria-deprecated-role': ariaValid,
   'aria-prohibited-attr': ariaValid,
@@ -477,17 +526,17 @@ export const accessibilityGuides: Record<string, FixGuide> = {
   'aria-roles': ariaValid,
   'aria-valid-attr': ariaValid,
   'aria-valid-attr-value': ariaValid,
-  'aria-text': ariaValid,
+  'aria-text': { ...ariaValid, wcag: [] },
   'aria-required-children': ariaStructure,
   'aria-required-parent': ariaStructure,
   'aria-command-name': ariaName,
-  'aria-dialog-name': ariaName,
+  'aria-dialog-name': { ...ariaName, wcag: [] },
   'aria-input-field-name': ariaName,
-  'aria-meter-name': ariaName,
+  'aria-meter-name': { ...ariaName, wcag: ['1.1.1'] },
   'aria-progressbar-name': ariaName,
   'aria-toggle-field-name': ariaName,
   'aria-tooltip-name': ariaName,
-  'aria-treeitem-name': ariaName,
+  'aria-treeitem-name': { ...ariaName, wcag: [] },
   'aria-hidden-focus': ariaHiddenFocus,
   'aria-hidden-body': ariaHiddenFocus,
   'heading-order': headingOrder,
@@ -502,7 +551,7 @@ export const accessibilityGuides: Record<string, FixGuide> = {
   'duplicate-id-aria': duplicateId,
   tabindex,
   bypass,
-  'skip-link': { ...bypass, summary: 'The "skip to content" link points at something that does not exist or cannot receive focus.' },
+  'skip-link': { ...bypass, summary: 'The "skip to content" link points at something that does not exist or cannot receive focus.', wcag: [] },
   'landmark-one-main': landmarkMain,
   'link-in-text-block': linkInText,
   'identical-links-same-purpose': sameNameLinks,

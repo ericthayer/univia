@@ -61,9 +61,41 @@ const FALLBACK_STEPS: Record<AuditCategory, string[]> = {
   ],
 };
 
-function categoryFor(ruleId: string): AuditCategory {
+/**
+ * Lighthouse rules with no curated guide yet, so uncurated rules still get the
+ * right category label and fallback steps. Callers that know the category
+ * (e.g. from `audit_data.categories[*].auditRefs`) can pass it instead.
+ */
+const UNCURATED_CATEGORY: Record<string, AuditCategory> = {
+  region: 'accessibility',
+  'landmark-banner-is-top-level': 'accessibility',
+  'landmark-unique': 'accessibility',
+  'scrollable-region-focusable': 'accessibility',
+  'nested-interactive': 'accessibility',
+  'presentation-role-conflict': 'accessibility',
+  'focus-traps': 'accessibility',
+  'js-libraries': 'best-practices',
+  'bf-cache': 'best-practices',
+  'trusted-types-xss': 'best-practices',
+  plugins: 'seo',
+  'non-composited-animations': 'performance',
+  'uses-passive-event-listeners': 'performance',
+  'no-document-write': 'performance',
+  'uses-rel-preconnect': 'performance',
+  'viewport-insight': 'performance',
+  'modern-http-insight': 'performance',
+  'interaction-to-next-paint': 'performance',
+  'server-response-time-insight': 'performance',
+  diagnostics: 'performance',
+};
+
+function categoryFor(ruleId: string, hint?: AuditCategory): AuditCategory {
+  if (hint) return hint;
   for (const [category, guides] of BY_CATEGORY) if (ruleId in guides) return category;
-  return ruleId.startsWith('aria-') ? 'accessibility' : 'best-practices';
+  if (ruleId in UNCURATED_CATEGORY) return UNCURATED_CATEGORY[ruleId];
+  if (ruleId.startsWith('aria-')) return 'accessibility';
+  if (ruleId.endsWith('-insight')) return 'performance';
+  return 'best-practices';
 }
 
 function lookupGuide(ruleId: string): FixGuide | undefined {
@@ -85,11 +117,12 @@ export type FixGuidanceInput = Pick<Violation, 'wcag_guideline' | 'title' | 'des
  * the Issues list (`ViolationCard`) and the PDF report.
  *
  * `wcag_guideline` holds the Lighthouse audit id (e.g. `color-contrast`), not a
- * WCAG criterion; the real criteria come from the curated guide.
+ * WCAG criterion; the real criteria come from the curated guide. Pass
+ * `categoryHint` when the Lighthouse category is known.
  */
-export function getFixGuidance(violation: FixGuidanceInput): FixGuidance {
+export function getFixGuidance(violation: FixGuidanceInput, categoryHint?: AuditCategory): FixGuidance {
   const ruleId = violation.wcag_guideline;
-  const category = categoryFor(ruleId);
+  const category = categoryFor(ruleId, categoryHint);
   const guide = lookupGuide(ruleId);
   const lighthouse = parseLighthouseDescription(violation.description);
   const standards = wcagRefs(guide?.wcag);

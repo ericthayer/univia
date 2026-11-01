@@ -30,3 +30,11 @@ describe('parseInstance', () => {
     expect(toStepText('"quoted"')).toBe('quoted');
   });
 });
+
+describe('inline links', () => {
+  it('keeps inline link text while extracting the URL', () => {
+    const parsed = parseLighthouseDescription('Use [semantic HTML](https://example.test/html) for structure. [Learn more](https://example.test/more).');
+    expect(parsed.text).toBe('Use semantic HTML for structure.');
+    expect(parsed.links.map((l) => l.url)).toEqual(['https://example.test/html', 'https://example.test/more']);
+  });
+});

@@ -21,3 +21,10 @@ describe('diagnoseConsoleMessage', () => {
     expect(diagnoseConsoleMessage('Something odd happened')).toBeUndefined();
   });
 });
+
+describe('CSP report-only', () => {
+  it('does not claim a report-only violation was blocked', () => {
+    const msg = "[Report Only] Refused to load the script 'https://x.test/a.js' because it violates the following Content Security Policy directive";
+    expect(diagnoseConsoleMessage(msg)).toMatch(/Nothing was blocked/);
+  });
+});

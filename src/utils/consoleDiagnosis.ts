@@ -31,6 +31,11 @@ const RULES: Rule[] = [
       'Your page tries to embed another site in a frame (iframe), and that site does not allow being embedded. Visitors see a blank box. Replace the embed with a link, or use the embed code the other site officially provides.',
   },
   {
+    test: /\[Report Only\].*Content Security Policy/i,
+    explain: () =>
+      "Your site's security policy (CSP) is in report-only mode and flagged something it would block if enforced. Nothing was blocked. Before switching the policy on, either remove that item or add its domain to the policy.",
+  },
+  {
     test: /Content Security Policy/i,
     explain: () =>
       "Your site's security policy (CSP) blocked a script, style, or connection. Either the blocked item is unexpected and should be removed, or it is legitimate and its domain needs to be added to the policy.",
