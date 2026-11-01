@@ -1,6 +1,12 @@
 import React from 'react';
-import { Box, Typography, Card, CardContent, Chip, Stack } from '@mui/material';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
 import Icon from '../ui/Icon';
+import { BezelCard } from '../ui/BezelCard/BezelCard';
+import { TonePill } from '../ui/TonePill/TonePill';
+import { toneColor, Tone } from '../ui/tone';
+import { clampScore, scoreTone } from '../ui/ScoreBar/scoreTone';
 
 /**
  * Props for the AuditSummaryCard component.
@@ -20,9 +26,15 @@ export interface AuditSummaryCardProps {
   'aria-label'?: string;
 }
 
+const STATUS_CONFIG: Record<AuditSummaryCardProps['status'], { tone: Tone; label: string; icon: string }> = {
+  completed: { tone: 'success', label: 'Completed', icon: 'check_circle' },
+  'in-progress': { tone: 'warning', label: 'In Progress', icon: 'schedule' },
+  failed: { tone: 'error', label: 'Failed', icon: 'error' },
+};
+
 /**
  * A summary card displaying high-level accessibility audit metrics.
- * Follows MUI v7.3+, Univia design tokens (src/theme), and GEMINI.md standards.
+ * Built on BezelCard; the score takes its tone from its value.
  */
 export const AuditSummaryCard: React.FC<AuditSummaryCardProps> = ({
   auditId,
@@ -32,89 +44,86 @@ export const AuditSummaryCard: React.FC<AuditSummaryCardProps> = ({
   timestamp,
   'aria-label': ariaLabel,
 }) => {
-  const getScoreColor = (value: number) => {
-    if (value >= 90) return 'success.main';
-    if (value >= 70) return 'warning.main';
-    return 'error.main';
-  };
-
-  const statusConfig = {
-    completed: { color: 'success' as const, label: 'Completed', icon: 'check_circle' },
-    'in-progress': { color: 'warning' as const, label: 'In Progress', icon: 'schedule' },
-    failed: { color: 'error' as const, label: 'Failed', icon: 'error' },
-  };
-
-  const config = statusConfig[status];
+  const theme = useTheme();
+  const config = STATUS_CONFIG[status];
 
   return (
-    <Card
-      component="article"
-      sx={{
-        borderRadius: 'var(--mui-shape-borderRadius)',
-        border: '1px solid',
-        borderColor: 'divider',
-        bgcolor: 'background.paper',
-        transition: 'all 0.2s var(--mui-transitions-easing-easeInOut)',
-        '&:hover': {
-          borderColor: 'primary.main',
-          boxShadow: 'var(--mui-shadows-2)',
-        }
-      }}
-    >
-      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-              AUDIT ID: {auditId.toUpperCase()}
-            </Typography>
-            <Typography variant="h6" component="h3" sx={{ fontWeight: 700 }}>
-              Audit Results Summary
-            </Typography>
-          </Box>
-          <Chip
-            icon={<Icon name={config.icon} style={{ fontSize: 16 }} />}
-            label={config.label}
-            size="small"
-            color={config.color}
-            variant="outlined"
-            sx={{ borderRadius: 1 }}
-          />
-        </Stack>
-
-        <Stack direction="row" spacing={3} sx={{ mt: 3 }} role="region" aria-label={ariaLabel || "Audit Metrics"}>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Accessibility Score
-            </Typography>
-            <Typography
-              variant="h3"
-              sx={{
-                fontWeight: 800,
-                color: getScoreColor(score),
-                letterSpacing: '-0.02em'
-              }}
-            >
-              {score}%
-            </Typography>
-          </Box>
-
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Total Issues
-            </Typography>
-            <Typography variant="h3" sx={{ fontWeight: 800 }}>
-              {issueCount}
-            </Typography>
-          </Box>
-        </Stack>
-
-        <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
-            Last updated: {timestamp}
+    <BezelCard component="article">
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, mb: 3 }}>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="eyebrow" component="p" sx={{ mb: 0.5, overflowWrap: 'anywhere' }}>
+            Audit ID {auditId.toUpperCase()}
           </Typography>
-          <Icon name="arrow_forward" style={{ fontSize: 20, color: 'var(--mui-palette-action-active)' }} />
+          <Typography variant="h6" component="h3" sx={{ fontWeight: 700 }}>
+            Audit Results Summary
+          </Typography>
         </Box>
-      </CardContent>
-    </Card>
+        <TonePill tone={config.tone} dot>
+          {config.label}
+        </TonePill>
+      </Box>
+
+      <Box
+        component="dl"
+        role="region"
+        aria-label={ariaLabel || 'Audit Metrics'}
+        sx={{ display: 'flex', gap: 3, m: 0 }}
+      >
+        <Box sx={{ flex: 1 }}>
+          <Typography component="dt" variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+            Accessibility Score
+          </Typography>
+          <Typography
+            component="dd"
+            variant="metric"
+            sx={{ m: 0, color: toneColor(theme, scoreTone(clampScore(score))) }}
+          >
+            {score}%
+          </Typography>
+        </Box>
+
+        <Box sx={{ flex: 1 }}>
+          <Typography component="dt" variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+            Total Issues
+          </Typography>
+          <Typography component="dd" variant="metric" sx={{ m: 0 }}>
+            {issueCount}
+          </Typography>
+        </Box>
+      </Box>
+
+      <Box
+        sx={{
+          mt: 3,
+          pt: 2,
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 2,
+        }}
+      >
+        <Typography variant="body2" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+          Last updated: {timestamp}
+        </Typography>
+        <Box
+          aria-hidden="true"
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            display: 'grid',
+            placeItems: 'center',
+            bgcolor: 'action.hover',
+            color: 'text.secondary',
+            fontSize: '1rem',
+            flexShrink: 0,
+          }}
+        >
+          <Icon name="arrow_forward" />
+        </Box>
+      </Box>
+    </BezelCard>
   );
 };

@@ -1,19 +1,18 @@
 import React, { useState } from 'react';
-import {
-  Container,
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  Fade,
-  Alert,
-  Chip,
-} from '@mui/material';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Fade from '@mui/material/Fade';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { useGemini } from '../../hooks/useGemini';
-import Icon from '../../components/ui/Icon';
+import { ArrowButton } from '../../components/ui/ArrowButton/ArrowButton';
+import { BezelCard } from '../../components/ui/BezelCard/BezelCard';
+import { PageCanvas } from '../../components/ui/PageCanvas/PageCanvas';
+import { PageHeader } from '../../components/ui/PageHeader/PageHeader';
+import { SectionHeader } from '../../components/ui/SectionHeader/SectionHeader';
+import { TonePill } from '../../components/ui/TonePill/TonePill';
+import { srOnly } from '../../components/ui/srOnly';
 
 /**
  * GeminiStreamingDemo
@@ -46,140 +45,96 @@ const GeminiStreamingDemo: React.FC = () => {
     }
   };
 
+  const busy = isLoading || isStreaming;
+
   return (
-    <Container maxWidth="md" sx={{ py: 8 }}>
-      <Box sx={{ mb: 6 }}>
-        <Typography
-          variant="h3"
-          component="h1"
-          sx={{
-            fontWeight: 800,
-            mb: 2,
-            color: 'text.primary'
-          }}
-        >
-          Accessibility Analysis Demo
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 660 }}>
-          Submit accessibility observations through the authenticated server analysis boundary.
-        </Typography>
-      </Box>
+    <PageCanvas>
+      <PageHeader
+        eyebrow="Admin"
+        title="Accessibility Analysis Demo"
+        description="Submit accessibility observations through the authenticated server analysis boundary. Your prompt is sent to Google Gemini."
+      />
 
       {!isReady && (
-        <Alert severity="warning" variant="outlined" sx={{ mb: 4 }}>
+        <Alert severity="warning" variant="outlined" sx={{ mb: 3, borderRadius: 3 }}>
           Sign in with an active session to use the protected analysis service.
         </Alert>
       )}
 
-      <Card
-        elevation={0}
-        sx={{
-          borderRadius: 'var(--mui-shape-borderRadius)',
-          bgcolor: 'background.paper',
-          border: '1px solid',
-          borderColor: 'divider',
-          mb: 4
-        }}
-      >
-        <CardContent sx={{ p: 4 }}>
-          <form onSubmit={handleSubmit}>
-            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              ENTER A PROMPT
-            </Typography>
+      <Box sx={{ display: 'grid', gap: 3, maxWidth: 880 }}>
+        <BezelCard component="section" aria-labelledby="demo-prompt-heading">
+          <SectionHeader id="demo-prompt-heading" title="Prompt" dense />
+          <Box component="form" onSubmit={handleSubmit} noValidate sx={{ display: 'grid', gap: 2.5 }}>
             <TextField
               fullWidth
               multiline
-              rows={4}
-              placeholder="e.g., Explain the importance of web accessibility in 3 paragraphs..."
+              minRows={4}
+              label="Prompt"
+              placeholder="e.g., Explain the importance of web accessibility in 3 paragraphs…"
               value={promptInput}
               onChange={(e) => setPromptInput(e.target.value)}
-              disabled={isLoading || isStreaming}
-              variant="outlined"
-              sx={{
-                mb: 3,
-                '& .MuiOutlinedInput-root': {
-                  bgcolor: 'action.hover'
-                }
-              }}
+              disabled={busy}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: 'action.hover' } }}
             />
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 2 }}>
-              <Typography variant="caption" color="text.secondary">
-                {attribution}
-              </Typography>
-              <Button
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+              {attribution && (
+                <Typography variant="caption" color="text.secondary">
+                  {attribution}
+                </Typography>
+              )}
+              <ArrowButton
                 type="submit"
-                variant="contained"
-                disabled={isLoading || isStreaming || !promptInput.trim() || !isReady}
-                startIcon={isLoading || isStreaming ? <CircularProgress size={20} color="inherit" /> : <Icon name="bolt" />}
-                sx={{
-                  px: 4,
-                  py: 1,
-                  minWidth: 160,
-                }}
+                disabled={busy || !promptInput.trim() || !isReady}
+                startIcon={busy ? <CircularProgress size={18} color="inherit" /> : undefined}
+                sx={{ minWidth: 180 }}
               >
-                {isLoading ? 'Analyzing...' : 'Run Analysis'}
-              </Button>
+                {isLoading ? 'Analyzing…' : 'Run Analysis'}
+              </ArrowButton>
             </Box>
-          </form>
-        </CardContent>
-      </Card>
+          </Box>
+        </BezelCard>
 
-      <Fade in={hasStarted}>
-        <Box>
-          <Card
-            elevation={2}
-            sx={{
-              borderRadius: 'var(--mui-shape-borderRadius)',
-              minHeight: 200,
-              bgcolor: 'background.paper',
-              border: '1px solid',
-              borderColor: 'divider',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-          >
-            <CardContent sx={{ p: 4 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Icon name="auto_awesome" style={{ color: 'var(--mui-palette-primary-main)' }} />
-                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                    Response
-                  </Typography>
-                </Box>
-                {isStreaming && (
-                  <Chip
-                    label="Receiving..."
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                    sx={{ borderRadius: 1 }}
-                  />
-                )}
+        <Fade in={hasStarted} timeout={{ enter: 300 }}>
+          <Box>
+            <BezelCard component="section" aria-labelledby="demo-response-heading" sx={{ minHeight: 200 }}>
+              <SectionHeader
+                id="demo-response-heading"
+                title="Response"
+                dense
+                action={isStreaming ? <TonePill tone="info" dot>Receiving</TonePill> : undefined}
+              />
+
+              <Box role="status" aria-live="polite" sx={srOnly}>
+                {isLoading ? 'Waiting for Gemini' : isStreaming ? 'Receiving response' : ''}
               </Box>
 
               {error && (
-                <Alert severity="error" sx={{ mb: 2 }}>
+                <Alert severity="error" sx={{ mb: 2, borderRadius: 3 }}>
                   {error.message}
                 </Alert>
               )}
 
               <Typography
                 variant="body1"
+                aria-live="polite"
+                aria-busy={isStreaming}
                 sx={{
                   whiteSpace: 'pre-wrap',
-                  lineHeight: 1.8,
+                  lineHeight: 1.75,
+                  maxWidth: '72ch',
                   color: response ? 'text.primary' : 'text.secondary',
                   fontFamily: 'inherit'
                 }}
               >
-                {response || (isLoading ? 'Waiting for Gemini...' : '')}
+                {response || (isLoading ? 'Waiting for Gemini…' : '')}
               </Typography>
 
               {isStreaming && (
                 <Box
+                  aria-hidden="true"
                   sx={{
                     display: 'inline-block',
-                    width: 4,
+                    width: 3,
                     height: 18,
                     bgcolor: 'primary.main',
                     ml: 0.5,
@@ -191,11 +146,11 @@ const GeminiStreamingDemo: React.FC = () => {
                   }}
                 />
               )}
-            </CardContent>
-          </Card>
-        </Box>
-      </Fade>
-    </Container>
+            </BezelCard>
+          </Box>
+        </Fade>
+      </Box>
+    </PageCanvas>
   );
 };
 

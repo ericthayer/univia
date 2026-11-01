@@ -1,6 +1,5 @@
 import {
   Box,
-  Container,
   Typography,
   Paper,
   Stack,
@@ -37,6 +36,16 @@ import GlassCard from '../components/ui/GlassCard';
 import StatCard from '../components/ui/StatCard';
 import ComplianceGauge from '../components/ui/ComplianceGauge';
 import { AuditSummaryCard } from '../components/audit/AuditSummaryCard';
+import { ArrowButton } from '../components/ui/ArrowButton/ArrowButton';
+import { BezelCard } from '../components/ui/BezelCard/BezelCard';
+import { EmptyState } from '../components/ui/EmptyState/EmptyState';
+import { MetricTile } from '../components/ui/MetricTile/MetricTile';
+import { PageCanvas } from '../components/ui/PageCanvas/PageCanvas';
+import { PageHeader } from '../components/ui/PageHeader/PageHeader';
+import { ScoreBar } from '../components/ui/ScoreBar/ScoreBar';
+import { ScoreStrip } from '../components/ui/ScoreStrip/ScoreStrip';
+import { SegmentedToggleGroup } from '../components/ui/SegmentedToggleGroup/SegmentedToggleGroup';
+import { TonePill } from '../components/ui/TonePill/TonePill';
 import packageJson from '../../package.json';
 
 export default function PatternLibrary() {
@@ -46,6 +55,7 @@ export default function PatternLibrary() {
   const [checkboxValue, setCheckboxValue] = useState(true);
   const [radioValue, setRadioValue] = useState('option1');
   const [switchValue, setSwitchValue] = useState(true);
+  const [segment, setSegment] = useState('overall');
 
   const designTokens = {
     colors: {
@@ -86,19 +96,16 @@ export default function PatternLibrary() {
   };
 
   return (
-    <Box sx={{ bgcolor: 'background.default', py: 8 }}>
-      <Container maxWidth="xl">
+    <PageCanvas maxWidth="xl">
         <Stack gap={6}>
           <Box data-testid="pattern-library-header">
-            <Typography variant="h2" gutterBottom>
-              Pattern Library
-            </Typography>
-            <Typography variant="body1" color="text.secondary" paragraph>
-              Comprehensive design system and component library for visual regression testing and
-              public documentation
-            </Typography>
-            <Stack direction="row" spacing={2} alignItems="center">
-              <Chip label={`Version ${packageJson.version}`} color="primary" size="small" />
+            <PageHeader
+              eyebrow="Design system"
+              title="Pattern Library"
+              description="Comprehensive design system and component library for visual regression testing and public documentation"
+            />
+            <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: -3 }}>
+              <TonePill variant="outline">Version {packageJson.version}</TonePill>
               <Typography variant="caption" color="text.secondary">
                 Last Updated: {new Date().toLocaleDateString()}
               </Typography>
@@ -121,7 +128,7 @@ export default function PatternLibrary() {
                   {Object.entries(designTokens.colors).map(([name, palette]) => (
                     <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} key={name}>
                       <Paper
-                        elevation={2}
+                        variant="outlined"
                         data-testid={`color-${name}`}
                         sx={{ p: 2, textAlign: 'center' }}
                       >
@@ -191,7 +198,7 @@ export default function PatternLibrary() {
                   {Object.entries(designTokens.typography).map(([variant, style]) => (
                     <Paper
                       key={variant}
-                      elevation={1}
+                      variant="outlined"
                       data-testid={`typography-${variant}`}
                       sx={{ p: 2 }}
                     >
@@ -221,7 +228,7 @@ export default function PatternLibrary() {
                 <Grid container spacing={2}>
                   {Object.entries(designTokens.spacing).map(([name, value]) => (
                     <Grid size={{ xs: 6, md: 4, lg: 2 }} key={name}>
-                      <Paper elevation={1} data-testid={`spacing-${name}`} sx={{ p: 2 }}>
+                      <Paper variant="outlined" data-testid={`spacing-${name}`} sx={{ p: 2 }}>
                         <Typography variant="subtitle2" gutterBottom>
                           {name.toUpperCase()}
                         </Typography>
@@ -246,6 +253,9 @@ export default function PatternLibrary() {
               <Box data-testid="elevation-shadows">
                 <Typography variant="h5" gutterBottom>
                   Elevation & Shadows
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Token reference only. The refreshed surfaces below intentionally use no outer shadows.
                 </Typography>
                 <Grid container spacing={3}>
                   {designTokens.shadows.map((shadow, index) => (
@@ -272,6 +282,167 @@ export default function PatternLibrary() {
 
           <Divider />
 
+          <Box data-testid="surfaces-section">
+            <Typography variant="h3" gutterBottom>
+              Surfaces
+            </Typography>
+            <Typography variant="body2" color="text.secondary" paragraph>
+              The refreshed page language: a shell (tray) holding a core (plate) with concentric radii.
+              Depth comes from nesting, a hairline border and a 1px inset highlight, never an outer drop shadow.
+              Specification: docs/specs/ui-refresh/SPEC.md.
+            </Typography>
+
+            <Stack spacing={4}>
+              <Box data-testid="bezel-card-surface">
+                <Typography variant="h5" gutterBottom>
+                  BezelCard
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Use for every primary container. Add interactive for clickable cards and accent for a
+                  decorative tone line.
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <BezelCard sx={{ height: '100%' }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Rest</Typography>
+                      <Typography variant="body2" color="text.secondary">Default surface.</Typography>
+                    </BezelCard>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <BezelCard interactive sx={{ height: '100%' }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Interactive</Typography>
+                      <Typography variant="body2" color="text.secondary">Lifts 2px on hover.</Typography>
+                    </BezelCard>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <BezelCard accent="success" sx={{ height: '100%' }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Accent</Typography>
+                      <Typography variant="body2" color="text.secondary">Tone line on the top edge.</Typography>
+                    </BezelCard>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              <Box data-testid="metric-tile-surface">
+                <Typography variant="h5" gutterBottom>
+                  MetricTile
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  KPI with a tabular numeral. Tone follows meaning: success for good, error only when non-zero.
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <MetricTile label="Total Audits" value={22} support="Audits completed" icon={<Icon name="assessment" />} />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <MetricTile label="Avg Accessibility" value="94%" support="Across all audits" tone="success" icon={<Icon name="accessibility_new" />} />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <MetricTile label="Churned Users" value={3} support="Accounts marked churned" tone="error" icon={<Icon name="logout" />} />
+                  </Grid>
+                </Grid>
+              </Box>
+
+              <Box data-testid="score-surface">
+                <Typography variant="h5" gutterBottom>
+                  ScoreBar and ScoreStrip
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Scores color by value (90+ success, 70+ warning, else error), never by category.
+                </Typography>
+                <BezelCard>
+                  <Stack spacing={2.5}>
+                    <ScoreBar label="Accessibility" value={98} />
+                    <ScoreBar label="Performance" value={82} />
+                    <ScoreBar label="Best Practices" value={64} />
+                    <ScoreStrip scores={{ performance: 82, accessibility: 98, bestPractices: 64, seo: 100 }} />
+                  </Stack>
+                </BezelCard>
+              </Box>
+
+              <Box data-testid="tone-pill-surface">
+                <Typography variant="h5" gutterBottom>
+                  TonePill
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Tinted status label. Outline is lowest emphasis, solid the highest; the palette stays monochrome.
+                </Typography>
+                <Stack direction="row" gap={1.5} flexWrap="wrap" alignItems="center">
+                  <TonePill tone="success" dot>Active</TonePill>
+                  <TonePill tone="warning" dot>Inactive</TonePill>
+                  <TonePill tone="error" dot>Churned</TonePill>
+                  <TonePill tone="info" dot>Receiving</TonePill>
+                  <TonePill>Pro</TonePill>
+                  <TonePill variant="outline">Basic</TonePill>
+                  <TonePill variant="solid">Enterprise</TonePill>
+                </Stack>
+              </Box>
+
+              <Box data-testid="segmented-toggle-surface">
+                <Typography variant="h5" gutterBottom>
+                  SegmentedToggleGroup
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Switch a view or dataset in place. The selected segment is outlined by a ring, not a shadow.
+                </Typography>
+                <SegmentedToggleGroup
+                  exclusive
+                  size="small"
+                  value={segment}
+                  onChange={(_, next: string | null) => next && setSegment(next)}
+                  aria-label="Dataset"
+                >
+                  <ToggleButton value="overall">
+                    <Icon name="analytics" style={{ fontSize: 16 }} aria-hidden />
+                    Overall
+                  </ToggleButton>
+                  <ToggleButton value="desktop">
+                    <Icon name="computer" style={{ fontSize: 16 }} aria-hidden />
+                    Desktop
+                  </ToggleButton>
+                  <ToggleButton value="mobile">
+                    <Icon name="smartphone" style={{ fontSize: 16 }} aria-hidden />
+                    Mobile
+                  </ToggleButton>
+                </SegmentedToggleGroup>
+              </Box>
+
+              <Box data-testid="arrow-button-surface">
+                <Typography variant="h5" gutterBottom>
+                  ArrowButton
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Primary call to action. The arrow sits in its own circle and nudges on hover.
+                </Typography>
+                <Stack direction="row" gap={2} flexWrap="wrap">
+                  <ArrowButton>Run Audit</ArrowButton>
+                  <ArrowButton variant="outlined">View report</ArrowButton>
+                  <ArrowButton variant="text">View all</ArrowButton>
+                </Stack>
+              </Box>
+
+              <Box data-testid="empty-state-surface">
+                <Typography variant="h5" gutterBottom>
+                  EmptyState
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Teach the next step; never just say there is nothing here.
+                </Typography>
+                <BezelCard>
+                  <EmptyState
+                    compact
+                    icon="history"
+                    title="No Audit History"
+                    description="Run your first audit to start building your history."
+                    action={<ArrowButton>Run Audit</ArrowButton>}
+                  />
+                </BezelCard>
+              </Box>
+            </Stack>
+          </Box>
+
+          <Divider />
+
           <Box data-testid="atoms-section">
             <Typography variant="h3" gutterBottom>
               Atoms
@@ -287,7 +458,7 @@ export default function PatternLibrary() {
                 </Typography>
                 <Grid container spacing={3}>
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper elevation={1} sx={{ p: 3 }}>
+                    <Paper variant="outlined" sx={{ p: 3 }}>
                       <Typography variant="subtitle2" gutterBottom>
                         Variants
                       </Typography>
@@ -306,7 +477,7 @@ export default function PatternLibrary() {
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper elevation={1} sx={{ p: 3 }}>
+                    <Paper variant="outlined" sx={{ p: 3 }}>
                       <Typography variant="subtitle2" gutterBottom>
                         Colors
                       </Typography>
@@ -328,7 +499,7 @@ export default function PatternLibrary() {
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper elevation={1} sx={{ p: 3 }}>
+                    <Paper variant="outlined" sx={{ p: 3 }}>
                       <Typography variant="subtitle2" gutterBottom>
                         Sizes
                       </Typography>
@@ -347,7 +518,7 @@ export default function PatternLibrary() {
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper elevation={1} sx={{ p: 3 }}>
+                    <Paper variant="outlined" sx={{ p: 3 }}>
                       <Typography variant="subtitle2" gutterBottom>
                         States
                       </Typography>
@@ -375,7 +546,7 @@ export default function PatternLibrary() {
                 <Typography variant="h5" gutterBottom>
                   Icons
                 </Typography>
-                <Paper elevation={1} sx={{ p: 3 }}>
+                <Paper variant="outlined" sx={{ p: 3 }}>
                   <Grid container spacing={2}>
                     {[
                       'home',
@@ -418,7 +589,7 @@ export default function PatternLibrary() {
                 </Typography>
                 <Grid container spacing={3}>
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper elevation={1} sx={{ p: 3 }}>
+                    <Paper variant="outlined" sx={{ p: 3 }}>
                       <Typography variant="subtitle2" gutterBottom>
                         Text Fields
                       </Typography>
@@ -451,7 +622,7 @@ export default function PatternLibrary() {
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper elevation={1} sx={{ p: 3 }}>
+                    <Paper variant="outlined" sx={{ p: 3 }}>
                       <Typography variant="subtitle2" gutterBottom>
                         Selects & Controls
                       </Typography>
@@ -514,7 +685,7 @@ export default function PatternLibrary() {
                 <Typography variant="h5" gutterBottom>
                   Chips
                 </Typography>
-                <Paper elevation={1} sx={{ p: 3 }}>
+                <Paper variant="outlined" sx={{ p: 3 }}>
                   <Stack direction="row" spacing={2} flexWrap="wrap" gap={2}>
                     <Chip label="Default" data-testid="chip-default" />
                     <Chip label="Primary" color="primary" data-testid="chip-primary" />
@@ -544,7 +715,7 @@ export default function PatternLibrary() {
                 <Typography variant="h5" gutterBottom>
                   Progress Indicators
                 </Typography>
-                <Paper elevation={1} sx={{ p: 3 }}>
+                <Paper variant="outlined" sx={{ p: 3 }}>
                   <Stack spacing={3}>
                     <Box>
                       <Typography variant="subtitle2" gutterBottom>
@@ -581,7 +752,7 @@ export default function PatternLibrary() {
                 </Typography>
                 <Grid container spacing={3}>
                   <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-                    <Card elevation={2} data-testid="card-basic">
+                    <Card variant="outlined" data-testid="card-basic">
                       <CardContent>
                         <Typography variant="h6" gutterBottom>
                           Basic Card
@@ -655,7 +826,7 @@ export default function PatternLibrary() {
                 <Typography variant="h5" gutterBottom>
                   Toggle Button Groups
                 </Typography>
-                <Paper elevation={1} sx={{ p: 3 }}>
+                <Paper variant="outlined" sx={{ p: 3 }}>
                   <ToggleButtonGroup
                     value={toggleValue}
                     exclusive
@@ -694,17 +865,17 @@ export default function PatternLibrary() {
                 </Typography>
                 <Grid container spacing={3}>
                   <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-                    <Paper elevation={1} sx={{ p: 3 }}>
+                    <Paper variant="outlined" sx={{ p: 3 }}>
                       <ComplianceGauge score={85} label="High Compliance" />
                     </Paper>
                   </Grid>
                   <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-                    <Paper elevation={1} sx={{ p: 3 }}>
+                    <Paper variant="outlined" sx={{ p: 3 }}>
                       <ComplianceGauge score={60} label="Medium Compliance" />
                     </Paper>
                   </Grid>
                   <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-                    <Paper elevation={1} sx={{ p: 3 }}>
+                    <Paper variant="outlined" sx={{ p: 3 }}>
                       <ComplianceGauge score={30} label="Low Compliance" />
                     </Paper>
                   </Grid>
@@ -715,7 +886,7 @@ export default function PatternLibrary() {
                 <Typography variant="h5" gutterBottom>
                   Toolbar Example
                 </Typography>
-                <Paper elevation={2} sx={{ p: 2 }} data-testid="toolbar-example">
+                <Paper variant="outlined" sx={{ p: 2 }} data-testid="toolbar-example">
                   <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
                     <Stack direction="row" spacing={2} alignItems="center">
                       <IconButton>
@@ -752,7 +923,7 @@ export default function PatternLibrary() {
             <Typography variant="h3" gutterBottom>
               Usage Guidelines
             </Typography>
-            <Paper elevation={1} sx={{ p: 3 }}>
+            <Paper variant="outlined" sx={{ p: 3 }}>
               <Stack spacing={2}>
                 <Typography variant="h6">Visual Regression Testing</Typography>
                 <Typography variant="body2" color="text.secondary" paragraph>
@@ -782,7 +953,6 @@ export default function PatternLibrary() {
             </Paper>
           </Box>
         </Stack>
-      </Container>
-    </Box>
+    </PageCanvas>
   );
 }

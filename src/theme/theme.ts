@@ -1,10 +1,52 @@
 import { createTheme } from '@mui/material/styles';
-import { primitiveTokens } from './tokens';
+import type { CSSProperties } from 'react';
+import { controlRadius, motionTokens, primitiveTokens, surfaceTokens } from './tokens';
 
 declare module '@mui/material/styles' {
   interface BreakpointOverrides {
     tiny: true;
     xxl: true;
+  }
+
+  /** Contrast-safe foregrounds for tone-colored text (SPEC §3.3). */
+  interface Palette {
+    toneText: { success: string; warning: string; error: string; info: string };
+  }
+  interface PaletteOptions {
+    toneText?: { success: string; warning: string; error: string; info: string };
+  }
+
+  /** Nested-bezel surface geometry (docs/specs/ui-refresh/SPEC.md §3.1). */
+  interface Theme {
+    surfaces: typeof surfaceTokens;
+  }
+  interface ThemeOptions {
+    surfaces?: typeof surfaceTokens;
+  }
+
+  interface Easing {
+    /** Mass-simulating curve for transform and shadow moves. */
+    spring: string;
+  }
+  interface Duration {
+    /** Reserved for transform and shadow moves. */
+    slow: number;
+  }
+
+  interface TypographyVariants {
+    eyebrow: CSSProperties;
+    metric: CSSProperties;
+  }
+  interface TypographyVariantsOptions {
+    eyebrow?: CSSProperties;
+    metric?: CSSProperties;
+  }
+}
+
+declare module '@mui/material/Typography' {
+  interface TypographyPropsVariantOverrides {
+    eyebrow: true;
+    metric: true;
   }
 }
 
@@ -27,14 +69,17 @@ const theme = createTheme({
       complex: 375,
       enteringScreen: 225,
       leavingScreen: 195,
+      slow: motionTokens.slow,
     },
     easing: {
       easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
       easeOut: 'cubic-bezier(0.0, 0, 0.2, 1)',
       easeIn: 'cubic-bezier(0.4, 0, 1, 1)',
       sharp: 'cubic-bezier(0.4, 0, 0.6, 1)',
+      spring: motionTokens.spring,
     },
   },
+  surfaces: surfaceTokens,
   colorSchemes: {
     light: {
       palette: primitiveTokens.light,
@@ -93,6 +138,22 @@ const theme = createTheme({
       fontWeight: 550,
       letterSpacing: '0.01em',
     },
+    // Additive variants for the refreshed pages (SPEC §3.2).
+    eyebrow: {
+      fontSize: '0.6875rem',
+      fontWeight: 600,
+      lineHeight: 1.4,
+      letterSpacing: '0.14em',
+      textTransform: 'uppercase',
+      color: 'var(--mui-palette-text-secondary)',
+    },
+    metric: {
+      fontSize: 'clamp(2.25rem, 6cqw, 3.5rem)',
+      fontWeight: 650,
+      lineHeight: 1,
+      letterSpacing: '-0.03em',
+      fontVariantNumeric: 'tabular-nums',
+    },
   },
   shape: {
     borderRadius: 4,
@@ -146,7 +207,7 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 6,
+          borderRadius: controlRadius,
           borderWidth: 2,
           fontSize: '1rem',
           fontWeight: 550,
@@ -229,6 +290,14 @@ const theme = createTheme({
         },
       },
     },
+    MuiTypography: {
+      defaultProps: {
+        variantMapping: {
+          eyebrow: 'span',
+          metric: 'p',
+        },
+      },
+    },
     MuiListItemButton: {
       styleOverrides: {
         root: {          
@@ -249,7 +318,14 @@ const theme = createTheme({
       styleOverrides: {
         root: {          
           background: 'var(--mui-palette-background-default)',
-          borderRadius: 'var(--mui-shape-borderRadius)',
+          borderRadius: controlRadius,
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          borderRadius: controlRadius,
         },
       },
     },

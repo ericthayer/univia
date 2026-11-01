@@ -1,70 +1,69 @@
-import { Card, CardContent, Typography, Box } from '@mui/material';
+import Box from '@mui/material/Box';
+import ButtonBase from '@mui/material/ButtonBase';
+import Typography from '@mui/material/Typography';
 import type { HelpCategory } from '../../config/helpContent';
+import { BezelCard } from '../ui/BezelCard/BezelCard';
 import Icon from '../ui/Icon';
 
 interface HelpCategoryCardProps {
   category: HelpCategory;
   onClick?: () => void;
+  /** Stagger index for the mount reveal. */
+  reveal?: number;
 }
 
-export default function HelpCategoryCard({ category, onClick }: HelpCategoryCardProps) {
+export default function HelpCategoryCard({ category, onClick, reveal }: HelpCategoryCardProps) {
   return (
-    <Card
-      onClick={onClick}
-      sx={{
-        cursor: 'pointer',
-        height: '100%',
-        transition: 'all 0.2s ease-in-out',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: 4,
-        },
-        '&:focus-within': {
-          outline: '3px solid',
-          outlineColor: 'primary.main',
-          outlineOffset: 2,
-        },
-      }}
-      tabIndex={0}
-      role="button"
-      aria-label={`View ${category.title} help articles`}
-      onKeyDown={(e) => {
-        if ((e.key === 'Enter' || e.key === ' ') && onClick) {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-    >
-      <CardContent sx={{ textAlign: 'center', py: 4 }}>
+    <BezelCard interactive padding="none" reveal={reveal} sx={{ height: '100%' }}>
+      <ButtonBase
+        onClick={onClick}
+        aria-label={`View ${category.title} help articles`}
+        sx={(theme) => ({
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          textAlign: 'left',
+          gap: 2,
+          width: '100%',
+          height: '100%',
+          p: { xs: 2, sm: 3 },
+          borderRadius: `${theme.surfaces.coreRadius}px`,
+          '&.Mui-focusVisible': {
+            outline: '2px solid',
+            outlineColor: 'primary.main',
+            outlineOffset: -2,
+          },
+        })}
+      >
         <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            mb: 2,
-          }}
+          aria-hidden="true"
+          sx={(theme) => ({
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            display: 'grid',
+            placeItems: 'center',
+            flexShrink: 0,
+            bgcolor: 'action.hover',
+            color: 'text.primary',
+            fontSize: '1.25rem',
+            boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.5)',
+            ...theme.applyStyles('dark', {
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+            }),
+          })}
         >
-          <Box
-            sx={{
-              width: 80,
-              height: 80,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: 2,
-              bgcolor: 'primary.main',
-              color: 'primary.contrastText',
-            }}
-          >
-            <Icon name={category.icon} style={{ fontSize: 40 }} />
-          </Box>
+          <Icon name={category.icon} />
         </Box>
-        <Typography variant="h6" component="h3" fontWeight={600} gutterBottom>
-          {category.title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {category.description}
-        </Typography>
-      </CardContent>
-    </Card>
+        <Box>
+          <Typography variant="h6" component="span" sx={{ display: 'block', fontWeight: 600, mb: 0.5 }}>
+            {category.title}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" component="span" sx={{ display: 'block' }}>
+            {category.description}
+          </Typography>
+        </Box>
+      </ButtonBase>
+    </BezelCard>
   );
 }

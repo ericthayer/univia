@@ -1,4 +1,8 @@
-import { Box, FormHelperText, Typography, LinearProgress } from '@mui/material';
+import Box from '@mui/material/Box';
+import FormHelperText from '@mui/material/FormHelperText';
+import LinearProgress from '@mui/material/LinearProgress';
+import Typography from '@mui/material/Typography';
+import type { Theme } from '@mui/material/styles';
 import { ValidationError } from '../../utils/validation';
 import Icon from '../ui/Icon';
 
@@ -14,6 +18,18 @@ interface ValidationFeedbackProps {
   alwaysShowHelper?: string;
 }
 
+type UsageTone = 'success' | 'warning' | 'error';
+
+function usageTone(percentageUsed: number): UsageTone {
+  if (percentageUsed > 90) return 'error';
+  if (percentageUsed > 75) return 'warning';
+  return 'success';
+}
+
+/**
+ * Inline field feedback: error, helper, success, and an optional length meter.
+ * Every state pairs an icon with text, so color is never the only signal.
+ */
 export default function ValidationFeedback({
   error,
   isValid,
@@ -28,28 +44,18 @@ export default function ValidationFeedback({
   const shouldShowError = error && (isDirty || isTouched);
   const shouldShowSuccess = isValid && isDirty && isTouched && !error;
   const percentageUsed = maxLength ? (characterCount / maxLength) * 100 : 0;
+  const tone = usageTone(percentageUsed);
 
   return (
-    <Box sx={{ mt: 1 }}>
+    <Box sx={{ mt: 1 }} aria-live="polite">
       {shouldShowError && (
         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 2 }}>
           <Icon
             name="error"
-            style={{
-              fontSize: 18,
-              color: '#EF4444',
-              marginTop: '2px',
-              flexShrink: 0,
-            }}
+            aria-hidden
+            style={{ fontSize: 18, marginTop: '2px', flexShrink: 0, color: 'var(--mui-palette-error-main)' }}
           />
-          <FormHelperText
-            error
-            sx={{
-              fontSize: '0.75rem',
-              lineHeight: 1.4,
-              m: 0,
-            }}
-          >
+          <FormHelperText error sx={{ fontSize: '0.75rem', lineHeight: 1.4, m: 0 }}>
             {error.message}
           </FormHelperText>
         </Box>
@@ -59,21 +65,10 @@ export default function ValidationFeedback({
         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 2 }}>
           <Icon
             name="info"
-            style={{
-              fontSize: 18,
-              color: '#3B82F6',
-              marginTop: '2px',
-              flexShrink: 0,
-            }}
+            aria-hidden
+            style={{ fontSize: 18, marginTop: '2px', flexShrink: 0, color: 'var(--mui-palette-text-secondary)' }}
           />
-          <FormHelperText
-            sx={{
-              fontSize: '0.875rem',
-              lineHeight: 1.4,
-              color: 'text.secondary',
-              m: 0,
-            }}
-          >
+          <FormHelperText sx={{ fontSize: '0.875rem', lineHeight: 1.4, color: 'text.secondary', m: 0 }}>
             {alwaysShowHelper}
           </FormHelperText>
         </Box>
@@ -83,18 +78,10 @@ export default function ValidationFeedback({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
           <Icon
             name="check_circle"
-            style={{
-              fontSize: 18,
-              color: '#22C55E',
-            }}
+            aria-hidden
+            style={{ fontSize: 18, flexShrink: 0, color: 'var(--mui-palette-success-main)' }}
           />
-          <FormHelperText
-            sx={{
-              color: '#22C55E',
-              fontSize: '0.75rem',
-              m: 0,
-            }}
-          >
+          <FormHelperText sx={{ color: 'success.main', fontSize: '0.75rem', m: 0 }}>
             {label} is valid
           </FormHelperText>
         </Box>
@@ -116,13 +103,9 @@ export default function ValidationFeedback({
             <Typography
               variant="caption"
               sx={{
-                color:
-                  percentageUsed > 90
-                    ? '#EF4444'
-                    : percentageUsed > 75
-                      ? '#F97316'
-                      : '#6B7280',
+                color: `${tone}.main`,
                 fontWeight: 600,
+                fontVariantNumeric: 'tabular-nums',
               }}
             >
               {characterCount} / {maxLength}
@@ -131,18 +114,16 @@ export default function ValidationFeedback({
           <LinearProgress
             variant="determinate"
             value={Math.min(percentageUsed, 100)}
+            aria-label={`${label || 'Input'} length used`}
             sx={{
               height: 6,
-              borderRadius: 3,
-              backgroundColor: '#E5E7EB',
+              borderRadius: 999,
+              backgroundColor: 'action.hover',
               '& .MuiLinearProgress-bar': {
-                backgroundColor:
-                  percentageUsed > 90
-                    ? '#EF4444'
-                    : percentageUsed > 75
-                      ? '#F97316'
-                      : '#22C55E',
-                borderRadius: 3,
+                borderRadius: 999,
+                backgroundColor: (theme: Theme) => (theme.vars ?? theme).palette[tone].main,
+                transition: (theme: Theme) =>
+                  `transform ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}`,
               },
             }}
           />

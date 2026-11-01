@@ -19,7 +19,9 @@ const AnalyzeReport = lazy(() => import('./pages/AnalyzeReport'));
 const AccountSettings = lazy(() => import('./pages/AccountSettings'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const UserManagement = lazy(() => import('./pages/admin/UserManagement'));
+const BillingManagement = lazy(() => import('./pages/admin/BillingManagement'));
 const DocumentAnalysisTest = lazy(() => import('./pages/admin/DocumentAnalysisTest'));
+const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
 const GeminiStreamingDemo = lazy(() => import('./pages/admin/GeminiStreamingDemo'));
 const PatternLibrary = lazy(() => import('./pages/PatternLibrary'));
 const SignIn = lazy(() => import('./pages/auth/SignIn'));
@@ -143,7 +145,7 @@ function App() {
                       path="/admin/billing"
                       element={
                         <AdminRoute>
-                          <UserManagement />
+                          <BillingManagement />
                         </AdminRoute>
                       }
                     />
@@ -151,7 +153,7 @@ function App() {
                       path="/admin/settings"
                       element={
                         <AdminRoute>
-                          <UserManagement />
+                          <AdminSettings />
                         </AdminRoute>
                       }
                     />

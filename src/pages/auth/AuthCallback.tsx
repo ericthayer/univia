@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Typography from '@mui/material/Typography';
 import { supabase } from '../../services/supabaseClient';
 
 export default function AuthCallback() {
@@ -51,19 +53,24 @@ export default function AuthCallback() {
     handleAuthCallback();
   }, [navigate]);
 
+  // No BezelCard here: the callback test renders without the project theme.
   return (
     <Box
+      component="main"
+      role="status"
+      aria-live="polite"
       sx={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '100vh',
-        gap: 2,
+        minHeight: '100dvh',
+        gap: 2.5,
+        bgcolor: 'background.default',
       }}
     >
-      <CircularProgress size={48} />
-      <Typography variant="h6" color="text.secondary">
+      <CircularProgress size={40} thickness={3} color="inherit" sx={{ color: 'text.secondary' }} aria-hidden="true" />
+      <Typography variant="body1" color="text.secondary">
         Completing sign in...
       </Typography>
     </Box>

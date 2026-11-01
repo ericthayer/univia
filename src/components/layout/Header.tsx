@@ -1,16 +1,39 @@
 import { AppBar, Toolbar, Tooltip, IconButton, Box, Typography, Stack, Button, useColorScheme } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import logoUniviaUrl from '../../assets/images/logo-univia.svg';
-import { getHeaderMenuItems, ROUTE_PATHS, MenuItem } from '../../config/navigation';
+import { getHeaderMenuItems, MenuItem } from '../../config/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import UserMenu from '../auth/UserMenu';
 import Icon from '../ui/Icon';
+import { controlRadius } from '../../theme/tokens';
 
 interface HeaderProps {
   onMobileMenuToggle?: () => void;
   mobileMenuOpen?: boolean;
 }
+
+const focusRingSx = {
+  '&:focus-visible': {
+    outline: '2px solid',
+    outlineColor: 'primary.main',
+    outlineOffset: 2,
+  },
+} as const;
+
+// Header controls share the site's control language (ui-refresh SPEC §3): 16px radius,
+// 44px targets, no underline on text buttons, background-only hover.
+const controlButtonSx = {
+  borderRadius: controlRadius,
+  minHeight: 44,
+  textTransform: 'none',
+  whiteSpace: 'nowrap',
+  textDecoration: 'none !important',
+  transition: (theme: Theme) =>
+    `background-color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}, color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}`,
+  ...focusRingSx,
+} as const;
 
 export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: HeaderProps) {
   const { mode, setMode } = useColorScheme();
@@ -18,7 +41,10 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
   const navigate = useNavigate();
   const location = useLocation();
   const { isRegistered, loading: authLoading } = useAuth();
-  const menuItems = getHeaderMenuItems(isRegistered);
+  // Hold back "Sign In" until auth resolves so signed-in users never see it flash.
+  const menuItems = getHeaderMenuItems(isRegistered).filter(
+    (item) => !(authLoading && item.id === 'sign-in'),
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -62,13 +88,15 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
               }
             }}
             variant="text"
+            aria-label="Univia home"
             sx={{
+              ...controlButtonSx,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              textTransform: 'none',
               borderColor: 'transparent',
-              p: 1,
+              px: 1.5,
+              py: 0.5,
             }}
           >
             <Box
@@ -144,19 +172,14 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                   }
 
                   sx={{
-                    textTransform: 'none',
-                    whiteSpace: 'nowrap',
+                    ...controlButtonSx,
                     fontSize: '1rem',
-                    px: 'clamp(0.35rem, 2cqw, 0.75rem)',
+                    px: 'clamp(0.875rem, 2cqw, 1.25rem)',
                     color: isActive ? 'primary.contrastText' : 'text.primary',
                     bgcolor: isActive ? 'primary.main' : 'transparent',
                     '&:hover': {
                       bgcolor: isActive ? 'primary.main' : 'action.hover',
-                    },
-                    '&:focus-visible': {
-                      outline: '2px solid',
-                      outlineColor: 'primary.main',
-                      outlineOffset: 2,
+                      color: isActive ? 'primary.contrastText' : 'text.primary',
                     },
                     '.MuiButton-icon:has(> .button-icon)': {
                       display: { xs: 'none', '@800': 'inherit' }
@@ -172,28 +195,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
 
         <Stack direction="row" gap={1.5} alignItems="center" sx={{ ml: 'auto' }}>
 
-          {!authLoading && (
-            <Box>
-              {isRegistered ? (
-                <UserMenu />
-              ) : (
-                <Stack direction="row" gap={1.5} sx={{ display: { xs: 'none', md: 'flex' } }}>
-                  <Button
-                    variant="text"
-                    onClick={() => navigate(ROUTE_PATHS.SIGN_IN)}
-                  >
-                    Sign In
-                  </Button>
-                  <Button
-                    variant="contained"
-                    onClick={() => navigate(ROUTE_PATHS.SIGN_UP)}
-                  >
-                    Register
-                  </Button>
-                </Stack>
-              )}
-            </Box>
-          )}
+          {!authLoading && isRegistered && <UserMenu />}
 
           <Tooltip title="Toggle Color Mode">
             <IconButton
@@ -202,11 +204,15 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
               onClick={toggleColorMode}
               sx={{
                 display: { xs: 'none', md: 'inline-flex' },
-                '&:focus-visible': {
-                  outline: '2px solid',
-                  outlineColor: 'primary.main',
-                  outlineOffset: 2,
-                },
+                minWidth: 44,
+                minHeight: 44,
+                borderRadius: controlRadius,
+                px: { xs: 0, xxl: 1.5 },
+                color: 'text.primary',
+                transition: (theme) =>
+                  `background-color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}`,
+                '&:hover': { bgcolor: 'action.hover' },
+                ...focusRingSx,
               }}
             >
               <Typography
@@ -232,30 +238,14 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
             aria-controls="mobile-navigation"
             variant="contained"
             onClick={onMobileMenuToggle}
+            startIcon={<Icon name={mobileMenuOpen ? 'close' : 'menu'} aria-hidden />}
             sx={{
-              background: 'transparent',
+              ...controlButtonSx,
               display: { xs: 'inline-flex', md: 'none' },
-              minHeight: 44,
-              p: 0,
-              textTransform: 'uppercase',
-              '&:focus-visible': {
-                outline: '2px solid',
-                outlineColor: 'primary.main',
-                outlineOffset: 2,
-              },
+              px: 2,
             }}
           >
-            <Box
-              component="small"
-              sx={{
-                bgcolor: 'primary.main',
-                borderRadius: 1.5,
-                py: 1,
-                px: 2,
-              }}
-            >
-              Menu
-            </Box>
+            Menu
           </Button>
         </Stack>
 
