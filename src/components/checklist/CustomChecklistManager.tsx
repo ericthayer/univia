@@ -19,6 +19,7 @@ import { EmptyState } from '../ui/EmptyState/EmptyState';
 import { ScoreBar } from '../ui/ScoreBar/ScoreBar';
 import { SectionHeader } from '../ui/SectionHeader/SectionHeader';
 import { TonePill } from '../ui/TonePill/TonePill';
+import { controlRadius } from '../../theme/tokens';
 
 export default function CustomChecklistManager() {
   const {
@@ -104,7 +105,7 @@ export default function CustomChecklistManager() {
                   color="error"
                   startIcon={<Icon name="delete_sweep" />}
                   onClick={() => setResetDialogOpen(true)}
-                  sx={{ borderRadius: 999, minHeight: 44, px: 2.5 }}
+                  sx={{ borderRadius: controlRadius, minHeight: 44, px: 2.5 }}
                 >
                   Reset All
                 </Button>
@@ -282,7 +283,7 @@ export default function CustomChecklistManager() {
             onClick={confirmDelete}
             color="error"
             variant="contained"
-            sx={{ borderRadius: 999, minHeight: 44, px: 2.5 }}
+            sx={{ borderRadius: controlRadius, minHeight: 44, px: 2.5 }}
           >
             Delete
           </Button>
@@ -308,7 +309,7 @@ export default function CustomChecklistManager() {
             onClick={handleResetAll}
             color="error"
             variant="contained"
-            sx={{ borderRadius: 999, minHeight: 44, px: 2.5 }}
+            sx={{ borderRadius: controlRadius, minHeight: 44, px: 2.5 }}
           >
             Reset All
           </Button>

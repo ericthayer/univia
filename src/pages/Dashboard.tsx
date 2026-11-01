@@ -14,6 +14,7 @@ import { PageCanvas } from '../components/ui/PageCanvas/PageCanvas';
 import { SectionHeader } from '../components/ui/SectionHeader/SectionHeader';
 import { TonePill } from '../components/ui/TonePill/TonePill';
 import { useAuth } from '../contexts/AuthContext';
+import { controlRadius } from '../theme/tokens';
 
 const ADA_URL =
   'https://www.ada.gov/topics/intro-to-ada/#:~:text=The%EE%80%80%20Americans%20with%20Disabilities%20Act%EE%80%81%20(ADA)';
@@ -141,7 +142,7 @@ export default function Dashboard() {
               size="large"
               onClick={() => navigate('/letters')}
               startIcon={<Icon name="upload_file" />}
-              sx={{ borderRadius: 999, minHeight: 48, px: 3, flexGrow: { xs: 1, sm: 0 } }}
+              sx={{ borderRadius: controlRadius, minHeight: 48, px: 3, flexGrow: { xs: 1, sm: 0 } }}
             >
               Analyze Letter
             </Button>

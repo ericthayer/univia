@@ -16,6 +16,7 @@ import type { Tone } from '../../components/ui/tone';
 import { srOnly } from '../../components/ui/srOnly';
 import { ensureSession } from '../../services/session';
 import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from '../../services/supabaseFunctions';
+import { controlRadius } from '../../theme/tokens';
 
 const WIDE = '@container (min-width: 900px)';
 
@@ -229,7 +230,7 @@ export default function DocumentAnalysisTest() {
               disabled={!file || uploading}
               startIcon={<Icon name={uploading ? 'hourglass_empty' : 'tools'} />}
               sx={{
-                borderRadius: 999,
+                borderRadius: controlRadius,
                 minHeight: 48,
                 '&.Mui-disabled': { bgcolor: 'action.disabledBackground', color: 'text.disabled' },
               }}

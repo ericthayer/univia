@@ -16,6 +16,7 @@ import { BezelCard } from '../components/ui/BezelCard/BezelCard';
 import { EmptyState } from '../components/ui/EmptyState/EmptyState';
 import { TonePill } from '../components/ui/TonePill/TonePill';
 import { FilterSelect } from '../components/admin/FilterSelect/FilterSelect';
+import { controlRadius } from '../theme/tokens';
 
 const TYPE_OPTIONS = [
   { value: 'all', label: 'All Types' },
@@ -158,7 +159,7 @@ function ResourceCard({ resource, reveal }: ResourceCardProps) {
           variant="contained"
           fullWidth
           startIcon={<Icon name="email" />}
-          sx={{ borderRadius: 999, minHeight: 44 }}
+          sx={{ borderRadius: controlRadius, minHeight: 44 }}
         >
           Contact
         </Button>
@@ -166,7 +167,7 @@ function ResourceCard({ resource, reveal }: ResourceCardProps) {
           <Button
             variant="outlined"
             startIcon={<Icon name="language" />}
-            sx={{ borderRadius: 999, minHeight: 44, flexShrink: 0 }}
+            sx={{ borderRadius: controlRadius, minHeight: 44, flexShrink: 0 }}
           >
             Website
           </Button>
@@ -264,9 +265,9 @@ export default function Resources() {
           }}
           sx={{
             flex: '1 1 18rem',
-            // The theme paints the field root with a square background; round it to match the pill outline.
-            borderRadius: 999,
-            '& .MuiOutlinedInput-root': { borderRadius: 999, minHeight: 44, pl: 1.75 },
+            // The theme paints the field root with a square background; round it to match the outline.
+            borderRadius: controlRadius,
+            '& .MuiOutlinedInput-root': { borderRadius: controlRadius, minHeight: 44, pl: 1.75 },
           }}
         />
         <FilterSelect
@@ -279,7 +280,7 @@ export default function Resources() {
         <Button
           variant="outlined"
           startIcon={<Icon name="filter_list" />}
-          sx={{ borderRadius: 999, minHeight: 44, px: 2.5, flexShrink: 0 }}
+          sx={{ borderRadius: controlRadius, minHeight: 44, px: 2.5, flexShrink: 0 }}
         >
           More Filters
         </Button>
@@ -340,7 +341,7 @@ export default function Resources() {
                   setSearchTerm('');
                   setTypeFilter('all');
                 }}
-                sx={{ borderRadius: 999, minHeight: 44, px: 2.5 }}
+                sx={{ borderRadius: controlRadius, minHeight: 44, px: 2.5 }}
               >
                 Clear Filters
               </Button>

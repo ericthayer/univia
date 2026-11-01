@@ -18,23 +18,24 @@ import { PageHeader } from '../components/ui/PageHeader/PageHeader';
 import { SectionHeader } from '../components/ui/SectionHeader/SectionHeader';
 import { TonePill } from '../components/ui/TonePill/TonePill';
 import { validatePasswordChange } from '../utils/validation';
+import { controlRadius } from '../theme/tokens';
 
 const WIDE = '@container (min-width: 900px)';
 
-// Pill fields: the theme paints the whole TextField root (helper text included)
+// Control fields: the theme paints the whole TextField root (helper text included)
 // with a square background. Clear it on the root and paint the outlined input
 // instead, so corners and helper text sit on the card surface.
-const pillFieldSx = {
-  borderRadius: 999,
+const controlFieldSx = {
+  borderRadius: controlRadius,
   bgcolor: 'transparent',
-  '& .MuiOutlinedInput-root': { borderRadius: 999, minHeight: 48, pl: 0.5, bgcolor: 'background.default' },
+  '& .MuiOutlinedInput-root': { borderRadius: controlRadius, minHeight: 48, pl: 0.5, bgcolor: 'background.default' },
   '& .MuiOutlinedInput-input': { px: 2 },
   '& .MuiInputLabel-root': { ml: 1 },
   '& .MuiFormHelperText-root': { mx: 2, mt: 1 },
 } as const;
 
-const pillButtonSx = {
-  borderRadius: 999,
+const controlButtonSx = {
+  borderRadius: controlRadius,
   minHeight: 48,
   px: 3,
   '&.Mui-disabled': { bgcolor: 'action.disabledBackground', color: 'text.disabled' },
@@ -189,7 +190,7 @@ export default function AccountSettings() {
                 autoComplete="name"
                 onChange={(e) => setFullName(e.target.value)}
                 fullWidth
-                sx={pillFieldSx}
+                sx={controlFieldSx}
               />
 
               <TextField
@@ -198,7 +199,7 @@ export default function AccountSettings() {
                 fullWidth
                 disabled
                 helperText="Email cannot be changed"
-                sx={pillFieldSx}
+                sx={controlFieldSx}
               />
 
               <Box>
@@ -206,7 +207,7 @@ export default function AccountSettings() {
                   type="submit"
                   variant="contained"
                   disabled={saving || fullName === profile.full_name}
-                  sx={pillButtonSx}
+                  sx={controlButtonSx}
                 >
                   {saving ? 'Saving…' : 'Save Changes'}
                 </Button>
@@ -239,7 +240,7 @@ export default function AccountSettings() {
                 autoComplete="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                sx={pillFieldSx}
+                sx={controlFieldSx}
                 slotProps={{
                   input: {
                     endAdornment: (
@@ -249,7 +250,7 @@ export default function AccountSettings() {
                           onClick={() => setShowPassword(!showPassword)}
                           aria-pressed={showPassword}
                           aria-label={showPassword ? 'Hide passwords' : 'Show passwords'}
-                          sx={{ minHeight: 40, minWidth: 56, borderRadius: 999, mr: 0.5 }}
+                          sx={{ minHeight: 40, minWidth: 56, borderRadius: controlRadius, mr: 0.5 }}
                         >
                           {showPassword ? 'Hide' : 'Show'}
                         </Button>
@@ -266,7 +267,7 @@ export default function AccountSettings() {
                 autoComplete="new-password"
                 value={confirmNewPassword}
                 onChange={(e) => setConfirmNewPassword(e.target.value)}
-                sx={pillFieldSx}
+                sx={controlFieldSx}
               />
 
               <Box>
@@ -274,7 +275,7 @@ export default function AccountSettings() {
                   type="submit"
                   variant="contained"
                   disabled={passwordSaving || !newPassword || !confirmNewPassword}
-                  sx={pillButtonSx}
+                  sx={controlButtonSx}
                 >
                   {passwordSaving ? 'Updating…' : 'Update Password'}
                 </Button>
@@ -366,7 +367,7 @@ export default function AccountSettings() {
           Once you delete your account, there is no going back. This action cannot be undone.
         </Typography>
         <Box sx={{ mt: 2.5 }}>
-          <Button variant="outlined" color="error" sx={{ borderRadius: 999, minHeight: 48, px: 3 }}>
+          <Button variant="outlined" color="error" sx={{ borderRadius: controlRadius, minHeight: 48, px: 3 }}>
             Delete Account
           </Button>
         </Box>

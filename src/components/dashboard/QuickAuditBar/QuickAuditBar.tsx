@@ -16,6 +16,7 @@ import {
   LighthouseAuditError,
   requestLighthouseAudit,
 } from '../../../services/lighthouseAudit.service';
+import { controlRadius } from '../../../theme/tokens';
 
 export interface QuickAuditBarProps {
   /** Opens the document analysis drawer. */
@@ -25,7 +26,7 @@ export interface QuickAuditBarProps {
 const GENERIC_ERROR = 'Failed to run audit. Please try again.';
 
 /**
- * Header actions for the signed-in dashboard: a pill URL field whose submit
+ * Header actions for the signed-in dashboard: a URL field whose submit
  * button is seated inside the field, plus the "Analyze Docs" entry point.
  */
 export function QuickAuditBar({ onAnalyzeDocs }: QuickAuditBarProps) {
@@ -135,7 +136,7 @@ export function QuickAuditBar({ onAnalyzeDocs }: QuickAuditBarProps) {
           minWidth: { xs: '100%', sm: 260 },
           bgcolor: 'transparent',
           '& .MuiOutlinedInput-root': {
-            borderRadius: 999,
+            borderRadius: controlRadius,
             bgcolor: 'background.default',
             pr: 0.75,
             minHeight: 44,
@@ -146,7 +147,7 @@ export function QuickAuditBar({ onAnalyzeDocs }: QuickAuditBarProps) {
         variant="outlined"
         onClick={onAnalyzeDocs}
         startIcon={<Icon name="upload_file" />}
-        sx={{ borderRadius: 999, minHeight: 44, px: 2.5, flexShrink: 0 }}
+        sx={{ borderRadius: controlRadius, minHeight: 44, px: 2.5, flexShrink: 0 }}
       >
         Analyze Docs
       </Button>
