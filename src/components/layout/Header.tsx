@@ -1,4 +1,5 @@
 import { AppBar, Toolbar, Tooltip, IconButton, Box, Typography, Stack, Button, useColorScheme } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import logoUniviaUrl from '../../assets/images/logo-univia.svg';
@@ -7,18 +8,31 @@ import { useAuth } from '../../contexts/AuthContext';
 import UserMenu from '../auth/UserMenu';
 import Icon from '../ui/Icon';
 
-// Header controls use the same pill shape as buttons across the rest of the site.
-const pillButtonSx = {
-  borderRadius: 999,
-  minHeight: 40,
-  px: 2,
-  textDecoration: 'none !important',
-} as const;
-
 interface HeaderProps {
   onMobileMenuToggle?: () => void;
   mobileMenuOpen?: boolean;
 }
+
+const focusRingSx = {
+  '&:focus-visible': {
+    outline: '2px solid',
+    outlineColor: 'primary.main',
+    outlineOffset: 2,
+  },
+} as const;
+
+// Header controls share the site's pill language (ui-refresh SPEC §3): 999 radius,
+// 44px targets, no underline on text buttons, background-only hover.
+const pillButtonSx = {
+  borderRadius: 999,
+  minHeight: 44,
+  textTransform: 'none',
+  whiteSpace: 'nowrap',
+  textDecoration: 'none !important',
+  transition: (theme: Theme) =>
+    `background-color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}, color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}`,
+  ...focusRingSx,
+} as const;
 
 export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: HeaderProps) {
   const { mode, setMode } = useColorScheme();
@@ -70,13 +84,15 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
               }
             }}
             variant="text"
+            aria-label="Univia home"
             sx={{
+              ...pillButtonSx,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              textTransform: 'none',
               borderColor: 'transparent',
-              p: 1,
+              px: 1.5,
+              py: 0.5,
             }}
           >
             <Box
@@ -153,19 +169,13 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
 
                   sx={{
                     ...pillButtonSx,
-                    textTransform: 'none',
-                    whiteSpace: 'nowrap',
                     fontSize: '1rem',
-                    px: 'clamp(0.75rem, 2cqw, 1rem)',
+                    px: 'clamp(0.875rem, 2cqw, 1.25rem)',
                     color: isActive ? 'primary.contrastText' : 'text.primary',
                     bgcolor: isActive ? 'primary.main' : 'transparent',
                     '&:hover': {
                       bgcolor: isActive ? 'primary.main' : 'action.hover',
-                    },
-                    '&:focus-visible': {
-                      outline: '2px solid',
-                      outlineColor: 'primary.main',
-                      outlineOffset: 2,
+                      color: isActive ? 'primary.contrastText' : 'text.primary',
                     },
                     '.MuiButton-icon:has(> .button-icon)': {
                       display: { xs: 'none', '@800': 'inherit' }
@@ -192,8 +202,9 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                     onClick={() => navigate(ROUTE_PATHS.SIGN_IN)}
                     sx={{
                       ...pillButtonSx,
+                      px: 2,
                       color: 'text.primary',
-                      '&:hover': { bgcolor: 'action.hover' },
+                      '&:hover': { bgcolor: 'action.hover', color: 'text.primary' },
                     }}
                   >
                     Sign In
@@ -201,7 +212,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                   <Button
                     variant="contained"
                     onClick={() => navigate(ROUTE_PATHS.SIGN_UP)}
-                    sx={pillButtonSx}
+                    sx={{ ...pillButtonSx, px: 2.5 }}
                   >
                     Register
                   </Button>
@@ -217,11 +228,15 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
               onClick={toggleColorMode}
               sx={{
                 display: { xs: 'none', md: 'inline-flex' },
-                '&:focus-visible': {
-                  outline: '2px solid',
-                  outlineColor: 'primary.main',
-                  outlineOffset: 2,
-                },
+                minWidth: 44,
+                minHeight: 44,
+                borderRadius: 999,
+                px: { xs: 0, xxl: 1.5 },
+                color: 'text.primary',
+                transition: (theme) =>
+                  `background-color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}`,
+                '&:hover': { bgcolor: 'action.hover' },
+                ...focusRingSx,
               }}
             >
               <Typography
@@ -247,30 +262,14 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
             aria-controls="mobile-navigation"
             variant="contained"
             onClick={onMobileMenuToggle}
+            startIcon={<Icon name={mobileMenuOpen ? 'close' : 'menu'} aria-hidden />}
             sx={{
-              background: 'transparent',
+              ...pillButtonSx,
               display: { xs: 'inline-flex', md: 'none' },
-              minHeight: 44,
-              p: 0,
-              textTransform: 'uppercase',
-              '&:focus-visible': {
-                outline: '2px solid',
-                outlineColor: 'primary.main',
-                outlineOffset: 2,
-              },
+              px: 2,
             }}
           >
-            <Box
-              component="small"
-              sx={{
-                bgcolor: 'primary.main',
-                borderRadius: 999,
-                py: 1,
-                px: 2,
-              }}
-            >
-              Menu
-            </Box>
+            Menu
           </Button>
         </Stack>
 
