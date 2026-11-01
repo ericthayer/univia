@@ -53,7 +53,7 @@ describe('BillingManagement', () => {
   it('summarizes billing from account plans', async () => {
     renderPage();
 
-    expect(await screen.findByText('$49')).toBeInTheDocument();
+    expect(await screen.findByText('$9')).toBeInTheDocument();
     expect(screen.getByText('50% of active accounts')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Billing Management' })).toBeInTheDocument();
     expect(screen.getByText('No invoices yet')).toBeInTheDocument();

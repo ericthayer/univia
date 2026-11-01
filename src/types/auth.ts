@@ -17,6 +17,10 @@ export interface UserProfile {
 export interface TierFeatures {
   name: string;
   price: string;
+  /** Yearly price when the plan offers annual billing, e.g. "$90". */
+  annualPrice?: string;
+  /** What one price unit buys, e.g. "site" renders "/site/month". */
+  priceUnit?: string;
   auditLimit: number | 'unlimited';
   features: string[];
   scheduledAudits?: number;

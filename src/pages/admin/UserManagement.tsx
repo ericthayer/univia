@@ -49,9 +49,9 @@ const STATUS_OPTIONS = [
 
 const TIER_OPTIONS = [
   { value: 'all', label: 'All' },
-  { value: 'basic', label: 'Basic' },
-  { value: 'pro', label: 'Pro' },
-  { value: 'enterprise', label: 'Enterprise' },
+  { value: 'basic', label: 'Free' },
+  { value: 'pro', label: 'Monitor' },
+  { value: 'enterprise', label: 'Agency' },
 ] as const;
 
 const eyebrowHeaderSx = {

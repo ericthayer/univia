@@ -28,9 +28,9 @@ const INVOICES_TITLE_ID = 'billing-invoices-title';
 const PLAN_OPTIONS = [
   { value: 'paid', label: 'Paid' },
   { value: 'all', label: 'All' },
-  { value: 'basic', label: 'Basic' },
-  { value: 'pro', label: 'Pro' },
-  { value: 'enterprise', label: 'Enterprise' },
+  { value: 'basic', label: 'Free' },
+  { value: 'pro', label: 'Monitor' },
+  { value: 'enterprise', label: 'Agency' },
 ] as const;
 
 const STATUS_OPTIONS = [

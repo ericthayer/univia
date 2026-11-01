@@ -17,19 +17,24 @@ import { TonePill } from '../components/ui/TonePill/TonePill';
 
 const FAQS = [
   {
-    question: 'Is the Basic plan really free forever?',
+    question: 'Does Univia make my site compliant or protect me from lawsuits?',
     answer:
-      'Yes! Our Basic plan is completely free with no time limit. We believe everyone should have access to accessibility auditing tools.',
+      'No tool can guarantee that. Univia finds many common WCAG issues, tracks your fixes, and keeps a dated Good-Faith Remediation Record you and your attorney can use. Automated scans cannot catch every issue, so pair them with manual review.',
+  },
+  {
+    question: 'Is the Free plan really free?',
+    answer:
+      'Yes. The Free plan has no time limit and no card required. Upgrade to Monitor when you want weekly scans and a remediation record.',
+  },
+  {
+    question: 'How does annual billing work?',
+    answer:
+      'Monitor is $9 per site each month, or $90 per site paid once a year, which is two months free. Each additional site is $5 a month.',
   },
   {
     question: 'Can I upgrade or downgrade anytime?',
     answer:
-      'Yes, you can change your plan at any time. Upgrades take effect immediately, and downgrades take effect at the end of your billing cycle.',
-  },
-  {
-    question: 'What payment methods do you accept?',
-    answer:
-      'We accept all major credit cards (Visa, MasterCard, American Express) and PayPal. Enterprise customers can arrange for invoice-based billing.',
+      'Yes. Upgrades take effect immediately, and downgrades take effect at the end of your billing cycle.',
   },
 ] as const;
 
@@ -46,7 +51,7 @@ export default function Pricing() {
     if (tier === 'basic') {
       navigate('/settings');
     } else {
-      alert(`Upgrade to ${tier} coming soon! This is a prototype feature.`);
+      alert(`Upgrade to ${USER_TIERS[tier].name} coming soon! This is a prototype feature.`);
     }
   };
 
@@ -57,7 +62,7 @@ export default function Pricing() {
       <PageHeader
         eyebrow="Plans"
         title="Choose Your Plan"
-        description="Start with our free Basic plan. Upgrade anytime for more features."
+        description="Start free. Monitor a site for $9 a month, or $90 a year."
       />
 
       <Box
@@ -77,9 +82,10 @@ export default function Pricing() {
           const isCurrentTier = profile?.tier === tier;
           const isFree = tier === 'basic';
           const isPopular = tier === 'pro';
-          const price = isFree ? 'Free' : config.price.split('/')[0];
-          // "/month" only reads correctly after a numeric price ("$49"), not after "Custom".
+          const price = isFree ? '$0' : config.price.split('/')[0];
+          // "/month" only reads correctly after a numeric price ("$9"), not after "Custom".
           const showPerMonth = !isFree && price.startsWith('$');
+          const perMonth = config.priceUnit ? `/${config.priceUnit}/month` : '/month';
           const titleId = `plan-${tier}-name`;
 
           return (
@@ -113,13 +119,18 @@ export default function Pricing() {
                     </Typography>
                     {showPerMonth && (
                       <Typography variant="body1" color="text.secondary" component="span">
-                        /month
+                        {perMonth}
                       </Typography>
                     )}
                   </Box>
                   {isFree && (
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                       Forever
+                    </Typography>
+                  )}
+                  {config.annualPrice && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      or {config.annualPrice}/year, 2 months free
                     </Typography>
                   )}
                 </Box>
