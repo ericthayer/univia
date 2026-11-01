@@ -1,4 +1,5 @@
 import type { AccessibilityAudit, Violation } from '../../types';
+import { getFixGuidance } from '../../config/fixGuides';
 import { SEVERITIES, severityTone } from '../ui/violationSeverity';
 import { parseInlineMarkdown } from './inlineMarkdown';
 import type { ReportBlock, ReportDocument, ReportHowToFix, ReportIssue, ReportSection, ReportTone } from './reportModel';
@@ -51,14 +52,31 @@ export function toStepText(step: unknown): string {
   return String(step);
 }
 
-/**
- * Single seam for fix guidance. Today Lighthouse remediation output is a list
- * of findings (failing resources, console messages), so it renders as
- * "Found on this page". Route through `getFixGuidance` once it lands.
- */
+/** Single seam for fix guidance: the same `getFixGuidance` the Issues list renders. */
 export function toReportHowToFix(violation: Violation): ReportHowToFix {
-  const instances = (violation.remediation_steps ?? []).map(toStepText).filter((text) => text.trim().length > 0);
-  return { steps: [], instances };
+  const guidance = getFixGuidance(violation);
+  return {
+    summary: guidance.summary,
+    whyItMatters: guidance.whyItMatters,
+    whoIsAffected: guidance.whoIsAffected.length > 0 ? guidance.whoIsAffected : undefined,
+    steps: guidance.steps,
+    example: guidance.example,
+    instances: guidance.instances.map((instance) => instance.text).filter((text) => text.trim().length > 0),
+    standards: guidance.standards.map((standard) => ({ label: `WCAG ${standard.id} ${standard.name}`, url: standard.url })),
+    resources: guidance.resources,
+  };
+}
+
+/** Same pills as `ViolationCard`: real WCAG criteria, else the category. */
+function standardTags(violation: Violation): string[] {
+  const guidance = getFixGuidance(violation);
+  const level = guidance.standards[0]?.level ?? violation.compliance_level;
+  const tags =
+    guidance.standards.length > 0
+      ? guidance.standards.map((standard) => `WCAG ${standard.id}`)
+      : [guidance.category === 'accessibility' ? 'Best practice' : guidance.categoryLabel];
+  if (level) tags.push(`Level ${level}`);
+  return tags;
 }
 
 const issueKey = (violation: Violation): string => `${violation.wcag_guideline}::${violation.title}`;
@@ -86,9 +104,7 @@ export function mergeIssues(input: AuditReportInput): ReportIssue[] {
   return Array.from(merged.values())
     .sort((a, b) => rank(a.violation.severity) - rank(b.violation.severity))
     .map(({ violation, devices, instances }) => {
-      const tags = [`WCAG ${violation.wcag_guideline}`];
-      if (violation.compliance_level) tags.push(`Level ${violation.compliance_level}`);
-      tags.push(...devices);
+      const tags = [...standardTags(violation), ...devices];
       return {
         title: parseInlineMarkdown(violation.title),
         severity: violation.severity,
