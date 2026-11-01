@@ -21,6 +21,7 @@ import { ArrowButton } from '../ui/ArrowButton/ArrowButton';
 import LegalDisclaimer from '../ui/LegalDisclaimer';
 import { DocumentAnalysis } from './DocumentUploadDialog';
 import { ensureSession } from '../../services/session';
+import { storeLetterFile } from '../../services/letterFiles.service';
 import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from '../../services/supabaseFunctions';
 
 interface InlineDocumentUploadProps {
@@ -230,6 +231,16 @@ export default function InlineDocumentUpload({ onUploadComplete, showNextSteps =
         const hint = resultData.hint ? `\n\n${resultData.hint}` : '';
         const details = resultData.errorDetails ? `\n\nDetails: ${resultData.errorDetails}` : '';
         throw new Error(errorMsg + hint + details);
+      }
+
+      // Keep the original so the letter card can reopen it. The analysis is
+      // already saved, so a storage failure must not fail the upload.
+      if (resultData.letter_id) {
+        try {
+          await storeLetterFile(file, currentSession.user.id, resultData.letter_id);
+        } catch (storeError) {
+          console.warn('[Upload] Original document was not stored', storeError);
+        }
       }
 
       setStage('complete');
