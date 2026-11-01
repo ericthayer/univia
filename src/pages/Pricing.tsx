@@ -19,7 +19,7 @@ const FAQS = [
   {
     question: 'Does Univia make my site compliant or protect me from lawsuits?',
     answer:
-      'No tool can guarantee that. Univia finds many common WCAG issues, tracks your fixes, and keeps a dated Good-Faith Remediation Record you and your attorney can use. Automated scans cannot catch every issue, so pair them with manual review.',
+      'No tool can guarantee that. Univia finds many common WCAG issues today. Monitor is adding fix tracking and a dated Good-Faith Remediation Record you and your attorney can use. Automated scans cannot catch every issue, so pair them with manual review.',
   },
   {
     question: 'Is the Free plan really free?',
@@ -29,7 +29,7 @@ const FAQS = [
   {
     question: 'How does annual billing work?',
     answer:
-      'Monitor is $9 per site each month, or $90 per site paid once a year, which is two months free. Each additional site is $5 a month.',
+      'Monitor is $9 a month for your first site, or $90 a year, which is two months free. Each additional site is $5 a month, or $50 a year on annual billing.',
   },
   {
     question: 'Can I upgrade or downgrade anytime?',
@@ -85,7 +85,6 @@ export default function Pricing() {
           const price = isFree ? '$0' : config.price.split('/')[0];
           // "/month" only reads correctly after a numeric price ("$9"), not after "Custom".
           const showPerMonth = !isFree && price.startsWith('$');
-          const perMonth = config.priceUnit ? `/${config.priceUnit}/month` : '/month';
           const titleId = `plan-${tier}-name`;
 
           return (
@@ -119,7 +118,7 @@ export default function Pricing() {
                     </Typography>
                     {showPerMonth && (
                       <Typography variant="body1" color="text.secondary" component="span">
-                        {perMonth}
+                        /month
                       </Typography>
                     )}
                   </Box>
@@ -130,7 +129,7 @@ export default function Pricing() {
                   )}
                   {config.annualPrice && (
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      or {config.annualPrice}/year, 2 months free
+                      or {config.annualPrice}/year for your first site
                     </Typography>
                   )}
                 </Box>
@@ -150,7 +149,10 @@ export default function Pricing() {
                     borderColor: 'divider',
                   }}
                 >
-                  {config.features.map((feature: string) => (
+                  {[
+                    ...config.features.map((label) => ({ label, planned: false })),
+                    ...(config.plannedFeatures ?? []).map((label) => ({ label, planned: true })),
+                  ].map(({ label: feature, planned }) => (
                     <Box component="li" key={feature} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
                       <Box
                         aria-hidden="true"
@@ -169,7 +171,14 @@ export default function Pricing() {
                       >
                         <Icon name="check_circle" />
                       </Box>
-                      <Typography variant="body2">{feature}</Typography>
+                      <Typography variant="body2">
+                        {feature}
+                        {planned && (
+                          <Typography component="span" variant="body2" color="text.secondary">
+                            {' '}(coming soon)
+                          </Typography>
+                        )}
+                      </Typography>
                     </Box>
                   ))}
                 </Box>

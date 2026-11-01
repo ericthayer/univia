@@ -19,6 +19,7 @@ import { PlanMixCard } from '../../components/admin/PlanMixCard/PlanMixCard';
 import { PlanCatalogCard } from '../../components/admin/PlanCatalogCard/PlanCatalogCard';
 import { BillingAccountsTable } from '../../components/admin/BillingAccountsTable/BillingAccountsTable';
 import { formatCurrency, isPaidTier, summarizeBilling } from '../../utils/billing';
+import { USER_TIERS } from '../../config/tierConfig';
 
 const DEFAULT_PLAN = 'paid';
 const DEFAULT_STATUS = 'all';
@@ -162,7 +163,7 @@ export default function BillingManagement() {
             <MetricTile
               label="Custom-Priced"
               value={summary.customPricedAccounts}
-              support="Active Enterprise, not in MRR"
+              support={`Active ${USER_TIERS.enterprise.name}, not in MRR`}
               icon={<Icon name="workspace_premium" />}
               loading={loading}
               reveal={2}

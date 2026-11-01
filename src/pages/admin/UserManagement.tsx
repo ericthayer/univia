@@ -25,6 +25,12 @@ import { UserCard, UserCardUser } from '../../components/admin/UserCard/UserCard
 import { FilterSelect } from '../../components/admin/FilterSelect/FilterSelect';
 import { StatusPill, TierPill } from '../../components/admin/UserBadges/UserBadges';
 import { controlRadius } from '../../theme/tokens';
+import { USER_TIERS } from '../../config/tierConfig';
+import { normalizeTier, PLAN_ORDER } from '../../utils/billing';
+
+function tierRank(name: string): number {
+  return PLAN_ORDER.findIndex((tier) => USER_TIERS[tier].name === name);
+}
 
 type UserData = UserCardUser & { created_at: string };
 
@@ -218,9 +224,12 @@ export default function UserManagement() {
       field: 'tier',
       headerName: 'Tier',
       width: 130,
+      // Filter on the displayed plan name; sort by plan order, cheapest first.
+      valueGetter: (value: string) => USER_TIERS[normalizeTier(value)].name,
+      sortComparator: (a: string, b: string) => tierRank(a) - tierRank(b),
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <TierPill tier={String(params.value)} />
+          <TierPill tier={String(params.row.tier)} />
         </Box>
       ),
     },

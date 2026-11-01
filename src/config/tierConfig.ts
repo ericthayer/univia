@@ -26,16 +26,19 @@ export const USER_TIERS: Record<UserTier, TierFeatures> = {
     name: 'Monitor',
     price: '$9',
     annualPrice: '$90',
-    priceUnit: 'site',
     auditLimit: 30,
     features: [
+      '30 on-demand audits per month',
+      'PDF export',
+      '5 demand letter analyses per month',
+      'Extra sites $5/month or $50/year each'
+    ],
+    plannedFeatures: [
       'Weekly scans of up to 25 pages',
       'Alerts when new issues appear',
       'Fix tracker with re-scan confirmation',
       'Good-Faith Remediation Record (PDF)',
-      'Accessibility statement generator',
-      '5 demand letter analyses per month',
-      'Extra sites $5/month each'
+      'Accessibility statement generator'
     ],
     scheduledAudits: 1,
     emailNotifications: true,
@@ -48,12 +51,15 @@ export const USER_TIERS: Record<UserTier, TierFeatures> = {
     price: 'Custom',
     auditLimit: 'unlimited',
     features: [
-      'Monitoring for 10+ sites',
-      'White-label PDF reports',
-      'Remediation Record per client',
+      'Unlimited audits',
       'API access and webhooks',
       '5+ team seats',
       'Priority support'
+    ],
+    plannedFeatures: [
+      'Monitoring for 10+ sites',
+      'White-label PDF reports',
+      'Remediation Record per client'
     ],
     scheduledAudits: 20,
     emailNotifications: true,
