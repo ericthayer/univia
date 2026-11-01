@@ -106,7 +106,12 @@ export const surfaceTokens = {
   shellRadius: 20,
   shellInset: 6,
   coreRadius: 14,
+  /** Buttons, inputs, selects and other interactive controls. Chips stay pill-shaped. */
+  controlRadius: 16,
 } as const;
+
+/** CSS length for interactive controls, usable directly in `sx`. */
+export const controlRadius = `${surfaceTokens.controlRadius}px`;
 
 /**
  * Motion tokens (SPEC §3.4). `spring` simulates mass; `slow` is reserved for

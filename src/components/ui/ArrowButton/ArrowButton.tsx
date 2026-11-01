@@ -2,13 +2,14 @@ import { forwardRef } from 'react';
 import Button, { ButtonProps, ButtonTypeMap, ExtendButton } from '@mui/material/Button';
 import { styled } from '@mui/material/styles';
 import Icon from '../Icon';
+import { controlRadius } from '../../../theme/tokens';
 
 export type ArrowButtonProps = Omit<ButtonProps, 'endIcon'>;
 
 const Root = styled(Button)(({ theme }) => {
   const slow = `${theme.transitions.duration.slow}ms ${theme.transitions.easing.spring}`;
   return {
-    borderRadius: 999,
+    borderRadius: controlRadius,
     paddingLeft: theme.spacing(3),
     paddingRight: theme.spacing(1),
     paddingTop: theme.spacing(1),
@@ -66,7 +67,7 @@ const ArrowButtonBase = forwardRef<HTMLButtonElement, ArrowButtonProps>(function
 });
 
 /**
- * Primary CTA pill with the trailing arrow seated in its own circle. The arrow
+ * Primary CTA button with the trailing arrow seated in its own circle. The arrow
  * nudges diagonally on hover; the button settles on press. Typed like MUI's
  * Button, so `component={RouterLink} to="…"` and `href` type-check.
  */

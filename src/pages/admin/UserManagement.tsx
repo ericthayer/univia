@@ -24,6 +24,7 @@ import { SegmentedToggleGroup } from '../../components/ui/SegmentedToggleGroup/S
 import { UserCard, UserCardUser } from '../../components/admin/UserCard/UserCard';
 import { FilterSelect } from '../../components/admin/FilterSelect/FilterSelect';
 import { StatusPill, TierPill } from '../../components/admin/UserBadges/UserBadges';
+import { controlRadius } from '../../theme/tokens';
 
 type UserData = UserCardUser & { created_at: string };
 
@@ -411,9 +412,9 @@ export default function UserManagement() {
               }}
               sx={{
                 flex: { xs: '1 1 100%', sm: '0 1 260px' },
-                // The theme paints the field root with a square background; round it to match the pill outline.
-                borderRadius: 999,
-                '& .MuiOutlinedInput-root': { borderRadius: 999, minHeight: 44, pl: 1.75 },
+                // The theme paints the field root with a square background; round it to match the outline.
+                borderRadius: controlRadius,
+                '& .MuiOutlinedInput-root': { borderRadius: controlRadius, minHeight: 44, pl: 1.75 },
               }}
             />
           </Box>
@@ -518,7 +519,8 @@ export default function UserManagement() {
                   px: 1,
                   py: 1,
                   pl: 3,
-                  borderRadius: 999,
+                  // Control radius plus the 8px inset, so the bar stays concentric with its buttons.
+                  borderRadius: `calc(${controlRadius} + 8px)`,
                   bgcolor: 'background.paper',
                   border: '1px solid',
                   borderColor: 'divider',
@@ -531,13 +533,13 @@ export default function UserManagement() {
                   {selectedRows.length} selected
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Button size="small" variant="outlined" sx={{ borderRadius: 999 }}>
+                  <Button size="small" variant="outlined" sx={{ borderRadius: controlRadius }}>
                     Engage
                   </Button>
-                  <Button size="small" variant="outlined" sx={{ borderRadius: 999 }}>
+                  <Button size="small" variant="outlined" sx={{ borderRadius: controlRadius }}>
                     Export
                   </Button>
-                  <Button size="small" variant="outlined" color="error" sx={{ borderRadius: 999 }}>
+                  <Button size="small" variant="outlined" color="error" sx={{ borderRadius: controlRadius }}>
                     Delete
                   </Button>
                 </Box>

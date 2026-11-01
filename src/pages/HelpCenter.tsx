@@ -11,6 +11,7 @@ import { PageHeader } from '../components/ui/PageHeader/PageHeader';
 import { SectionHeader } from '../components/ui/SectionHeader/SectionHeader';
 import { BezelCard } from '../components/ui/BezelCard/BezelCard';
 import { TonePill } from '../components/ui/TonePill/TonePill';
+import { controlRadius } from '../theme/tokens';
 
 const AUTO_GRID_SX = (min: string) =>
   ({
@@ -58,7 +59,7 @@ export default function HelpCenter() {
                   sx={{
                     minHeight: 44,
                     px: 0.5,
-                    borderRadius: 999,
+                    borderRadius: controlRadius,
                     '& > span': {
                       transition: (theme) =>
                         `color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}, border-color ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeOut}`,

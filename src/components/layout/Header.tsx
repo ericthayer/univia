@@ -7,6 +7,7 @@ import { getHeaderMenuItems, ROUTE_PATHS, MenuItem } from '../../config/navigati
 import { useAuth } from '../../contexts/AuthContext';
 import UserMenu from '../auth/UserMenu';
 import Icon from '../ui/Icon';
+import { controlRadius } from '../../theme/tokens';
 
 interface HeaderProps {
   onMobileMenuToggle?: () => void;
@@ -21,10 +22,10 @@ const focusRingSx = {
   },
 } as const;
 
-// Header controls share the site's pill language (ui-refresh SPEC §3): 999 radius,
+// Header controls share the site's control language (ui-refresh SPEC §3): 16px radius,
 // 44px targets, no underline on text buttons, background-only hover.
-const pillButtonSx = {
-  borderRadius: 999,
+const controlButtonSx = {
+  borderRadius: controlRadius,
   minHeight: 44,
   textTransform: 'none',
   whiteSpace: 'nowrap',
@@ -86,7 +87,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
             variant="text"
             aria-label="Univia home"
             sx={{
-              ...pillButtonSx,
+              ...controlButtonSx,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -168,7 +169,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                   }
 
                   sx={{
-                    ...pillButtonSx,
+                    ...controlButtonSx,
                     fontSize: '1rem',
                     px: 'clamp(0.875rem, 2cqw, 1.25rem)',
                     color: isActive ? 'primary.contrastText' : 'text.primary',
@@ -201,7 +202,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                     variant="text"
                     onClick={() => navigate(ROUTE_PATHS.SIGN_IN)}
                     sx={{
-                      ...pillButtonSx,
+                      ...controlButtonSx,
                       px: 2,
                       color: 'text.primary',
                       '&:hover': { bgcolor: 'action.hover', color: 'text.primary' },
@@ -212,7 +213,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                   <Button
                     variant="contained"
                     onClick={() => navigate(ROUTE_PATHS.SIGN_UP)}
-                    sx={{ ...pillButtonSx, px: 2.5 }}
+                    sx={{ ...controlButtonSx, px: 2.5 }}
                   >
                     Register
                   </Button>
@@ -230,7 +231,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
                 display: { xs: 'none', md: 'inline-flex' },
                 minWidth: 44,
                 minHeight: 44,
-                borderRadius: 999,
+                borderRadius: controlRadius,
                 px: { xs: 0, xxl: 1.5 },
                 color: 'text.primary',
                 transition: (theme) =>
@@ -264,7 +265,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
             onClick={onMobileMenuToggle}
             startIcon={<Icon name={mobileMenuOpen ? 'close' : 'menu'} aria-hidden />}
             sx={{
-              ...pillButtonSx,
+              ...controlButtonSx,
               display: { xs: 'inline-flex', md: 'none' },
               px: 2,
             }}

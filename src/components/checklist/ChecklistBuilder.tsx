@@ -17,6 +17,7 @@ import { useLocalStorageChecklists } from '../../hooks/useLocalStorageChecklists
 import type { CustomChecklistItem } from '../../types';
 import { dialogPaperSx } from './dialogPaperSx';
 import Icon from '../ui/Icon';
+import { controlRadius } from '../../theme/tokens';
 
 interface ChecklistBuilderProps {
   open: boolean;
@@ -291,7 +292,7 @@ export default function ChecklistBuilder({ open, onClose, checklistId }: Checkli
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
         <Button onClick={onClose} sx={{ minHeight: 44 }}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained" sx={{ borderRadius: 999, minHeight: 44, px: 2.5 }}>
+        <Button onClick={handleSave} variant="contained" sx={{ borderRadius: controlRadius, minHeight: 44, px: 2.5 }}>
           {checklistId ? 'Save Changes' : 'Create Checklist'}
         </Button>
       </DialogActions>
