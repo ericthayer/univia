@@ -23,6 +23,8 @@ import { SectionHeader } from '../components/ui/SectionHeader/SectionHeader';
 import { SegmentedToggleGroup } from '../components/ui/SegmentedToggleGroup/SegmentedToggleGroup';
 import { TonePill } from '../components/ui/TonePill/TonePill';
 import { SEVERITIES, severityTone } from '../components/ui/violationSeverity';
+import { srOnly } from '../components/ui/srOnly';
+import { useReportExport } from '../components/report/useReportExport';
 import { controlRadius } from '../theme/tokens';
 
 const WIDE = '@container (min-width: 1000px)';
@@ -47,6 +49,7 @@ export default function AuditResults() {
   const [deviceTab, setDeviceTab] = useState(0);
   const [severityTab, setSeverityTab] = useState(0);
   const loadingRef = useRef(false);
+  const report = useReportExport();
 
   const loadAuditResults = useCallback(async () => {
     try {
@@ -136,6 +139,14 @@ export default function AuditResults() {
     count: currentViolations.filter((v) => v.severity === severity).length,
   }));
   const titleCase = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+  const handleExportPdf = () =>
+    report.exportReport({
+      kind: 'audit',
+      input: {
+        mobile: mobileAudit ? { audit: mobileAudit, violations: mobileViolations } : undefined,
+        desktop: desktopAudit ? { audit: desktopAudit, violations: desktopViolations } : undefined,
+      },
+    });
 
   return (
     <PageCanvas maxWidth="lg">
@@ -314,12 +325,23 @@ export default function AuditResults() {
           variant="outlined"
           size="large"
           startIcon={<Icon name="file_download" />}
+          onClick={handleExportPdf}
+          disabled={report.status === 'preparing'}
+          aria-busy={report.status === 'preparing'}
           sx={{ borderRadius: controlRadius, minHeight: 48 }}
         >
           Export PDF Report
         </Button>
         <ArrowButton onClick={() => navigate('/audit')}>Run New Audit</ArrowButton>
       </Box>
+      <Box role="status" aria-live="polite" sx={srOnly}>
+        {report.status === 'preparing' ? report.message : ''}
+      </Box>
+      {report.status === 'error' && (
+        <Alert severity="error" sx={{ mt: 2, maxWidth: 480, mx: 'auto' }}>
+          {report.message}
+        </Alert>
+      )}
     </PageCanvas>
   );
 }

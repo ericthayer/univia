@@ -109,7 +109,8 @@ This project follows WCAG 2.1 Level AA standards:
    - any commit type with a `BREAKING CHANGE:` note publishes a major release
 - Releases are published as GitHub tags and GitHub Releases (no npm publish).
 - PR titles are validated for Conventional Commit format in CI. Use squash merge so the PR title becomes the commit message on `main`.
-- Git tags and GitHub Releases are the release version source of truth. Semantic Release also commits the generated package version metadata to `main`; the checked-in `CHANGELOG.md` remains manually maintained.
-- Semantic Release commits the updated `package.json` and `package-lock.json` to `main` with `[skip ci]`; Netlify continuous deployment then builds and deploys that exact release version.
+- Git tags and GitHub Releases are the release version source of truth. Semantic Release does not commit back to `main` (the branch ruleset only accepts changes through pull requests), so `package.json` `version` is a fallback only; the checked-in `CHANGELOG.md` remains manually maintained.
+- The footer version is resolved at build time from the latest `v*` tag (`scripts/releaseVersion.ts`, wired in `vite.config.ts`); `VITE_APP_VERSION` overrides it. Netlify fetches tags before building.
+- After a release, the workflow calls the Netlify build hook in the `NETLIFY_BUILD_HOOK_URL` secret so continuous deployment rebuilds `main` with the new tag. Without that secret the step is skipped and the footer catches up on the next deploy.
 - Keep Netlify continuous deployment enabled for the production site. The release workflow does not perform a second direct Netlify deployment.
 - Local preview command: `npm run release:dry-run`
