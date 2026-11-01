@@ -106,7 +106,7 @@ export default function DemandLetters() {
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 7fr) minmax(0, 5fr)' },
           gap: 3,
-          alignItems: 'start',
+          alignItems: 'stretch',
           mb: { xs: 6, md: 8 },
         }}
       >
