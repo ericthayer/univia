@@ -49,7 +49,7 @@ export default function AdminSettings() {
           display: 'grid',
           gap: 3,
           gridTemplateColumns: '1fr',
-          alignItems: 'start',
+          alignItems: 'stretch',
           [WIDE]: { gridTemplateColumns: 'minmax(0, 7fr) minmax(0, 5fr)' },
         }}
       >
@@ -65,7 +65,7 @@ export default function AdminSettings() {
           />
         </Box>
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 3, minWidth: 0 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', alignContent: 'start', gap: 3, minWidth: 0 }}>
           <SystemInfoCard
             id="engine"
             title="Analysis engine"
