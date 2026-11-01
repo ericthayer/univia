@@ -24,6 +24,7 @@ const DocumentAnalysisTest = lazy(() => import('./pages/admin/DocumentAnalysisTe
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
 const GeminiStreamingDemo = lazy(() => import('./pages/admin/GeminiStreamingDemo'));
 const PatternLibrary = lazy(() => import('./pages/PatternLibrary'));
+const SharedLetter = lazy(() => import('./pages/SharedLetter'));
 const SignIn = lazy(() => import('./pages/auth/SignIn'));
 const SignUp = lazy(() => import('./pages/auth/SignUp'));
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
@@ -114,6 +115,7 @@ function App() {
                       }
                     />
                     <Route path={ROUTE_PATHS.RESOURCES} element={<Resources />} />
+                    <Route path={ROUTE_PATHS.SHARED_LETTER} element={<SharedLetter />} />
                     <Route path={ROUTE_PATHS.HELP} element={<HelpCenter />} />
                     <Route
                       path={ROUTE_PATHS.ANALYZE_REPORT}

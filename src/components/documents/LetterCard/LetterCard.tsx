@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography';
 import { DemandLetter } from '../../../types';
 import { BezelCard } from '../../ui/BezelCard/BezelCard';
 import Icon from '../../ui/Icon';
+import { ShareLetterDialog } from '../ShareLetterDialog/ShareLetterDialog';
 import { getDaysUntilDeadline, getRiskColor, getStatusColor } from './letterStatus';
 
 export interface LetterCardProps {
@@ -29,6 +30,7 @@ const SUMMARY_CLAMP_LINES = 3;
  */
 export function LetterCard({ letter, reveal, onView }: LetterCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const summaryId = useId();
   const daysLeft = getDaysUntilDeadline(letter.response_deadline);
 
@@ -70,7 +72,14 @@ export function LetterCard({ letter, reveal, onView }: LetterCardProps) {
           {letter.file_name}
         </Typography>
         <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
-          <Button variant="outlined" size="small" startIcon={<Icon name="share" />}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<Icon name="share" />}
+            onClick={() => setShareOpen(true)}
+            aria-haspopup="dialog"
+            aria-label={`Share analysis of ${letter.file_name}`}
+          >
             Share
           </Button>
           <Button
@@ -170,6 +179,13 @@ export function LetterCard({ letter, reveal, onView }: LetterCardProps) {
           </Button>
         </Box>
       )}
+
+      <ShareLetterDialog
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        letterId={letter.id}
+        letterName={letter.file_name}
+      />
     </BezelCard>
   );
 }

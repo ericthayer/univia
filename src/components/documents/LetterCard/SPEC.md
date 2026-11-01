@@ -10,9 +10,10 @@
 
 Sibling `letterStatus.ts` exports `getRiskColor`, `getStatusColor`, `getDaysUntilDeadline` for callers that need the same mappings.
 
-**Architecture:** Composes `BezelCard` (`interactive`, `component="article"`). Local `expanded` state only. Share and View buttons are visual placeholders with no handlers (unchanged from the previous page).
+**Architecture:** Composes `BezelCard` (`interactive`, `component="article"`). Local `expanded` state only. Share opens `ShareLetterDialog` (see `docs/specs/letter-sharing/SPEC.md`). View is still a placeholder.
 
 **Accessibility:** Article labelled by file name; meta rendered as a `<dl>`; the summary toggle exposes `aria-expanded` and `aria-controls`. Chips always carry text; color is never the only signal. Amounts and dates use tabular numerals.
 
 **Changelog**
 - 2026-10-29 — Created.
+- 2026-11-01 — Share button opens ShareLetterDialog.
