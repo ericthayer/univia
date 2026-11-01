@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AccessibilityAudit, Violation } from '../../types';
-import { buildAuditReport, mergeIssues, toStepText } from './buildAuditReport';
+import { buildAuditReport, mergeIssues, toReportHowToFix, toStepText } from './buildAuditReport';
 
 const audit = (device: 'mobile' | 'desktop', score: number): AccessibilityAudit => ({
   id: device,
@@ -40,7 +40,7 @@ describe('mergeIssues', () => {
       desktop: { audit: audit('desktop', 85), violations: [violation({ remediation_steps: ['img.hero', 'img.logo'] })] },
     });
     expect(issues).toHaveLength(1);
-    expect(issues[0].tags).toEqual(['WCAG image-alt', 'Mobile', 'Desktop']);
+    expect(issues[0].tags).toEqual(['WCAG 1.1.1', 'Level A', 'Mobile', 'Desktop']);
     expect(issues[0].howToFix.instances).toEqual(['img.hero', 'img.logo']);
   });
 
@@ -79,5 +79,24 @@ describe('buildAuditReport', () => {
     const a11y = summary.rows.find((row) => row.header === 'Accessibility');
     expect(a11y?.cells[0]).toMatchObject({ text: '64', tone: 'error', meter: 64 });
     expect(report.footerNote).toContain('Desktop audit did not complete');
+  });
+});
+
+describe('toReportHowToFix', () => {
+  it('uses the same curated guidance as the Issues list', () => {
+    const fix = toReportHowToFix(
+      violation({
+        description: 'Images need alt text. [Learn more](https://developer.chrome.com/docs/lighthouse/accessibility/image-alt/)',
+        remediation_steps: ['Element: <img src="hero.jpg">'],
+      }),
+    );
+    expect(fix.summary).toMatch(/no text description/);
+    expect(fix.steps.length).toBeGreaterThan(2);
+    expect(fix.instances).toEqual(['<img src="hero.jpg">']);
+    expect(fix.standards?.[0]).toEqual({
+      label: 'WCAG 1.1.1 Non-text Content',
+      url: 'https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html',
+    });
+    expect(fix.resources?.some((r) => r.url.includes('image-alt'))).toBe(true);
   });
 });
