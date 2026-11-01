@@ -229,25 +229,19 @@ async function analyzeWithGemini(
         }
       ]);
     } else if (isPDF) {
-      const extractedText = await extractTextFromPDF(content);
-
-      if (extractedText.length > 100) {
-        console.log(`[GEMINI] Analyzing PDF with ${extractedText.length} characters of extracted text`);
-        result = await model.generateContent(
-          `${prompt}\n\nDocument: ${fileName}\nExtracted Text Content:\n${extractedText.substring(0, 50000)}`
-        );
-      } else {
-        console.log('[GEMINI] Sending PDF directly to Gemini for vision analysis');
-        result = await model.generateContent([
-          prompt + '\n\nAnalyze this PDF document:',
-          {
-            inlineData: {
-              mimeType: 'application/pdf',
-              data: content
-            }
+      // Gemini reads PDFs natively, text and scanned pages alike. The regex
+      // extractor can't inflate compressed streams and pulls "text" out of
+      // embedded image bytes, so its output is only used as a no-Gemini fallback.
+      console.log('[GEMINI] Sending PDF directly to Gemini');
+      result = await model.generateContent([
+        prompt + '\n\nAnalyze this PDF document:',
+        {
+          inlineData: {
+            mimeType: 'application/pdf',
+            data: content
           }
-        ]);
-      }
+        }
+      ]);
     } else {
       const textContent = extractTextFromContent(content);
       console.log('[GEMINI] Analyzing text document');
