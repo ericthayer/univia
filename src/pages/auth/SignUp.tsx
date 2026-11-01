@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Link from '@mui/material/Link';
+import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useAuth } from '../../contexts/AuthContext';
@@ -69,21 +70,30 @@ export default function SignUp() {
       title="Get started"
       subtitle={
         <>
-          Create your account to start auditing, or go back to the{' '}
-          <AuthLink to="/">app</AuthLink>
+          Create your account to start auditing,
+          <br />
+          or go back to the <AuthLink to="/">app</AuthLink>
         </>
       }
     >
       {error && <AuthAlert severity="error">{error}</AuthAlert>}
 
-      <Stack spacing={1.5}>
-        <OAuthButton startIcon={<Icon name="github" />} onClick={() => handleSocialSignIn('github')}>
-          Join with GitHub
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1.5 }}>
+        <OAuthButton
+          startIcon={<Icon name="github" />}
+          aria-label="Sign up with GitHub"
+          onClick={() => handleSocialSignIn('github')}
+        >
+          GitHub
         </OAuthButton>
-        <OAuthButton startIcon={<Icon name="google" />} onClick={() => handleSocialSignIn('google')}>
-          Join with Google
+        <OAuthButton
+          startIcon={<Icon name="google" />}
+          aria-label="Sign up with Google"
+          onClick={() => handleSocialSignIn('google')}
+        >
+          Google
         </OAuthButton>
-      </Stack>
+      </Box>
 
       <AuthDivider />
 
@@ -129,7 +139,8 @@ export default function SignUp() {
       </form>
 
       <Typography variant="caption" color="text.secondary" align="center" display="block" sx={{ mt: 6 }}>
-        By creating an account, you agree to Univia's{' '}
+        By creating an account, you agree to Univia's
+        <br />
         <Link href="#" color="inherit">Terms of Service</Link> and{' '}
         <Link href="#" color="inherit">Privacy Policy</Link>.
       </Typography>

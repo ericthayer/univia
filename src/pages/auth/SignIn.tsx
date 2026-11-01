@@ -78,21 +78,30 @@ export default function SignIn() {
       title="Welcome back"
       subtitle={
         <>
-          Sign in to your account to continue, or go back to the{' '}
-          <AuthLink to="/">app</AuthLink>
+          Sign in to your account to continue,
+          <br />
+          or go back to the <AuthLink to="/">app</AuthLink>
         </>
       }
     >
       {error && <AuthAlert severity="error">{error}</AuthAlert>}
 
-      <Stack spacing={1.5}>
-        <OAuthButton startIcon={<Icon name="github" />} onClick={() => handleSocialSignIn('github')}>
-          Continue with GitHub
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1.5 }}>
+        <OAuthButton
+          startIcon={<Icon name="github" />}
+          aria-label="Sign in with GitHub"
+          onClick={() => handleSocialSignIn('github')}
+        >
+          GitHub
         </OAuthButton>
-        <OAuthButton startIcon={<Icon name="google" />} onClick={() => handleSocialSignIn('google')}>
-          Continue with Google
+        <OAuthButton
+          startIcon={<Icon name="google" />}
+          aria-label="Sign in with Google"
+          onClick={() => handleSocialSignIn('google')}
+        >
+          Google
         </OAuthButton>
-      </Stack>
+      </Box>
 
       <AuthDivider />
 
@@ -137,7 +146,8 @@ export default function SignIn() {
       </form>
 
       <Typography variant="caption" color="text.secondary" align="center" display="block" sx={{ mt: 6 }}>
-        By continuing, you agree to Univia's{' '}
+        By continuing, you agree to Univia's
+        <br />
         <Link href="#" color="inherit">Terms of Service</Link> and{' '}
         <Link href="#" color="inherit">Privacy Policy</Link>.
       </Typography>

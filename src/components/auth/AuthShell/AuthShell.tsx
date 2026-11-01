@@ -11,6 +11,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import logoUniviaUrl from '../../../assets/images/logo-univia.svg';
 import { BezelCard } from '../../ui/BezelCard/BezelCard';
 import Icon from '../../ui/Icon';
+import { controlRadius } from '../../../theme/tokens';
 
 /**
  * Shared presentation for the auth screens (sign in, sign up, forgot and reset
@@ -112,7 +113,7 @@ export function AuthSplitLayout({ headline, description, points, title, subtitle
           >
             {headline}
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 5, maxWidth: '44ch' }}>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 5, maxWidth: '44ch', textWrap: 'pretty' }}>
             {description}
           </Typography>
           <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, display: 'grid', gap: 2 }}>
@@ -170,7 +171,7 @@ export function AuthSplitLayout({ headline, description, points, title, subtitle
             >
               {title}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" sx={{ textWrap: 'pretty' }}>
               {subtitle}
             </Typography>
           </Box>
@@ -237,7 +238,7 @@ export interface AuthFieldProps extends Omit<TextFieldProps, 'label' | 'variant'
 }
 
 /**
- * Pill input with a static label above it. A floating notched label does not
+ * Input with a static label above it. A floating notched label does not
  * sit well on a fully rounded outline, and the static label stays associated
  * with the input through `htmlFor`.
  */
@@ -270,9 +271,9 @@ export function AuthField({ id, label, required, endAdornment, sx, slotProps, ..
         }}
         sx={[
           {
-            // The theme paints the field root with a square background; round it to match the pill outline.
-            borderRadius: 999,
-            '& .MuiOutlinedInput-root': { borderRadius: 999, minHeight: 48, px: 2.5 },
+            // The theme paints the field root with a square background; round it to match the outline.
+            borderRadius: controlRadius,
+            '& .MuiOutlinedInput-root': { borderRadius: controlRadius, minHeight: 48, px: 2.5 },
             '& .MuiOutlinedInput-root.MuiInputBase-adornedEnd': { pr: 0.75 },
           },
           ...(Array.isArray(sx) ? sx : [sx]),
@@ -293,7 +294,7 @@ export interface PasswordFieldProps extends Omit<AuthFieldProps, 'type' | 'endAd
   onToggleVisible: () => void;
 }
 
-/** Password pill with a 40px visibility toggle exposing `aria-pressed`. */
+/** Password field with a 40px visibility toggle exposing `aria-pressed`. */
 export function PasswordField({ visible, onToggleVisible, ...rest }: PasswordFieldProps) {
   return (
     <AuthField
@@ -316,7 +317,7 @@ export function PasswordField({ visible, onToggleVisible, ...rest }: PasswordFie
   );
 }
 
-/** Pill outlined provider button (GitHub, Google). */
+/** Outlined provider button (GitHub, Google). */
 export function OAuthButton({ sx, ...props }: ButtonProps) {
   return (
     <Button
@@ -324,7 +325,7 @@ export function OAuthButton({ sx, ...props }: ButtonProps) {
       variant="outlined"
       sx={[
         {
-          borderRadius: 999,
+          borderRadius: controlRadius,
           minHeight: 48,
           borderWidth: 1,
           borderColor: 'divider',

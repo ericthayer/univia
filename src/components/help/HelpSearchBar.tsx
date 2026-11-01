@@ -3,6 +3,7 @@ import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import TextField from '@mui/material/TextField';
 import Icon from '../ui/Icon';
+import { controlRadius } from '../../theme/tokens';
 
 interface HelpSearchBarProps {
   onSearch?: (query: string) => void;
@@ -59,10 +60,10 @@ export default function HelpSearchBar({ onSearch }: HelpSearchBarProps) {
         }}
         sx={{
           maxWidth: 640,
-          // The theme paints the field root with a square background; round it to match the pill outline.
-          borderRadius: 999,
+          // The theme paints the field root with a square background; round it to match the outline.
+          borderRadius: controlRadius,
           '& .MuiOutlinedInput-root': {
-            borderRadius: 999,
+            borderRadius: controlRadius,
             minHeight: 56,
             pl: 2,
             pr: 1,

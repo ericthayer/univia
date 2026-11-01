@@ -11,6 +11,7 @@ import Icon from '../ui/Icon';
 import LegalDisclaimer from '../ui/LegalDisclaimer';
 import { ArrowButton } from '../ui/ArrowButton/ArrowButton';
 import { TonePill } from '../ui/TonePill/TonePill';
+import { controlRadius } from '../../theme/tokens';
 
 interface InlineAnalysisResultsProps {
   analysis: DocumentAnalysis;
@@ -99,7 +100,7 @@ const detailsGridSx = {
   m: 0,
 } as const;
 
-const pillButtonSx = { borderRadius: 999, minHeight: 44, px: 2.5 } as const;
+const controlButtonSx = { borderRadius: controlRadius, minHeight: 44, px: 2.5 } as const;
 
 export default function InlineAnalysisResults({
   analysis,
@@ -154,10 +155,10 @@ export default function InlineAnalysisResults({
         </Box>
         <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
           <ArrowButton onClick={onNewUpload}>Upload Another</ArrowButton>
-          <Button variant="outlined" startIcon={<Icon name="share" />} onClick={handleShare} sx={pillButtonSx}>
+          <Button variant="outlined" startIcon={<Icon name="share" />} onClick={handleShare} sx={controlButtonSx}>
             Share
           </Button>
-          <Button variant="outlined" startIcon={<Icon name="picture_as_pdf" />} onClick={handleExportPDF} sx={pillButtonSx}>
+          <Button variant="outlined" startIcon={<Icon name="picture_as_pdf" />} onClick={handleExportPDF} sx={controlButtonSx}>
             Export PDF
           </Button>
         </Box>

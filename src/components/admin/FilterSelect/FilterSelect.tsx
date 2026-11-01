@@ -4,6 +4,7 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import { srOnly } from '../../ui/srOnly';
+import { controlRadius } from '../../../theme/tokens';
 
 export interface FilterSelectOption {
   value: string;
@@ -21,7 +22,7 @@ export interface FilterSelectProps {
 }
 
 /**
- * Pill select that shows "Label  Value" inside the field instead of a floating
+ * Select that shows "Label  Value" inside the field instead of a floating
  * notched label, which does not sit well on a fully rounded outline. The label
  * stays in the DOM (visually hidden) so the combobox keeps its accessible name.
  */
@@ -50,7 +51,7 @@ export function FilterSelect({ id, label, value, options, onChange }: FilterSele
           </>
         )}
         sx={{
-          borderRadius: 999,
+          borderRadius: controlRadius,
           minHeight: 44,
           '& .MuiSelect-select': {
             display: 'flex',

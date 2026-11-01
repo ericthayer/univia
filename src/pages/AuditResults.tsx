@@ -23,6 +23,7 @@ import { SectionHeader } from '../components/ui/SectionHeader/SectionHeader';
 import { SegmentedToggleGroup } from '../components/ui/SegmentedToggleGroup/SegmentedToggleGroup';
 import { TonePill } from '../components/ui/TonePill/TonePill';
 import { SEVERITIES, severityTone } from '../components/ui/violationSeverity';
+import { controlRadius } from '../theme/tokens';
 
 const WIDE = '@container (min-width: 1000px)';
 
@@ -142,7 +143,7 @@ export default function AuditResults() {
         component={RouterLink}
         to="/audit"
         startIcon={<Icon name="arrow_back" />}
-        sx={{ alignSelf: 'flex-start', borderRadius: 999, minHeight: 44, px: 2, ml: -2, mb: 1, textDecoration: 'none !important' }}
+        sx={{ alignSelf: 'flex-start', borderRadius: controlRadius, minHeight: 44, px: 2, ml: -2, mb: 1, textDecoration: 'none !important' }}
       >
         Back to Audit
       </Button>
@@ -313,7 +314,7 @@ export default function AuditResults() {
           variant="outlined"
           size="large"
           startIcon={<Icon name="file_download" />}
-          sx={{ borderRadius: 999, minHeight: 48 }}
+          sx={{ borderRadius: controlRadius, minHeight: 48 }}
         >
           Export PDF Report
         </Button>

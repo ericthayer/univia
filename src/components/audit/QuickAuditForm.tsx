@@ -11,6 +11,7 @@ import { useFormValidation } from '../../hooks/useFormValidation';
 import ValidationFeedback from '../validation/ValidationFeedback';
 import { ArrowButton } from '../ui/ArrowButton/ArrowButton';
 import { srOnly } from '../ui/srOnly';
+import { controlRadius } from '../../theme/tokens';
 
 export default function QuickAuditForm() {
   const navigate = useNavigate();
@@ -105,9 +106,9 @@ export default function QuickAuditForm() {
               },
             }}
             sx={{
-              // The theme paints the field root with a square background; round it to match the pill outline.
-              borderRadius: 999,
-              '& .MuiOutlinedInput-root': { borderRadius: 999, minHeight: 44, pl: 2 },
+              // The theme paints the field root with a square background; round it to match the outline.
+              borderRadius: controlRadius,
+              '& .MuiOutlinedInput-root': { borderRadius: controlRadius, minHeight: 44, pl: 2 },
             }}
           />
           {(urlField.error || (urlField.isDirty && urlField.isTouched && urlIsValid)) && (
@@ -129,7 +130,7 @@ export default function QuickAuditForm() {
               variant="outlined"
               onClick={handleCancel}
               startIcon={<CircularProgress size={18} color="inherit" />}
-              sx={{ borderRadius: 999, minHeight: 48, flexGrow: { xs: 1, sm: 0 } }}
+              sx={{ borderRadius: controlRadius, minHeight: 48, flexGrow: { xs: 1, sm: 0 } }}
             >
               Cancel
             </Button>
@@ -142,7 +143,7 @@ export default function QuickAuditForm() {
                 type="button"
                 variant="outlined"
                 onClick={handleReset}
-                sx={{ borderRadius: 999, minHeight: 48, px: 3, flexGrow: { xs: 1, sm: 0 } }}
+                sx={{ borderRadius: controlRadius, minHeight: 48, px: 3, flexGrow: { xs: 1, sm: 0 } }}
               >
                 Clear
               </Button>
