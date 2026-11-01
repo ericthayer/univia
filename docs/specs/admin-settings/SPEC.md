@@ -2,7 +2,7 @@
 
 **Status:** Implemented
 **Branch:** off `feat/ui-update` (UI refresh, PR #26)
-**Design language:** UI refresh (`docs/specs/ui-refresh/SPEC.md`). Interactive elements use a 16px radius; cards and pills keep theirs.
+**Design language:** UI refresh (`docs/specs/ui-refresh/SPEC.md`). Interactive elements take the theme `controlRadius` (16px); no local radius overrides.
 
 ## 1. Intent
 

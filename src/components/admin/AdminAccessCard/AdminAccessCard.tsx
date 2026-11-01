@@ -15,16 +15,13 @@ import { SectionHeader } from '../../ui/SectionHeader/SectionHeader';
 import { TonePill } from '../../ui/TonePill/TonePill';
 import type { AdminAccount, AdminActionResult } from '../../../hooks/useAdminAccounts';
 
-// Interactive elements use a 16px radius (UI refresh follow-up on PR #26).
-const INTERACTIVE_RADIUS = '16px';
-
 const fieldSx = {
   bgcolor: 'transparent',
-  '& .MuiOutlinedInput-root': { borderRadius: INTERACTIVE_RADIUS, minHeight: 56, bgcolor: 'background.default' },
+  '& .MuiOutlinedInput-root': { minHeight: 56, bgcolor: 'background.default' },
   '& .MuiFormHelperText-root': { mx: 2, mt: 1 },
 } as const;
 
-const buttonSx = { borderRadius: INTERACTIVE_RADIUS, minHeight: 56, px: 3, flexShrink: 0 } as const;
+const buttonSx = { minHeight: 56, px: 3, flexShrink: 0 } as const;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -150,7 +147,7 @@ export function AdminAccessCard({
                     disabled={busy}
                     onClick={() => setPendingRevoke(admin)}
                     aria-label={`Revoke admin access for ${admin.email}`}
-                    sx={{ borderRadius: INTERACTIVE_RADIUS, minHeight: 44, px: 2 }}
+                    sx={{ minHeight: 44, px: 2 }}
                   >
                     Revoke
                   </Button>
@@ -214,7 +211,7 @@ export function AdminAccessCard({
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={() => setPendingRevoke(null)} disabled={busy} sx={{ borderRadius: INTERACTIVE_RADIUS, minHeight: 44 }}>
+          <Button onClick={() => setPendingRevoke(null)} disabled={busy} sx={{ minHeight: 44 }}>
             Cancel
           </Button>
           <Button
@@ -222,7 +219,7 @@ export function AdminAccessCard({
             color="error"
             onClick={() => void confirmRevoke()}
             disabled={busy}
-            sx={{ borderRadius: INTERACTIVE_RADIUS, minHeight: 44 }}
+            sx={{ minHeight: 44 }}
           >
             {busy ? 'Revoking…' : 'Revoke access'}
           </Button>
