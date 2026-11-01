@@ -32,15 +32,18 @@ export default function Footer() {
         pl: 'env(safe-area-inset-left)',
       }}
     >
+      {/* Full-bleed like the app header: same edge gutters as its Toolbar. */}
       <Container
-        maxWidth="lg"
+        maxWidth={false}
+        disableGutters
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: 2,
-          px: 2,
+          pl: 1,
+          pr: { xs: 2, sm: 1.5 },
         }}
       >
         <Stack direction="row" alignItems="center" flex={1} gap={1}>
