@@ -204,7 +204,7 @@ export default function Pricing() {
         })}
       </Box>
 
-      <Box component="section" aria-labelledby="pricing-faq-title" sx={{ maxWidth: 800 }}>
+      <Box component="section" aria-labelledby="pricing-faq-title">
         <SectionHeader id="pricing-faq-title" title="Frequently Asked Questions" />
         <BezelCard padding="none" sx={{ overflow: 'hidden' }}>
           {FAQS.map(({ question, answer }) => (
