@@ -779,10 +779,12 @@ Deno.serve(async (req: Request) => {
     if (!isAnonymous) {
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('is_admin')
+        .select('is_admin, status')
         .eq('id', auth.user.id)
         .maybeSingle();
-      premiumAnalysis = profile?.is_admin === true;
+      // is_admin is protected from self-service edits by
+      // 20261102020000_protect_profile_privileged_fields.
+      premiumAnalysis = profile?.is_admin === true && profile?.status === 'active';
     }
     const { modelPreference, analysisDepth, downgraded } = resolveAnalysisOptions(
       { modelPreference: validation.value.modelPreference, analysisDepth: validation.value.analysisDepth },
