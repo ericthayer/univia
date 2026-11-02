@@ -7,12 +7,12 @@ import {
   ListItemText,
   Toolbar,
   Box,
-  useColorScheme,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getSidebarMenuItems, MenuItem } from '../../config/navigation';
 import Icon from '../ui/Icon';
+import { useThemeToggle } from '../../hooks/useThemeToggle';
 import { controlRadius } from '../../theme/tokens';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -28,18 +28,12 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const location = useLocation();
   const { isRegistered } = useAuth();
   const menuItems = getSidebarMenuItems(isRegistered);
-  const { mode, setMode } = useColorScheme();
+  const { resolvedMode, toggle: toggleColorMode } = useThemeToggle();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const toggleColorMode = () => {
-    const nextMode = mode === 'dark' ? 'light' : 'dark';
-    setMode(nextMode);
-    localStorage.setItem('manual-color-mode', nextMode);
-  };
 
   const handleNavigation = (path: string) => {
     onMobileClose();
@@ -112,7 +106,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
               <ListItem disablePadding sx={{ px: 2 }}>
                 <ListItemButton
                   onClick={toggleColorMode}
-                  aria-label={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                  aria-label={resolvedMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
                   sx={{
                     borderRadius: controlRadius,
                     '&:hover': {
