@@ -183,7 +183,7 @@ export default function BillingManagement() {
             <Box
               sx={{
                 display: 'grid',
-                gridTemplateColumns: '1fr',
+                gridTemplateColumns: 'minmax(0, 1fr)',
                 gap: 3,
                 '@container (min-width: 900px)': {
                   gridTemplateColumns: '7fr 5fr',

@@ -157,7 +157,7 @@ export default function Dashboard() {
           sx={{
             display: 'grid',
             gap: 3,
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+            gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' },
           }}
         >
           {STANDARDS.map((standard, index) => (
@@ -196,7 +196,7 @@ export default function Dashboard() {
             m: 0,
             p: 0,
             listStyle: 'none',
-            gridTemplateColumns: { xs: '1fr', tiny: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' },
+            gridTemplateColumns: { xs: 'minmax(0, 1fr)', tiny: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' },
           }}
         >
           {QUICK_ACTIONS.map((action, index) => {

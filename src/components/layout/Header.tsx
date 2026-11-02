@@ -1,4 +1,4 @@
-import { AppBar, Toolbar, Tooltip, IconButton, Box, Typography, Stack, Button, useColorScheme } from '@mui/material';
+import { AppBar, Toolbar, Tooltip, IconButton, Box, Typography, Stack, Button } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -7,6 +7,7 @@ import { getHeaderMenuItems, MenuItem } from '../../config/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import UserMenu from '../auth/UserMenu';
 import Icon from '../ui/Icon';
+import { useThemeToggle } from '../../hooks/useThemeToggle';
 import { controlRadius } from '../../theme/tokens';
 
 interface HeaderProps {
@@ -36,7 +37,7 @@ const controlButtonSx = {
 } as const;
 
 export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: HeaderProps) {
-  const { mode, setMode } = useColorScheme();
+  const { resolvedMode, toggle: toggleColorMode } = useThemeToggle();
   const [mounted, setMounted] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -49,12 +50,6 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const toggleColorMode = () => {
-    const nextMode = mode === 'dark' ? 'light' : 'dark';
-    setMode(nextMode);
-    localStorage.setItem('manual-color-mode', nextMode);
-  };
 
   if (!mounted) {
     return null;
@@ -200,7 +195,7 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
           <Tooltip title="Toggle Color Mode">
             <IconButton
               color="primary"
-              aria-label={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={resolvedMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
               onClick={toggleColorMode}
               sx={{
                 display: { xs: 'none', md: 'inline-flex' },

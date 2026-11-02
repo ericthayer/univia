@@ -48,7 +48,7 @@ export default function AdminSettings() {
         sx={{
           display: 'grid',
           gap: 3,
-          gridTemplateColumns: '1fr',
+          gridTemplateColumns: 'minmax(0, 1fr)',
           alignItems: 'stretch',
           [WIDE]: { gridTemplateColumns: 'minmax(0, 7fr) minmax(0, 5fr)' },
         }}

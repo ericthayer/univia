@@ -39,7 +39,7 @@ export function FixGuide({ guidance }: FixGuideProps) {
             mb: 2.5,
             display: 'grid',
             gap: 1.5,
-            gridTemplateColumns: '1fr',
+            gridTemplateColumns: 'minmax(0, 1fr)',
             '@container (min-width: 44rem)': { gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr)' },
           }}
         >

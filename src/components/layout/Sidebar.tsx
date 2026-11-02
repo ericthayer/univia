@@ -7,15 +7,13 @@ import {
   ListItemText,
   Toolbar,
   Box,
-  Divider,
-  useColorScheme,
-  Button,
-  Stack,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getSidebarMenuItems, ROUTE_PATHS, MenuItem } from '../../config/navigation';
+import { getSidebarMenuItems, MenuItem } from '../../config/navigation';
 import Icon from '../ui/Icon';
+import { useThemeToggle } from '../../hooks/useThemeToggle';
+import { controlRadius } from '../../theme/tokens';
 import { useAuth } from '../../contexts/AuthContext';
 
 const drawerWidth = 240;
@@ -30,26 +28,14 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const location = useLocation();
   const { isRegistered } = useAuth();
   const menuItems = getSidebarMenuItems(isRegistered);
-  const { mode, setMode } = useColorScheme();
+  const { resolvedMode, toggle: toggleColorMode } = useThemeToggle();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const toggleColorMode = () => {
-    const nextMode = mode === 'dark' ? 'light' : 'dark';
-    setMode(nextMode);
-    localStorage.setItem('manual-color-mode', nextMode);
-  };
-
   const handleNavigation = (path: string) => {
-    onMobileClose();
-    // Small delay to ensure drawer starts closing before navigation
-    setTimeout(() => navigate(path), 50);
-  };
-
-  const handleOpenAuth = (path: string) => {
     onMobileClose();
     // Small delay to ensure drawer starts closing before navigation
     setTimeout(() => navigate(path), 50);
@@ -81,7 +67,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                     aria-current={isActive ? 'page' : undefined}
                     disabled={item.disabled}
                     sx={{
-                      borderRadius: 1,
+                      borderRadius: controlRadius,
                       '&.Mui-selected': {
                         backgroundColor: 'primary.main',
                         color: 'primary.contrastText',
@@ -120,9 +106,9 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
               <ListItem disablePadding sx={{ px: 2 }}>
                 <ListItemButton
                   onClick={toggleColorMode}
-                  aria-label={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                  aria-label={resolvedMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
                   sx={{
-                    borderRadius: 1,
+                    borderRadius: controlRadius,
                     '&:hover': {
                       backgroundColor: 'action.hover',
                     },
@@ -145,37 +131,6 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
           )}
         </nav>
 
-        <Box sx={{ mt: 'auto' }}>
-
-          {!isRegistered && (
-            <>
-              <Divider sx={{ my: 2 }} />
-              <Stack gap={2} flexDirection="row" flexWrap="wrap" sx={{ px: 2 }}>
-                <Button
-                  variant="contained"
-                  onClick={() => handleOpenAuth(ROUTE_PATHS.SIGN_IN)}
-                  sx={{
-                    flex: '1 1 15rem',
-                    minHeight: { xs: 56, md: 44 },
-                  }}
-                >
-                  Sign In
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={() => handleOpenAuth(ROUTE_PATHS.SIGN_UP)}
-                  sx={{
-                    flex: '1 1 15rem',
-
-                    minHeight: { xs: 56, md: 44 },
-                  }}
-                >
-                  Join Univia
-                </Button>
-              </Stack>
-            </>
-          )}
-        </Box>
       </Box>
     </>
   );

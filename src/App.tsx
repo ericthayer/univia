@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 import AppShell from './components/layout/AppShell';
-import { useSystemColorMode } from './hooks/useSystemColorMode';
 import { ROUTE_PATHS } from './config/navigation';
 import { AuthProvider } from './contexts/AuthContext';
 import { AdminRoute, ProtectedRoute, RegisteredRoute } from './components/auth/RouteGuards';
@@ -45,8 +44,6 @@ const PageLoader = () => (
 );
 
 function App() {
-  useSystemColorMode();
-
   return (
     <AuthProvider>
       <Router
