@@ -24,7 +24,7 @@ import { SectionHeader } from '../components/ui/SectionHeader/SectionHeader';
 const NEXT_STEPS = [
   'Your document will be analyzed for key information',
   'AI extracts dates, names, amounts, and violations',
-  'Legal analysis with risk assessment and potential defenses',
+  'Questions to take to your attorney',
   'Results are saved and can be shared with others',
 ];
 

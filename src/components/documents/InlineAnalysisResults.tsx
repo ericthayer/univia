@@ -326,13 +326,13 @@ export default function InlineAnalysisResults({
       {result.legalAnalysis && (
         <AnalysisSection
           id={`${uid}-legal`}
-          title="Legal Analysis"
+          title="Claim Details"
           action={
             <IconButton
               onClick={() => setShowLegalAnalysis((open) => !open)}
               aria-expanded={showLegalAnalysis}
               aria-controls={`${uid}-legal-panel`}
-              aria-label={showLegalAnalysis ? 'Collapse legal analysis' : 'Expand legal analysis'}
+              aria-label={showLegalAnalysis ? 'Collapse claim details' : 'Expand claim details'}
               sx={{ width: 44, height: 44, mr: -1 }}
             >
               <Icon name={showLegalAnalysis ? 'expand_less' : 'expand_more'} />
@@ -340,7 +340,7 @@ export default function InlineAnalysisResults({
           }
         >
           <Collapse in={showLegalAnalysis} id={`${uid}-legal-panel`}>
-            <Box component="dl" sx={{ ...detailsGridSx, mb: 2.5 }}>
+            <Box component="dl" sx={detailsGridSx}>
               <Detail label="Claim Type">
                 <Typography variant="body1" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
                   {result.legalAnalysis.claimType}
@@ -353,34 +353,7 @@ export default function InlineAnalysisResults({
                   </Typography>
                 </Detail>
               )}
-              {result.legalAnalysis.statuteOfLimitations && (
-                <Detail label="Statute of Limitations">
-                  <Typography variant="body1" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
-                    {result.legalAnalysis.statuteOfLimitations}
-                  </Typography>
-                </Detail>
-              )}
             </Box>
-
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
-              Risk Assessment
-            </Typography>
-            <Typography variant="body2" sx={{ lineHeight: 1.7, overflowWrap: 'anywhere' }}>
-              {result.legalAnalysis.riskAssessment}
-            </Typography>
-
-            {result.legalAnalysis.potentialDefenses && result.legalAnalysis.potentialDefenses.length > 0 && (
-              <Box sx={{ mt: 2.5 }}>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
-                  Potential Defenses to Consider
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  {result.legalAnalysis.potentialDefenses.map((defense, index) => (
-                    <TextChip key={index} label={defense} icon="shield" />
-                  ))}
-                </Box>
-              </Box>
-            )}
           </Collapse>
         </AnalysisSection>
       )}
@@ -451,6 +424,18 @@ export default function InlineAnalysisResults({
                   {action}
                 </Typography>
               </Box>
+            ))}
+          </Box>
+        </AnalysisSection>
+      )}
+
+      {result.questionsForAttorney && result.questionsForAttorney.length > 0 && (
+        <AnalysisSection id={`${uid}-questions`} title="Questions for Your Attorney">
+          <Box component="ul" sx={{ m: 0, pl: 2.5, display: 'grid', gap: 1 }}>
+            {result.questionsForAttorney.map((question, index) => (
+              <Typography component="li" variant="body2" key={index} sx={{ overflowWrap: 'anywhere' }}>
+                {question}
+              </Typography>
             ))}
           </Box>
         </AnalysisSection>

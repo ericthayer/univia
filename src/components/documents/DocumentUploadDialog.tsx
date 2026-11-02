@@ -20,6 +20,7 @@ import { srOnly } from '../ui/srOnly';
 import { ensureSession } from '../../services/session';
 import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from '../../services/supabaseFunctions';
 import { controlRadius } from '../../theme/tokens';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface DocumentUploadDialogProps {
   open: boolean;
@@ -27,12 +28,15 @@ interface DocumentUploadDialogProps {
   onUploadComplete: (analysis: DocumentAnalysis) => void;
 }
 
+/**
+ * Facts about the claim as the document states them. Letters analyzed before
+ * the guardrail change may also carry `potentialDefenses`, `riskAssessment`
+ * and `statuteOfLimitations` in stored JSON; those are legal opinions and are
+ * intentionally not typed or displayed.
+ */
 export interface LegalAnalysis {
   claimType: string;
   jurisdiction?: string;
-  statuteOfLimitations?: string;
-  potentialDefenses: string[];
-  riskAssessment: string;
 }
 
 export interface DocumentAnalysis {
@@ -64,6 +68,7 @@ export interface DocumentAnalysis {
       amounts: string[];
       legalCitations?: string[];
     };
+    questionsForAttorney?: string[];
     legalAnalysis?: LegalAnalysis;
   };
   debug?: {
@@ -117,6 +122,10 @@ export default function DocumentUploadDialog({
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
+  // Pro + detailed are a paid feature; the analyze-document function enforces
+  // this server-side, so only admins see the choice here.
+  const { profile } = useAuth();
+  const canChooseModel = profile?.is_admin === true;
   const [modelPreference, setModelPreference] = useState<'flash' | 'pro'>('flash');
   const [analysisDepth, setAnalysisDepth] = useState<'standard' | 'detailed'>('standard');
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -425,6 +434,7 @@ export default function DocumentUploadDialog({
           </Box>
         )}
 
+        {canChooseModel && (
         <Box sx={{ mt: 3 }}>
           <Button
             size="small"
@@ -490,7 +500,7 @@ export default function DocumentUploadDialog({
                     </Tooltip>
                   </ToggleButton>
                   <ToggleButton value="detailed">
-                    <Tooltip title="In-depth legal analysis with risk assessment">
+                    <Tooltip title="Lists every claim and cited WCAG criterion in detail">
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Icon name="search" style={{ fontSize: 16 }} aria-hidden />
                         <span>Detailed</span>
@@ -502,6 +512,7 @@ export default function DocumentUploadDialog({
             </Box>
           </Collapse>
         </Box>
+        )}
 
         <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid', borderColor: 'divider' }}>
           <Typography variant="eyebrow" component="h3" sx={{ mb: 1 }}>
@@ -510,7 +521,7 @@ export default function DocumentUploadDialog({
           <Typography variant="body2" color="text.secondary" component="ul" sx={{ pl: 2, m: 0 }}>
             <li>Your document will be analyzed for key information</li>
             <li>AI extracts dates, names, amounts, and violations</li>
-            <li>Legal analysis with risk assessment and defenses</li>
+            <li>Questions to take to your attorney</li>
             <li>Confidence scores show reliability of extracted data</li>
           </Typography>
         </Box>

@@ -5,6 +5,7 @@ import { authenticateRequest } from '../_shared/auth.ts';
 import { getSupabaseKey } from '../_shared/supabase-keys.ts';
 import { validateDocumentRequest } from '../_shared/document-validation.ts';
 import { validateDocumentAnalysis, type DocumentAnalysis } from '../_shared/analysis-validation.ts';
+import { findAdviceViolations, resolveAnalysisOptions, stripAdvice } from '../_shared/analysis-policy.ts';
 import {
   createRequestId,
   getAllowedOrigins,
@@ -43,19 +44,27 @@ function createErrorResponse(
 }
 
 function buildAnalysisPrompt(documentType: string, analysisDepth: 'standard' | 'detailed'): string {
-  const basePrompt = `You are an expert legal document analyzer specializing in ADA compliance, accessibility law, and demand letter analysis. Your role is to provide accurate, actionable insights for legal professionals and business owners.
+  const basePrompt = `You are a careful document analyst. You help small-business owners understand a legal document they received, usually an ADA website-accessibility demand letter, so they can organize a response with their own attorney. You are not a lawyer and you do not give legal advice.
 
 ANALYSIS INSTRUCTIONS:
-1. Carefully read and analyze every part of the document
-2. Extract ALL relevant information with high precision
-3. Identify legal implications and time-sensitive matters
+1. Carefully read every part of the document
+2. Extract ALL relevant facts with high precision: parties, dates, amounts, deadlines, cited standards
+3. Describe what the document claims or demands, in plain language, attributed to the sender ("The letter alleges...", "The firm demands...")
 4. Provide confidence scores based on clarity of information in the document
-5. Focus on accessibility-related legal matters (ADA, WCAG, Section 508)
+5. Focus on accessibility-related matters (ADA, WCAG, Section 508)
+
+RULES (these override everything else):
+- Do NOT assess the legal merit, strength or weakness of any claim
+- Do NOT suggest legal defenses, arguments, settlement positions or whether to pay, settle or ignore the demand
+- Do NOT compare amounts to typical settlements or characterize the sender (for example "serial litigant")
+- Do NOT estimate legal risk or likelihood of winning or losing
+- Do NOT state or imply that any website is or will become compliant
+- Questions of legal strategy belong in "questionsForAttorney", phrased neutrally as questions
 
 OUTPUT FORMAT - Return ONLY valid JSON with this exact structure:
 {
   "documentType": "string (Legal Demand Letter, Settlement Offer, Court Filing, Cease and Desist, Legal Notice, Complaint, etc.)",
-  "documentSummary": "string (comprehensive 3-4 sentence overview including key parties, claims, and required actions)",
+  "documentSummary": "string (3-4 sentence factual overview: who sent it, what it alleges, what it demands, and by when)",
   "plaintiffName": "string or null (full legal name of plaintiff/claimant)",
   "attorneyName": "string or null (full name of representing attorney)",
   "attorneyFirm": "string or null (complete law firm name)",
@@ -63,12 +72,13 @@ OUTPUT FORMAT - Return ONLY valid JSON with this exact structure:
   "courtName": "string or null (court name if litigation is filed)",
   "filingDate": "string or null (date document was filed/sent in YYYY-MM-DD format)",
   "responseDeadline": "string or null (response deadline in YYYY-MM-DD format, calculate from document date if given as 'within X days')",
-  "settlementAmount": "number or null (settlement/damages amount as integer, no currency symbols)",
-  "violationsCited": ["array of specific violations cited (WCAG 2.1 AA, ADA Title III, Section 508, etc.)"],
-  "urgencyLevel": "critical|high|medium|low (based on deadline proximity and claim severity)",
-  "keyPoints": ["array of 4-8 most important findings, be specific"],
-  "recommendedActions": ["array of 4-6 prioritized, specific action items with timeframes"],
-  "additionalResources": ["array of relevant resources (ADA.gov, W3C WCAG, legal aid, etc.)"],
+  "settlementAmount": "number or null (amount demanded as integer, no currency symbols)",
+  "violationsCited": ["array of specific standards or violations the document cites (WCAG 2.1 AA 1.1.1, ADA Title III, Section 508, etc.)"],
+  "urgencyLevel": "critical|high|medium|low (based on deadline proximity only)",
+  "keyPoints": ["array of 4-8 specific facts from the document"],
+  "recommendedActions": ["array of 4-6 practical, non-legal next steps with timeframes, such as calendaring the deadline, sharing the letter with an attorney, preserving records, or auditing the pages the letter names"],
+  "questionsForAttorney": ["array of 3-5 neutral questions the recipient could ask their own attorney about this document"],
+  "additionalResources": ["array of relevant public resources (ADA.gov, W3C WCAG, state bar lawyer referral service, etc.)"],
   "confidenceScores": {
     "plaintiffName": 0.0-1.0,
     "attorneyName": 0.0-1.0,
@@ -82,27 +92,22 @@ OUTPUT FORMAT - Return ONLY valid JSON with this exact structure:
     "organizations": ["all organization/company names"],
     "dates": ["all dates mentioned in original format"],
     "amounts": ["all monetary amounts mentioned"],
-    "legalCitations": ["all legal citations, statutes, and case references"]
+    "legalCitations": ["all legal citations, statutes, and case references, as written"]
   },
   "legalAnalysis": {
-    "claimType": "string (ADA Website Accessibility, Physical Accessibility, Employment ADA, etc.)",
-    "jurisdiction": "string or null (federal/state court, specific district)",
-    "statuteOfLimitations": "string or null (relevant limitations period if applicable)",
-    "potentialDefenses": ["array of potential legal defenses to consider"],
-    "riskAssessment": "string (1-2 sentence assessment of legal risk level and reasoning)"
+    "claimType": "string (the kind of claim as the document describes it: ADA Website Accessibility, Physical Accessibility, etc.)",
+    "jurisdiction": "string or null (court or jurisdiction named in the document, if any)"
   }
 }`;
 
   const detailedAddition = analysisDepth === 'detailed' ? `
 
 DETAILED ANALYSIS REQUIREMENTS:
-- Analyze legal language for potential ambiguities or weaknesses
-- Identify all specific WCAG success criteria mentioned or implied
-- Note any procedural defects in the demand
-- Assess credibility markers in the document
-- Flag any unusual or aggressive language patterns
-- Compare demands against typical settlement ranges
-- Identify serial litigant indicators if present` : '';
+- List every claim the document makes, quoting or closely paraphrasing its wording
+- Identify every WCAG success criterion the document names, and the pages or features it says are affected
+- Record every date, deadline and amount exactly as stated
+- Note anything the document asks the recipient to do or provide
+- All RULES above still apply: describe, never evaluate` : '';
 
   return basePrompt + detailedAddition;
 }
@@ -215,58 +220,78 @@ async function analyzeWithGemini(
     const isImage = fileType.startsWith('image/');
     const isPDF = fileType === 'application/pdf';
 
-    let result;
+    const generate = async (promptText: string): Promise<DocumentAnalysis> => {
+      let result;
 
-    if (isImage) {
-      console.log('[GEMINI] Analyzing image with vision model');
-      result = await model.generateContent([
-        prompt + '\n\nAnalyze the document shown in this image:',
-        {
-          inlineData: {
-            mimeType: fileType,
-            data: content
+      if (isImage) {
+        console.log('[GEMINI] Analyzing image with vision model');
+        result = await model.generateContent([
+          promptText + '\n\nAnalyze the document shown in this image:',
+          {
+            inlineData: {
+              mimeType: fileType,
+              data: content
+            }
           }
-        }
-      ]);
-    } else if (isPDF) {
-      // Gemini reads PDFs natively, text and scanned pages alike. The regex
-      // extractor can't inflate compressed streams and pulls "text" out of
-      // embedded image bytes, so its output is only used as a no-Gemini fallback.
-      console.log('[GEMINI] Sending PDF directly to Gemini');
-      result = await model.generateContent([
-        prompt + '\n\nAnalyze this PDF document:',
-        {
-          inlineData: {
-            mimeType: 'application/pdf',
-            data: content
+        ]);
+      } else if (isPDF) {
+        // Gemini reads PDFs natively, text and scanned pages alike. The regex
+        // extractor can't inflate compressed streams and pulls "text" out of
+        // embedded image bytes, so its output is only used as a no-Gemini fallback.
+        console.log('[GEMINI] Sending PDF directly to Gemini');
+        result = await model.generateContent([
+          promptText + '\n\nAnalyze this PDF document:',
+          {
+            inlineData: {
+              mimeType: 'application/pdf',
+              data: content
+            }
           }
-        }
-      ]);
-    } else {
-      const textContent = extractTextFromContent(content);
-      console.log('[GEMINI] Analyzing text document');
-      result = await model.generateContent(
-        `${prompt}\n\nDocument: ${fileName}\nContent:\n${textContent.substring(0, 50000)}`
+        ]);
+      } else {
+        const textContent = extractTextFromContent(content);
+        console.log('[GEMINI] Analyzing text document');
+        result = await model.generateContent(
+          `${promptText}\n\nDocument: ${fileName}\nContent:\n${textContent.substring(0, 50000)}`
+        );
+      }
+
+      const response = await result.response;
+      const generatedText = response.text();
+
+      const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new InvalidGeminiResponseError();
+      }
+
+      let parsedData: unknown;
+      try {
+        parsedData = JSON.parse(jsonMatch[0]);
+      } catch {
+        throw new InvalidGeminiResponseError();
+      }
+      const validated = validateDocumentAnalysis(parsedData);
+      if (!validated) {
+        throw new InvalidGeminiResponseError();
+      }
+      return validated;
+    };
+
+    let validatedAnalysis = await generate(prompt);
+
+    // Guardrail: analysis must describe the letter, never advise on it.
+    // Regenerate once with the offending fields named; strip what remains.
+    const violations = findAdviceViolations(validatedAnalysis);
+    if (violations.length > 0) {
+      console.warn({ event: 'analysis_advice_regenerate', fields: violations });
+      validatedAnalysis = await generate(
+        `${prompt}\n\nYour previous answer broke the RULES in these fields: ${violations.join(', ')}. ` +
+        'Rewrite them as neutral descriptions of what the document says, with no assessment of merit, defenses, risk, settlement or compliance.'
       );
-    }
-
-    const response = await result.response;
-    const generatedText = response.text();
-
-    const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new InvalidGeminiResponseError();
-    }
-
-    let parsedData: unknown;
-    try {
-      parsedData = JSON.parse(jsonMatch[0]);
-    } catch {
-      throw new InvalidGeminiResponseError();
-    }
-    const validatedAnalysis = validateDocumentAnalysis(parsedData);
-    if (!validatedAnalysis) {
-      throw new InvalidGeminiResponseError();
+      if (findAdviceViolations(validatedAnalysis).length > 0) {
+        console.warn({ event: 'analysis_advice_stripped' });
+        validatedAnalysis = stripAdvice(validatedAnalysis);
+      }
     }
 
     return validatedAnalysis;
@@ -734,8 +759,6 @@ Deno.serve(async (req: Request) => {
       fileName,
       fileType,
       business_id,
-      modelPreference,
-      analysisDepth,
     } = validation.value;
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -748,6 +771,26 @@ Deno.serve(async (req: Request) => {
     }
     const supabase = createClient(supabaseUrl, supabaseKey);
     const isAnonymous = auth.user.is_anonymous;
+
+    // Pro model + detailed depth are reserved for the paid Response Kit.
+    // Until purchases exist only administrators get them; the client's
+    // request is never trusted on its own.
+    let premiumAnalysis = false;
+    if (!isAnonymous) {
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('is_admin')
+        .eq('id', auth.user.id)
+        .maybeSingle();
+      premiumAnalysis = profile?.is_admin === true;
+    }
+    const { modelPreference, analysisDepth, downgraded } = resolveAnalysisOptions(
+      { modelPreference: validation.value.modelPreference, analysisDepth: validation.value.analysisDepth },
+      { premiumAnalysis },
+    );
+    if (downgraded) {
+      console.log({ event: 'analysis_options_downgraded', requestId });
+    }
 
     if (isAnonymous) {
       const { count, error: quotaError } = await supabase
