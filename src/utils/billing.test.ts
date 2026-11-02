@@ -8,7 +8,7 @@ function account(id: string, tier: BillingAccount['tier'], status: string): Bill
 describe('billing utils', () => {
   it('parses configured list prices', () => {
     expect(listPrice('basic')).toBe(0);
-    expect(listPrice('pro')).toBe(49);
+    expect(listPrice('pro')).toBe(9);
     expect(listPrice('enterprise')).toBeNull();
   });
 
@@ -20,7 +20,7 @@ describe('billing utils', () => {
 
   it('formats list prices', () => {
     expect(formatListPrice(0)).toBe('Free');
-    expect(formatListPrice(49)).toBe('$49/mo');
+    expect(formatListPrice(9)).toBe('$9/mo');
     expect(formatListPrice(null)).toBe('Custom');
   });
 
@@ -34,7 +34,7 @@ describe('billing utils', () => {
       account('f', 'basic', 'inactive'),
     ]);
 
-    expect(summary.estimatedMrr).toBe(98);
+    expect(summary.estimatedMrr).toBe(18);
     expect(summary.customPricedAccounts).toBe(1);
     expect(summary.paidAccounts).toBe(3);
     expect(summary.activeAccounts).toBe(4);
@@ -42,7 +42,7 @@ describe('billing utils', () => {
     expect(summary.churnedPaidAccounts).toBe(1);
 
     const pro = summary.plans.find((plan) => plan.tier === 'pro');
-    expect(pro).toMatchObject({ accounts: 3, activeAccounts: 2, share: 50, estimatedMonthly: 98 });
+    expect(pro).toMatchObject({ accounts: 3, activeAccounts: 2, share: 50, estimatedMonthly: 18 });
     expect(summary.plans.find((plan) => plan.tier === 'enterprise')?.estimatedMonthly).toBeNull();
   });
 

@@ -17,8 +17,13 @@ export interface UserProfile {
 export interface TierFeatures {
   name: string;
   price: string;
+  /** Yearly price when the plan offers annual billing, e.g. "$90". */
+  annualPrice?: string;
   auditLimit: number | 'unlimited';
+  /** Entitlements available today. Account settings lists only these. */
   features: string[];
+  /** Announced but not built yet; the Pricing page labels them "coming soon". */
+  plannedFeatures?: string[];
   scheduledAudits?: number;
   emailNotifications: boolean;
   webhooks: boolean;
