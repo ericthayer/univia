@@ -207,7 +207,7 @@ export default function AuditResults() {
         sx={{
           display: 'grid',
           gap: 3,
-          gridTemplateColumns: '1fr',
+          gridTemplateColumns: 'minmax(0, 1fr)',
           mb: { xs: 4, md: 6 },
           [WIDE]: { gridTemplateColumns: 'minmax(0, 8fr) minmax(0, 4fr)' },
         }}

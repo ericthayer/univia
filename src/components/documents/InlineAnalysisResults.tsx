@@ -199,7 +199,7 @@ export default function InlineAnalysisResults({
       <LegalDisclaimer variant="compact" />
 
       <AnalysisSection id={`${uid}-summary`} title="Summary">
-        <Typography variant="body1" sx={{ lineHeight: 1.7 }}>
+        <Typography variant="body1" sx={{ lineHeight: 1.7, overflowWrap: 'anywhere' }}>
           {result.documentSummary}
         </Typography>
       </AnalysisSection>

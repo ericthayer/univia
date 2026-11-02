@@ -313,7 +313,7 @@ export default function AccessibilityAudit() {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 7fr) minmax(0, 5fr)' },
+          gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 7fr) minmax(0, 5fr)' },
           gap: 3,
           alignItems: 'stretch',
           mb: { xs: 6, md: 8 },
@@ -664,7 +664,7 @@ export default function AccessibilityAudit() {
                     <Box
                       sx={{
                         display: 'grid',
-                        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+                        gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))' },
                         columnGap: 4,
                         rowGap: 3,
                       }}

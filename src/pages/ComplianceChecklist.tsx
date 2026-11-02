@@ -108,7 +108,7 @@ export default function ComplianceChecklist() {
           sx={{
             display: 'grid',
             gap: 3,
-            gridTemplateColumns: '1fr',
+            gridTemplateColumns: 'minmax(0, 1fr)',
             alignItems: 'start',
             [WIDE]: { gridTemplateColumns: 'minmax(0, 4fr) minmax(0, 8fr)' },
           }}
