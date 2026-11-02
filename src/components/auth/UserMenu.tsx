@@ -254,7 +254,7 @@ export default function UserMenu() {
             <ListItemIcon>
               <Icon name="workspace_premium" style={{ fontSize: 18 }} />
             </ListItemIcon>
-            <ListItemText>Upgrade to Pro</ListItemText>
+            <ListItemText>Upgrade to {USER_TIERS.pro.name}</ListItemText>
           </MenuItem>
         )}
 

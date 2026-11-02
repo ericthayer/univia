@@ -78,7 +78,7 @@ export function ScoreBreakdownCard({ overall, desktop, mobile, reveal }: ScoreBr
         sx={{
           display: 'grid',
           gap: 2.5,
-          gridTemplateColumns: '1fr',
+          gridTemplateColumns: 'minmax(0, 1fr)',
           '@container (min-width: 34rem)': {
             gridTemplateColumns: '1fr 1fr',
             columnGap: 4,

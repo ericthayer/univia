@@ -17,19 +17,24 @@ import { TonePill } from '../components/ui/TonePill/TonePill';
 
 const FAQS = [
   {
-    question: 'Is the Basic plan really free forever?',
+    question: 'Does Univia make my site compliant or protect me from lawsuits?',
     answer:
-      'Yes! Our Basic plan is completely free with no time limit. We believe everyone should have access to accessibility auditing tools.',
+      'No tool can guarantee that. Univia finds many common WCAG issues today. Monitor is adding fix tracking and a dated Good-Faith Remediation Record you and your attorney can use. Automated scans cannot catch every issue, so pair them with manual review.',
+  },
+  {
+    question: 'Is the Free plan really free?',
+    answer:
+      'Yes. The Free plan has no time limit and no card required. Upgrade to Monitor when you want weekly scans and a remediation record.',
+  },
+  {
+    question: 'How does annual billing work?',
+    answer:
+      'Monitor is $9 a month for your first site, or $90 a year, which is two months free. Each additional site is $5 a month, or $50 a year on annual billing.',
   },
   {
     question: 'Can I upgrade or downgrade anytime?',
     answer:
-      'Yes, you can change your plan at any time. Upgrades take effect immediately, and downgrades take effect at the end of your billing cycle.',
-  },
-  {
-    question: 'What payment methods do you accept?',
-    answer:
-      'We accept all major credit cards (Visa, MasterCard, American Express) and PayPal. Enterprise customers can arrange for invoice-based billing.',
+      'Yes. Upgrades take effect immediately, and downgrades take effect at the end of your billing cycle.',
   },
 ] as const;
 
@@ -46,7 +51,7 @@ export default function Pricing() {
     if (tier === 'basic') {
       navigate('/settings');
     } else {
-      alert(`Upgrade to ${tier} coming soon! This is a prototype feature.`);
+      alert(`Upgrade to ${USER_TIERS[tier].name} coming soon! This is a prototype feature.`);
     }
   };
 
@@ -57,7 +62,7 @@ export default function Pricing() {
       <PageHeader
         eyebrow="Plans"
         title="Choose Your Plan"
-        description="Start with our free Basic plan. Upgrade anytime for more features."
+        description="Start free. Monitor a site for $9 a month, or $90 a year."
       />
 
       <Box
@@ -77,8 +82,8 @@ export default function Pricing() {
           const isCurrentTier = profile?.tier === tier;
           const isFree = tier === 'basic';
           const isPopular = tier === 'pro';
-          const price = isFree ? 'Free' : config.price.split('/')[0];
-          // "/month" only reads correctly after a numeric price ("$49"), not after "Custom".
+          const price = isFree ? '$0' : config.price.split('/')[0];
+          // "/month" only reads correctly after a numeric price ("$9"), not after "Custom".
           const showPerMonth = !isFree && price.startsWith('$');
           const titleId = `plan-${tier}-name`;
 
@@ -122,6 +127,11 @@ export default function Pricing() {
                       Forever
                     </Typography>
                   )}
+                  {config.annualPrice && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      or {config.annualPrice}/year for your first site
+                    </Typography>
+                  )}
                 </Box>
 
                 <Box
@@ -139,7 +149,10 @@ export default function Pricing() {
                     borderColor: 'divider',
                   }}
                 >
-                  {config.features.map((feature: string) => (
+                  {[
+                    ...config.features.map((label) => ({ label, planned: false })),
+                    ...(config.plannedFeatures ?? []).map((label) => ({ label, planned: true })),
+                  ].map(({ label: feature, planned }) => (
                     <Box component="li" key={feature} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
                       <Box
                         aria-hidden="true"
@@ -158,7 +171,14 @@ export default function Pricing() {
                       >
                         <Icon name="check_circle" />
                       </Box>
-                      <Typography variant="body2">{feature}</Typography>
+                      <Typography variant="body2">
+                        {feature}
+                        {planned && (
+                          <Typography component="span" variant="body2" color="text.secondary">
+                            {' '}(coming soon)
+                          </Typography>
+                        )}
+                      </Typography>
                     </Box>
                   ))}
                 </Box>
@@ -184,7 +204,7 @@ export default function Pricing() {
         })}
       </Box>
 
-      <Box component="section" aria-labelledby="pricing-faq-title" sx={{ maxWidth: 800 }}>
+      <Box component="section" aria-labelledby="pricing-faq-title">
         <SectionHeader id="pricing-faq-title" title="Frequently Asked Questions" />
         <BezelCard padding="none" sx={{ overflow: 'hidden' }}>
           {FAQS.map(({ question, answer }) => (

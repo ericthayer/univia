@@ -1,5 +1,7 @@
 import { TonePill } from '../../ui/TonePill/TonePill';
 import type { Tone } from '../../ui/tone';
+import { USER_TIERS } from '../../../config/tierConfig';
+import { normalizeTier } from '../../../utils/billing';
 
 const STATUS_TONE: Record<string, Tone> = {
   active: 'success',
@@ -21,7 +23,8 @@ export function StatusPill({ status }: { status: string }) {
  * basic is an outline, pro is a tint, enterprise is inverse.
  */
 export function TierPill({ tier }: { tier: string }) {
-  if (tier === 'enterprise') return <TonePill variant="solid">{tier}</TonePill>;
-  if (tier === 'pro') return <TonePill>{tier}</TonePill>;
-  return <TonePill variant="outline">{tier}</TonePill>;
+  const label = USER_TIERS[normalizeTier(tier)].name;
+  if (tier === 'enterprise') return <TonePill variant="solid">{label}</TonePill>;
+  if (tier === 'pro') return <TonePill>{label}</TonePill>;
+  return <TonePill variant="outline">{label}</TonePill>;
 }

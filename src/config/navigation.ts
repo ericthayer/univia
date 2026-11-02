@@ -138,8 +138,9 @@ export function getHeaderMenuItems(isAuthenticated: boolean = false): MenuItem[]
   return isAuthenticated ? items : [...items, SIGN_IN_MENU_ITEM];
 }
 
+/** Mirrors the header: signed-out users get Sign In as a nav item, no Register. */
 export function getSidebarMenuItems(isAuthenticated: boolean = false): MenuItem[] {
-  return MENU_ITEMS.filter(item => item.showInSidebar).map(item => {
+  const items = MENU_ITEMS.filter(item => item.showInSidebar).map(item => {
     if (item.id === 'dashboard') {
       return {
         ...item,
@@ -150,6 +151,7 @@ export function getSidebarMenuItems(isAuthenticated: boolean = false): MenuItem[
     }
     return item;
   });
+  return isAuthenticated ? items : [...items, SIGN_IN_MENU_ITEM];
 }
 
 export function getMenuItemByPath(path: string): MenuItem | undefined {

@@ -51,6 +51,7 @@ export function LetterCard({ letter, reveal, onView }: LetterCardProps) {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
+          flexWrap: 'wrap',
           gap: 2,
           mb: 2,
         }}
@@ -61,6 +62,7 @@ export function LetterCard({ letter, reveal, onView }: LetterCardProps) {
           sx={{
             fontWeight: 600,
             lineHeight: 1.35,
+            flex: '1 1 12rem',
             minWidth: 0,
             display: '-webkit-box',
             WebkitLineClamp: 2,

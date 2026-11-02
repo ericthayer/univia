@@ -19,6 +19,7 @@ import { PlanMixCard } from '../../components/admin/PlanMixCard/PlanMixCard';
 import { PlanCatalogCard } from '../../components/admin/PlanCatalogCard/PlanCatalogCard';
 import { BillingAccountsTable } from '../../components/admin/BillingAccountsTable/BillingAccountsTable';
 import { formatCurrency, isPaidTier, summarizeBilling } from '../../utils/billing';
+import { USER_TIERS } from '../../config/tierConfig';
 
 const DEFAULT_PLAN = 'paid';
 const DEFAULT_STATUS = 'all';
@@ -28,9 +29,9 @@ const INVOICES_TITLE_ID = 'billing-invoices-title';
 const PLAN_OPTIONS = [
   { value: 'paid', label: 'Paid' },
   { value: 'all', label: 'All' },
-  { value: 'basic', label: 'Basic' },
-  { value: 'pro', label: 'Pro' },
-  { value: 'enterprise', label: 'Enterprise' },
+  { value: 'basic', label: 'Free' },
+  { value: 'pro', label: 'Monitor' },
+  { value: 'enterprise', label: 'Agency' },
 ] as const;
 
 const STATUS_OPTIONS = [
@@ -162,7 +163,7 @@ export default function BillingManagement() {
             <MetricTile
               label="Custom-Priced"
               value={summary.customPricedAccounts}
-              support="Active Enterprise, not in MRR"
+              support={`Active ${USER_TIERS.enterprise.name}, not in MRR`}
               icon={<Icon name="workspace_premium" />}
               loading={loading}
               reveal={2}
@@ -182,7 +183,7 @@ export default function BillingManagement() {
             <Box
               sx={{
                 display: 'grid',
-                gridTemplateColumns: '1fr',
+                gridTemplateColumns: 'minmax(0, 1fr)',
                 gap: 3,
                 '@container (min-width: 900px)': {
                   gridTemplateColumns: '7fr 5fr',

@@ -163,7 +163,7 @@ export default function AccountSettings() {
         sx={{
           display: 'grid',
           gap: 3,
-          gridTemplateColumns: '1fr',
+          gridTemplateColumns: 'minmax(0, 1fr)',
           alignItems: 'start',
           [WIDE]: { gridTemplateColumns: 'minmax(0, 7fr) minmax(0, 5fr)' },
         }}
@@ -314,7 +314,7 @@ export default function AccountSettings() {
             {profile.tier === 'basic' && (
               <Box sx={{ mt: 3 }}>
                 <ArrowButton onClick={() => navigate('/pricing')} startIcon={<Icon name="workspace_premium" />}>
-                  Upgrade to Pro
+                  Upgrade to {USER_TIERS.pro.name}
                 </ArrowButton>
               </Box>
             )}
@@ -354,7 +354,7 @@ export default function AccountSettings() {
 
             {usagePercentage > 90 && profile.tier === 'basic' && (
               <Alert severity="warning" sx={{ mt: 2, borderRadius: 3 }}>
-                You're approaching your audit limit. Upgrade to Pro for unlimited audits.
+                You're approaching your audit limit. Upgrade to {USER_TIERS.pro.name} for {USER_TIERS.pro.auditLimit} audits a month.
               </Alert>
             )}
           </BezelCard>

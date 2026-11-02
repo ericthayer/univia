@@ -28,7 +28,7 @@ export function CodeSample({ example }: CodeSampleProps) {
         sx={{
           display: 'grid',
           gap: 1.5,
-          gridTemplateColumns: '1fr',
+          gridTemplateColumns: 'minmax(0, 1fr)',
           '@container (min-width: 44rem)': example.before ? { gridTemplateColumns: '1fr 1fr' } : {},
         }}
       >
