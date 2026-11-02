@@ -24,12 +24,16 @@ export interface DocumentAnalysis {
     amounts: string[];
     legalCitations: string[];
   };
+  /** Neutral questions the recipient can raise with their own attorney. */
+  questionsForAttorney?: string[];
+  /**
+   * Facts about the claim as stated in the document. Opinions on merit,
+   * defenses and risk are deliberately not part of the contract; any such
+   * fields the model returns are dropped here.
+   */
   legalAnalysis?: {
     claimType: string;
     jurisdiction?: string;
-    statuteOfLimitations?: string;
-    potentialDefenses: string[];
-    riskAssessment: string;
   };
 }
 
@@ -135,12 +139,10 @@ export function validateDocumentAnalysis(value: unknown): DocumentAnalysis | nul
         amounts: stringArray(extractedEntities.amounts ?? [], MAX_ARRAY_ITEMS, MAX_SHORT_TEXT_LENGTH),
         legalCitations: stringArray(extractedEntities.legalCitations ?? [], MAX_ARRAY_ITEMS, MAX_SHORT_TEXT_LENGTH),
       },
+      questionsForAttorney: optionalStringArray(value.questionsForAttorney, MAX_LIST_ITEMS, MAX_LONG_TEXT_LENGTH),
       legalAnalysis: legalAnalysis ? {
         claimType: requiredString(legalAnalysis.claimType, MAX_SHORT_TEXT_LENGTH),
         jurisdiction: optionalString(legalAnalysis.jurisdiction, MAX_SHORT_TEXT_LENGTH),
-        statuteOfLimitations: optionalString(legalAnalysis.statuteOfLimitations, MAX_SHORT_TEXT_LENGTH),
-        potentialDefenses: stringArray(legalAnalysis.potentialDefenses, MAX_LIST_ITEMS, MAX_LONG_TEXT_LENGTH),
-        riskAssessment: requiredString(legalAnalysis.riskAssessment, MAX_LONG_TEXT_LENGTH),
       } : undefined,
     };
   } catch {

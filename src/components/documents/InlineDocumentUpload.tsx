@@ -20,6 +20,7 @@ import Icon from '../ui/Icon';
 import { ArrowButton } from '../ui/ArrowButton/ArrowButton';
 import LegalDisclaimer from '../ui/LegalDisclaimer';
 import { DocumentAnalysis } from './DocumentUploadDialog';
+import { useAuth } from '../../contexts/AuthContext';
 import { ensureSession } from '../../services/session';
 import { storeLetterFile } from '../../services/letterFiles.service';
 import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl } from '../../services/supabaseFunctions';
@@ -80,6 +81,10 @@ export default function InlineDocumentUpload({ onUploadComplete, showNextSteps =
   const [showInfo, setShowInfo] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
+  // Pro + detailed are a paid feature; the analyze-document function enforces
+  // this server-side, so only admins see the choice here.
+  const { profile } = useAuth();
+  const canChooseModel = profile?.is_admin === true;
   const [modelPreference, setModelPreference] = useState<'flash' | 'pro'>('flash');
   const [analysisDepth, setAnalysisDepth] = useState<'standard' | 'detailed'>('standard');
   // Changed from showAdvanced boolean to anchorEl for Menu popover pattern
@@ -437,6 +442,7 @@ export default function InlineDocumentUpload({ onUploadComplete, showNextSteps =
       )}
 
       {/* Advanced Options - Refactored to IconButton + Menu pattern */}
+      {canChooseModel && (
       <Box
         sx={{
           mb: 3,
@@ -565,7 +571,7 @@ export default function InlineDocumentUpload({ onUploadComplete, showNextSteps =
                 </Tooltip>
               </ToggleButton>
               <ToggleButton value="detailed">
-                <Tooltip title="In-depth legal analysis with risk assessment">
+                <Tooltip title="Lists every claim and cited WCAG criterion in detail">
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Icon name="search" style={{ fontSize: 18 }} />
                     <span>Detailed</span>
@@ -586,6 +592,7 @@ export default function InlineDocumentUpload({ onUploadComplete, showNextSteps =
           </MenuItem>
         </Menu>
       </Box>
+      )}
 
       {/* Submit Button  */}
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
@@ -641,7 +648,7 @@ export default function InlineDocumentUpload({ onUploadComplete, showNextSteps =
             AI extracts dates, names, amounts, and violations
           </Typography>
           <Typography component="li" variant="body2" color="text.secondary">
-            Legal analysis with risk assessment and potential defenses
+            Questions to take to your attorney
           </Typography>
           <Typography component="li" variant="body2" color="text.secondary">
             Results are saved and can be shared with others

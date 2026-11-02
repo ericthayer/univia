@@ -99,7 +99,7 @@ export function LetterCard({ letter, reveal, onView }: LetterCardProps) {
       <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mb: meta.length || letter.analysis_summary ? 2.5 : 0 }}>
         <Chip label={letter.status?.toUpperCase() || 'PENDING'} color={getStatusColor(letter.status)} size="small" />
         <Chip
-          label={`${letter.risk_level?.toUpperCase() || 'MEDIUM'} RISK`}
+          label={`${letter.risk_level?.toUpperCase() || 'MEDIUM'} URGENCY`}
           color={getRiskColor(letter.risk_level)}
           size="small"
         />

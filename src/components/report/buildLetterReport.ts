@@ -76,20 +76,15 @@ export function buildLetterReport(analysis: DocumentAnalysis, options: LetterRep
   if (legal) {
     const legalFacts: ReportFact[] = [{ label: 'Claim Type', value: legal.claimType }];
     if (legal.jurisdiction) legalFacts.push({ label: 'Jurisdiction', value: legal.jurisdiction });
-    if (legal.statuteOfLimitations) legalFacts.push({ label: 'Statute of Limitations', value: legal.statuteOfLimitations });
-    const blocks: ReportBlock[] = [
-      { kind: 'facts', items: legalFacts },
-      { kind: 'subheading', text: 'Risk Assessment' },
-      { kind: 'paragraph', text: parseInlineMarkdown(legal.riskAssessment) },
-    ];
-    if (legal.potentialDefenses?.length) {
-      blocks.push({ kind: 'subheading', text: 'Potential Defenses to Consider' }, { kind: 'list', ordered: false, items: legal.potentialDefenses.map(parseInlineMarkdown) });
-    }
-    sections.push({ id: 'legal', title: 'Legal Analysis', blocks });
+    sections.push({ id: 'legal', title: 'Claim Details', blocks: [{ kind: 'facts', items: legalFacts }] });
   }
 
   if (result.recommendedActions?.length) {
     sections.push({ id: 'actions', title: 'Recommended Actions', blocks: [{ kind: 'list', ordered: true, items: result.recommendedActions.map(parseInlineMarkdown) }] });
+  }
+
+  if (result.questionsForAttorney?.length) {
+    sections.push({ id: 'questions', title: 'Questions for Your Attorney', blocks: [{ kind: 'list', ordered: false, items: result.questionsForAttorney.map(parseInlineMarkdown) }] });
   }
 
   if (result.additionalResources?.length) {
