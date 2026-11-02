@@ -12,6 +12,8 @@
   inline. If the hardening migration runs later, it replaces this function
   with its own stricter version under the same name, which is intended.
 
+  Only end-user API requests (JWT role authenticated or anon) are checked.
+
   Only privilege fields are protected here; audit_count, last_login and email
   are left alone so existing triggers and auth sync keep working.
 */
@@ -30,8 +32,9 @@ BEGIN
     NEW.audit_limit IS DISTINCT FROM OLD.audit_limit OR
     NEW.status IS DISTINCT FROM OLD.status
   )
-  AND coalesce(auth.role(), '') <> 'service_role'
-  AND session_user NOT IN ('postgres', 'supabase_admin')
+  -- Only end-user API requests are checked. The service role and direct SQL
+  -- sessions (dashboard, migrations: no JWT claims) pass through.
+  AND coalesce(auth.role(), '') IN ('authenticated', 'anon')
   AND NOT EXISTS (
     SELECT 1
     FROM public.user_profiles
