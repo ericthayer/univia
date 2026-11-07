@@ -1,11 +1,11 @@
 -- Behavioral test for sign-up, guest conversion and profile saving.
--- Run on a disposable Supabase database after 20261107213000 as a superuser.
+-- Run on a disposable Supabase database built from every migration as a superuser.
 -- Everything rolls back. Do not run against production.
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap;
 
-SELECT plan(19);
+SELECT plan(23);
 
 CREATE SCHEMA test_helpers;
 
@@ -89,6 +89,19 @@ SELECT test_helpers.act_as('authenticated', '00000000-0000-0000-0000-00000000a00
 SELECT is((SELECT count(*)::int FROM public.user_profiles), 4, 'an active admin sees every profile');
 SELECT lives_ok($$UPDATE public.user_profiles SET tier = 'pro' WHERE id = '00000000-0000-0000-0000-00000000a001'$$, 'an active admin can change a plan');
 SELECT test_helpers.act_as_system();
+
+-- A stale profile email must not block a sign-up, and sign-up keeps the account's own date
+INSERT INTO auth.users (id, email, created_at, raw_user_meta_data, is_anonymous) VALUES
+  ('00000000-0000-0000-0000-00000000a005', 'old@example.invalid', '2024-03-01T00:00:00Z', '{}', false);
+UPDATE public.user_profiles SET email = 'held@example.invalid' WHERE id = '00000000-0000-0000-0000-00000000a005';
+
+INSERT INTO auth.users (id, email, created_at, raw_user_meta_data, is_anonymous) VALUES
+  ('00000000-0000-0000-0000-00000000a006', 'held@example.invalid', '2024-06-01T00:00:00Z', '{}', false);
+
+SELECT is((SELECT email FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-00000000a006'), 'held@example.invalid', 'a sign-up gets a profile when a stale profile held its address');
+SELECT is((SELECT email FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-00000000a005'), 'old@example.invalid', 'the stale holder is resynced to its own address');
+SELECT is((SELECT created_at::date FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-00000000a006'), '2024-06-01'::date, 'a new profile keeps the account''s sign-up date');
+SELECT is((SELECT count(*)::int FROM pg_policies WHERE schemaname = 'public' AND tablename = 'demand_letters' AND policyname = 'Anyone can insert demand letters'), 0, 'no permissive letter insert policy is left behind');
 
 SELECT * FROM finish();
 ROLLBACK;
