@@ -13,7 +13,8 @@ const analysis: DocumentAnalysis = {
     additionalResources: ['ADA.gov'],
     extractedData: { attorneyName: 'Jane Doe', responseDeadline: '2026-11-20', settlementAmount: 15000 },
     confidenceScores: { attorneyName: 0.95 },
-    legalAnalysis: { claimType: 'ADA Title III', riskAssessment: 'Moderate', potentialDefenses: ['Remediation underway'] },
+    questionsForAttorney: ['Does the deadline run from the letter date or receipt?'],
+    legalAnalysis: { claimType: 'ADA Title III' },
   },
   debug: { analysisMethod: 'gemini', aiModel: 'gemini-x', hasGeminiKey: true, fileType: 'pdf', timestamp: '2026-11-01T10:00:00Z' },
 };
@@ -40,6 +41,23 @@ describe('buildLetterReport', () => {
         expect.objectContaining({ label: 'Settlement Amount', value: '$15,000' }),
       ]),
     );
+  });
+
+  it('shows claim facts and attorney questions without legal opinions', () => {
+    // Letters saved before the guardrail change still carry these in stored JSON.
+    const legacy = {
+      ...analysis,
+      analysis: {
+        ...analysis.analysis,
+        legalAnalysis: { claimType: 'ADA Title III', riskAssessment: 'Moderate', potentialDefenses: ['Remediation underway'] },
+      },
+    } as DocumentAnalysis;
+    const report = buildLetterReport(legacy);
+    const legal = report.sections.find((section) => section.id === 'legal');
+    expect(legal?.title).toBe('Claim Details');
+    expect(legal?.blocks).toEqual([{ kind: 'facts', items: [{ label: 'Claim Type', value: 'ADA Title III' }] }]);
+    expect(JSON.stringify(report)).not.toMatch(/Remediation underway|Risk Assessment|Defenses/);
+    expect(report.sections.find((section) => section.id === 'questions')?.blocks[0]).toMatchObject({ kind: 'list', ordered: false });
   });
 
   it('skips sections with no data', () => {

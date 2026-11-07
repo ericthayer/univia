@@ -64,4 +64,20 @@ describe('validateDocumentAnalysis', () => {
       extractedEntities: { ...validAnalysis.extractedEntities, persons: [42] },
     })).toBeNull();
   });
+
+  it('keeps claim facts and drops defense and risk opinions from the model', () => {
+    const result = validateDocumentAnalysis(validAnalysis);
+    expect(result?.legalAnalysis).toEqual({ claimType: 'ADA Website Accessibility', jurisdiction: undefined });
+    expect(result?.legalAnalysis).not.toHaveProperty('potentialDefenses');
+    expect(result?.legalAnalysis).not.toHaveProperty('riskAssessment');
+  });
+
+  it('accepts questions for an attorney and treats them as optional', () => {
+    expect(validateDocumentAnalysis({
+      ...validAnalysis,
+      questionsForAttorney: ['Does the 14-day deadline run from the letter date or receipt?'],
+    })?.questionsForAttorney).toEqual(['Does the 14-day deadline run from the letter date or receipt?']);
+    expect(validateDocumentAnalysis(validAnalysis)?.questionsForAttorney).toBeUndefined();
+    expect(validateDocumentAnalysis({ ...validAnalysis, questionsForAttorney: 'one question' })).toBeNull();
+  });
 });
