@@ -20,4 +20,4 @@ Production applies migrations as `postgres`, which does not own `auth.users`. A 
 
 `20261107214000_tenant_isolation.sql` refuses to run while any audit or letter has no owner. This is intentional: there is no safe automatic owner for those rows. Resolve them first (Monitor launch SPEC, Decision 1). Do not assign them to an admin or to whoever is signed in.
 
-`20261108021333_require_audit_owner.sql` has the same gate for audits. Apply it only after the `run-lighthouse-audit` version that rejects key-only calls is deployed.
+`20261108023428_require_audit_owner.sql` has the same gate for audits. It runs after the `run-lighthouse-audit` version that rejects key-only calls (production version 34).
