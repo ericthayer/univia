@@ -11,12 +11,13 @@ export const USER_TIERS: Record<UserTier, TierFeatures> = {
   basic: {
     name: 'Free',
     price: '$0',
+    // Mirrors plan_audit_limit() in 20261108044538_enforce_plan_limits.
     auditLimit: 1,
     features: [
-      '1 homepage scan per month',
+      '1 site audit per month',
       'Accessibility score and top issues',
       'Demand letter triage (1 letter)',
-      'Community support'
+      'Self-serve help center'
     ],
     emailNotifications: true,
     webhooks: false,
@@ -28,43 +29,41 @@ export const USER_TIERS: Record<UserTier, TierFeatures> = {
     annualPrice: '$90',
     auditLimit: 30,
     features: [
-      '30 on-demand audits per month',
+      '30 site audits per month',
       'PDF export',
-      '5 demand letter analyses per month',
-      'Extra sites $5/month or $50/year each'
+      '5 demand letter analyses per month'
     ],
     plannedFeatures: [
       'Weekly scans of up to 25 pages',
       'Alerts when new issues appear',
       'Fix tracker with re-scan confirmation',
       'Good-Faith Remediation Record (PDF)',
-      'Accessibility statement generator'
+      'Accessibility statement generator',
+      'Extra sites $5/month or $50/year each'
     ],
-    scheduledAudits: 1,
     emailNotifications: true,
     webhooks: false,
     apiAccess: false,
-    teamMembers: 2,
   },
   enterprise: {
     name: 'Agency',
     price: 'Custom',
+    // No cap on the server today; allowances are agreed per account.
     auditLimit: 'unlimited',
     features: [
-      'Unlimited audits',
-      'API access and webhooks',
-      '5+ team seats',
-      'Priority support'
+      'Everything in Monitor',
+      'Allowances set to fit your volume'
     ],
     plannedFeatures: [
       'Monitoring for 10+ sites',
+      'Team seats',
+      'API access and webhooks',
       'White-label PDF reports',
-      'Remediation Record per client'
+      'Remediation Record per client',
+      'Priority support'
     ],
-    scheduledAudits: 20,
     emailNotifications: true,
-    webhooks: true,
-    apiAccess: true,
-    teamMembers: 100,
+    webhooks: false,
+    apiAccess: false,
   }
 };

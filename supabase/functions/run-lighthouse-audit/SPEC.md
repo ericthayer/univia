@@ -27,6 +27,7 @@ The function validates the target, runs PageSpeed Insights for mobile and deskto
 
 - Require a caller bearer token that verifies to a user. Supabase anonymous (guest) sessions qualify. A publishable key alone is rejected, as is a missing or invalid token.
 - Store every audit with the caller's user ID, so each audit has an owner who can read it and whose plan limits apply.
+- Claim the run against the caller's monthly allowance (`claim_audit_run`) after validation and before calling PageSpeed. Release it (`release_audit_run`) if both devices fail.
 - Validate HTTPS hostname, business ownership, and public DNS targets.
 - Call Google PageSpeed Insights v5 with explicit Lighthouse categories and device strategy.
 - Bound upstream response size and timeout.
@@ -41,7 +42,8 @@ The function validates the target, runs PageSpeed Insights for mobile and deskto
 - `401`: missing or invalid user token.
 - `403`: origin or business access denied.
 - `422`: malformed/private/unverifiable audit target.
-- `429`: PageSpeed rate limit.
+- `429`: PageSpeed rate limit, or `AUDIT_LIMIT` when the caller's monthly plan allowance is used up. The limit message comes from the server.
+- `503` with `QUOTA_UNAVAILABLE`: the allowance could not be read. Fails closed.
 - `502`: provider failure or invalid provider payload; logs include safe provider status/classification.
 - `503`: missing server-side configuration.
 - `504`: provider timeout.
@@ -81,3 +83,4 @@ A successful response must contain a non-empty `session_id` and explicit `status
 - 2026-11-07: Removed the publishable-key path (Monitor launch, Phase 2). It stored audits with no owner, which nobody could read and which bypassed limits. Every audit now has a `user_id`, which the database requires.
 - 2026-08-25: Accepted the Supabase dashboard anon tester's duplicate publishable-key bearer header without downgrading other invalid bearer tokens.
 - 2026-08-25: Persist audit ownership from `@supabase/server`'s `userClaims.id`, including anonymous Auth sessions, so private history RLS can return completed audits.
+- 2026-11-07: Added the monthly plan allowance (Monitor launch, Phase 2).

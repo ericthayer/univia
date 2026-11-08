@@ -41,6 +41,18 @@ const controlButtonSx = {
   '&.Mui-disabled': { bgcolor: 'action.disabledBackground', color: 'text.disabled' },
 } as const;
 
+interface AuditUsage {
+  used: number;
+  /** -1 means no cap. */
+  limit: number;
+}
+
+function parseAuditUsage(value: unknown): AuditUsage | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const { used, limit } = value as Record<string, unknown>;
+  return typeof used === 'number' && typeof limit === 'number' ? { used, limit } : null;
+}
+
 export default function AccountSettings() {
   const { user, profile, refreshProfile, updatePassword } = useAuth();
   const navigate = useNavigate();
@@ -54,18 +66,17 @@ export default function AccountSettings() {
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [auditCount, setAuditCount] = useState(0);
+  const [auditUsage, setAuditUsage] = useState<AuditUsage | null>(null);
 
+  // The same monthly count the server enforces (my_audit_usage(), in
+  // 20261108044538_enforce_plan_limits), not every audit row ever saved.
   const fetchAuditCount = useCallback(async () => {
     if (!user) return;
 
-    const { count, error } = await supabase
-      .from('accessibility_audits')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id);
-
-    if (!error && count !== null) {
-      setAuditCount(count);
+    const { data, error } = await supabase.rpc('my_audit_usage');
+    const usage = error ? null : parseAuditUsage(data);
+    if (usage) {
+      setAuditUsage(usage);
     }
   }, [user]);
 
@@ -136,8 +147,10 @@ export default function AccountSettings() {
 
   const tierConfig = USER_TIERS[profile.tier];
   const tierVariant = profile.tier === 'enterprise' ? 'solid' : profile.tier === 'pro' ? 'tonal' : 'outline';
-  const usagePercentage = profile.audit_limit > 0 ? (auditCount / profile.audit_limit) * 100 : 0;
-  const limitLabel = profile.audit_limit === -1 ? 'Unlimited' : profile.audit_limit;
+  const auditCount = auditUsage?.used ?? 0;
+  const auditLimit = auditUsage?.limit ?? profile.audit_limit;
+  const usagePercentage = auditLimit > 0 ? (auditCount / auditLimit) * 100 : 0;
+  const limitLabel = auditLimit === -1 ? 'Unlimited' : auditLimit;
 
   const submitProfile = (event: FormEvent) => {
     event.preventDefault();
@@ -324,7 +337,7 @@ export default function AccountSettings() {
             <SectionHeader id="usage-heading" title="Usage" dense />
 
             <Typography variant="eyebrow" component="p" sx={{ mb: 1 }}>
-              Audits saved
+              Audits this month
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 2 }}>
               <Typography variant="h3" component="p" sx={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em' }}>
@@ -335,11 +348,11 @@ export default function AccountSettings() {
               </Typography>
             </Box>
 
-            {profile.audit_limit > 0 && (
+            {auditLimit > 0 && (
               <LinearProgress
                 variant="determinate"
                 value={Math.min(usagePercentage, 100)}
-                aria-label="Audits saved against your plan limit"
+                aria-label="Audits this month against your plan limit"
                 sx={{
                   height: 6,
                   borderRadius: 999,
@@ -354,7 +367,7 @@ export default function AccountSettings() {
 
             {usagePercentage > 90 && profile.tier === 'basic' && (
               <Alert severity="warning" sx={{ mt: 2, borderRadius: 3 }}>
-                You're approaching your audit limit. Upgrade to {USER_TIERS.pro.name} for {USER_TIERS.pro.auditLimit} audits a month.
+                You've used {auditCount} of {auditLimit} audits this month. {USER_TIERS.pro.name} includes {USER_TIERS.pro.auditLimit} a month.
               </Alert>
             )}
           </BezelCard>

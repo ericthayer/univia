@@ -41,6 +41,32 @@ describe('requestLighthouseAudit', () => {
     });
   });
 
+  it('shows the server\'s plan allowance message when the monthly audit limit is reached', async () => {
+    const message = "You've used your 1 audit for this month. Your allowance resets on the 1st (UTC).";
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ error: message, errorType: 'AUDIT_LIMIT' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    }));
+
+    await expect(requestLighthouseAudit('example.com', 'session-token')).rejects.toMatchObject({
+      message,
+      status: 429,
+      code: 'AUDIT_LIMIT',
+    });
+  });
+
+  it('keeps the generic busy message for provider rate limits', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ error: 'Audit provider is busy', errorType: 'PAGESPEED_RATE_LIMITED' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    }));
+
+    await expect(requestLighthouseAudit('example.com', 'session-token')).rejects.toMatchObject({
+      message: 'Audit service is busy. Please try again shortly.',
+      code: 'PAGESPEED_RATE_LIMITED',
+    });
+  });
+
   it('rejects incomplete successful responses', async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ success: true }), { status: 200 }));
 
@@ -89,7 +115,7 @@ describe('requestLighthouseAudit', () => {
     expect(hasFailedDevice(result)).toBe(true);
   });
 
-  it('allows publishable-key-only requests for anonymous audits', async () => {
+  it('omits the Authorization header when no session token is given', async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({
       success: true,
       session_id: 'anonymous-session-id',
