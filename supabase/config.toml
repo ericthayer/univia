@@ -1,2 +1,5 @@
 [functions.run-lighthouse-audit]
 verify_jwt = false
+
+[functions.scan-worker]
+verify_jwt = false
