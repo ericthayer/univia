@@ -5,7 +5,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap;
 
-SELECT plan(58);
+SELECT plan(67);
 
 CREATE SCHEMA test_helpers;
 
@@ -109,6 +109,18 @@ SELECT throws_ok(
   'P0001', 'INVALID_SITE', 'the site must be https'
 );
 SELECT throws_ok(
+  $$ SELECT public.create_site('Local', 'https://127.0.0.1', ARRAY['https://127.0.0.1/']) $$,
+  'P0001', 'INVALID_SITE', 'IP addresses cannot be sites, because the worker will not scan them'
+);
+SELECT throws_ok(
+  $$ SELECT public.create_site('Local', 'https://shop.localhost', ARRAY['https://shop.localhost/']) $$,
+  'P0001', 'INVALID_SITE', 'nor localhost names'
+);
+SELECT throws_ok(
+  $$ SELECT public.create_site('Puny', 'https://xn--bcher-kva.example', ARRAY['https://xn--bcher-kva.example/']) $$,
+  'P0001', 'INVALID_SITE', 'nor punycode names'
+);
+SELECT throws_ok(
   $$ SELECT public.create_site('Shop', 'https://shop.example.com', (SELECT array_agg('https://shop.example.com/p' || n) FROM generate_series(1, 26) AS n)) $$,
   'P0001', 'PAGE_LIMIT', 'a site has at most 25 pages'
 );
@@ -174,7 +186,12 @@ SELECT public.complete_scan_page(
 SELECT is((SELECT status FROM public.scan_runs), 'running', 'the run waits for every page');
 SELECT public.fail_scan_page((SELECT id FROM public.scan_page_results WHERE url = 'https://shop.example.com/contact'), 'pagespeed_timeout', true);
 SELECT is((SELECT status FROM public.scan_page_results WHERE url = 'https://shop.example.com/contact'), 'pending', 'a retryable failure goes back in the queue');
-SELECT is((SELECT attempts FROM public.claim_scan_pages(1)), 2, 'and is retried');
+SELECT is((SELECT count(*)::integer FROM public.claim_scan_pages(1)), 0, 'but not straight away');
+SELECT ok((SELECT not_before > now() + interval '4 minutes' FROM public.scan_page_results WHERE url = 'https://shop.example.com/contact'), 'it waits about 5 minutes');
+SELECT test_helpers.act_as_system();
+UPDATE public.scan_page_results SET not_before = now() - interval '1 second' WHERE url = 'https://shop.example.com/contact';
+SELECT test_helpers.act_as('service_role', NULL);
+SELECT is((SELECT attempts FROM public.claim_scan_pages(1)), 2, 'and is retried once the wait is over');
 SELECT public.fail_scan_page((SELECT id FROM public.scan_page_results WHERE url = 'https://shop.example.com/contact'), 'pagespeed_runtime_error', false);
 SELECT is(
   (SELECT status || '/' || pages_succeeded || '/' || pages_failed || '/' || new_issues || '/' || open_issues FROM public.scan_runs),
@@ -247,6 +264,16 @@ UPDATE public.scan_runs SET created_at = created_at - interval '8 days';
 SELECT public.enqueue_due_scans();
 SELECT is((SELECT pages_total FROM public.scan_runs WHERE status = 'queued'), 2, 'a removed page is not scanned');
 SELECT is((SELECT count(*)::integer FROM public.issues WHERE rule_id = 'link-name'), 1, 'but its history stays');
+
+-- A run is never queued without pages, so it cannot block later runs
+SELECT test_helpers.act_as_system();
+SELECT is(public.create_scan_run((SELECT id FROM public.sites), 'manual'), NULL, 'no run while one is unfinished');
+UPDATE public.site_pages SET removed_at = now() WHERE removed_at IS NULL AND site_id = (SELECT id FROM public.sites);
+DELETE FROM public.scan_runs WHERE status = 'queued';
+SELECT is(public.create_scan_run((SELECT id FROM public.sites), 'manual'), NULL, 'a site with no pages gets no run');
+SELECT is((SELECT count(*)::integer FROM public.scan_runs WHERE status IN ('queued', 'running')), 0, 'and no empty run is left behind');
+UPDATE public.site_pages SET removed_at = NULL WHERE url <> 'https://shop.example.com/about';
+SELECT isnt(public.create_scan_run((SELECT id FROM public.sites), 'scheduled'), NULL, 'pages added back are scanned again');
 
 -- A crashed worker
 SELECT test_helpers.act_as('service_role', NULL);

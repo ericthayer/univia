@@ -25,7 +25,6 @@ export interface PageScan {
 }
 
 const MAX_ITEMS = 5;
-const MAX_FINDINGS = 100;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -70,7 +69,10 @@ export function extractPageScan(lighthouseResult: unknown): PageScan | null {
   for (const ref of category.auditRefs) {
     if (!isRecord(ref) || typeof ref.id !== 'string') continue;
     const audit = audits[ref.id];
-    if (!isRecord(audit)) continue;
+    // A missing or errored rule is unknown, not passed. Skipping it would let
+    // finalize_scan_run resolve its issue, so reject the whole result and let
+    // the page be retried.
+    if (!isRecord(audit) || audit.scoreDisplayMode === 'error' || audit.errorMessage) return null;
     // Manual, informative and not-applicable rules have a null score.
     if (typeof audit.score !== 'number' || audit.score >= 1) continue;
 
@@ -86,7 +88,6 @@ export function extractPageScan(lighthouseResult: unknown): PageScan | null {
         .map(toItem)
         .filter((item): item is FindingItem => item !== null),
     });
-    if (findings.length >= MAX_FINDINGS) break;
   }
 
   return { accessibility_score: Math.round(score * 100), findings };

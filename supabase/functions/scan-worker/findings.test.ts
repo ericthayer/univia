@@ -67,6 +67,15 @@ describe('extractPageScan', () => {
     expect(extractPageScan({ categories: { performance: { score: 1 } }, audits: {} })).toBeNull();
     expect(extractPageScan({ categories: { accessibility: { score: null, auditRefs: [] } }, audits: {} })).toBeNull();
   });
+
+  it('rejects a result with a missing or errored rule instead of treating it as passed', () => {
+    const refs = [{ id: 'image-alt', weight: 10 }, { id: 'color-contrast', weight: 7 }];
+    expect(extractPageScan(lighthouse({ 'image-alt': { title: 'Alt', score: 1 } }, refs))).toBeNull();
+    expect(extractPageScan(lighthouse({
+      'image-alt': { title: 'Alt', score: 1 },
+      'color-contrast': { title: 'Contrast', score: null, scoreDisplayMode: 'error', errorMessage: 'Audit failed' },
+    }, refs))).toBeNull();
+  });
 });
 
 describe('severityFromWeight', () => {

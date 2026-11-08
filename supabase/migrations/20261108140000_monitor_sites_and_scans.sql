@@ -90,6 +90,12 @@ CREATE TABLE IF NOT EXISTS public.sites (
   origin text NOT NULL CHECK (
     char_length(origin) <= 261
     AND origin ~ '^https://[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$'
+    -- Same refusals as the worker's validateAuditUrl, so a site that can be
+    -- added can be scanned: no IP literals (the last label needs a letter),
+    -- no localhost names, no punycode.
+    AND origin ~ '\.[a-z0-9-]*[a-z][a-z0-9-]*$'
+    AND origin !~ '\.localhost$'
+    AND origin !~ 'xn--'
   ),
   paused boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -138,6 +144,8 @@ CREATE TABLE IF NOT EXISTS public.scan_page_results (
   url text NOT NULL,
   status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'succeeded', 'failed')),
   attempts integer NOT NULL DEFAULT 0,
+  -- A retried page waits before it can be claimed again (fail_scan_page).
+  not_before timestamptz,
   claimed_at timestamptz,
   finished_at timestamptz,
   error_code text CHECK (error_code IS NULL OR char_length(error_code) <= 64),
@@ -299,16 +307,11 @@ DECLARE
   v_run_id uuid;
   v_pages integer;
 BEGIN
-  SELECT count(*)::integer INTO v_pages
-  FROM public.site_pages
-  WHERE site_id = p_site_id AND removed_at IS NULL;
+  -- Page edits lock the same site row, so the pages cannot change under us.
+  PERFORM 1 FROM public.sites WHERE id = p_site_id FOR UPDATE;
 
-  IF v_pages = 0 THEN
-    RETURN NULL;
-  END IF;
-
-  INSERT INTO public.scan_runs (site_id, trigger, pages_total)
-  VALUES (p_site_id, p_trigger, v_pages)
+  INSERT INTO public.scan_runs (site_id, trigger)
+  VALUES (p_site_id, p_trigger)
   ON CONFLICT (site_id) WHERE status IN ('queued', 'running') DO NOTHING
   RETURNING id INTO v_run_id;
 
@@ -320,7 +323,16 @@ BEGIN
   SELECT v_run_id, p_site_id, pages.id, pages.url
   FROM public.site_pages AS pages
   WHERE pages.site_id = p_site_id AND pages.removed_at IS NULL;
+  GET DIAGNOSTICS v_pages = ROW_COUNT;
 
+  -- A run with no page rows could never finish and would block every later
+  -- run through scan_runs_one_active_per_site, so never keep one.
+  IF v_pages = 0 THEN
+    DELETE FROM public.scan_runs WHERE id = v_run_id;
+    RETURN NULL;
+  END IF;
+
+  UPDATE public.scan_runs SET pages_total = v_pages WHERE id = v_run_id;
   RETURN v_run_id;
 END;
 $$;
@@ -543,7 +555,7 @@ BEGIN
   RETURN QUERY
   WITH picked AS (
     SELECT id FROM public.scan_page_results
-    WHERE status = 'pending'
+    WHERE status = 'pending' AND coalesce(not_before, '-infinity'::timestamptz) <= now()
     ORDER BY created_at, id
     LIMIT greatest(1, least(coalesce(p_limit, 1), 5))
     FOR UPDATE SKIP LOCKED
@@ -551,6 +563,7 @@ BEGIN
     UPDATE public.scan_page_results AS results SET
       status = 'running',
       attempts = results.attempts + 1,
+      not_before = NULL,
       claimed_at = now()
     FROM picked
     WHERE results.id = picked.id
@@ -620,6 +633,9 @@ BEGIN
     status = CASE WHEN p_retry AND attempts < 3 THEN 'pending' ELSE 'failed' END,
     error_code = left(coalesce(p_error_code, 'internal_error'), 64),
     claimed_at = NULL,
+    -- 5 minutes after the first attempt, 15 after the second, so a provider
+    -- outage or rate limit is not retried into permanent failure in seconds.
+    not_before = CASE WHEN p_retry AND attempts < 3 THEN now() + interval '5 minutes' * (2 * attempts - 1) END,
     finished_at = CASE WHEN p_retry AND attempts < 3 THEN NULL ELSE now() END
   WHERE id = p_result_id AND status = 'running'
   RETURNING run_id, status INTO v_run_id, v_status;
@@ -760,6 +776,14 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
+  -- Lock the site first, as create_scan_run does, so a run is never queued
+  -- from a page list that is changing.
+  PERFORM 1
+  FROM public.sites
+  JOIN public.site_pages AS pages ON pages.site_id = sites.id
+  WHERE pages.id = p_page_id AND sites.owner_id = auth.uid()
+  FOR UPDATE OF sites;
+
   UPDATE public.site_pages AS pages SET removed_at = now()
   FROM public.sites
   WHERE pages.id = p_page_id
@@ -859,7 +883,7 @@ DECLARE
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM public.scan_page_results
-    WHERE status = 'pending'
+    WHERE (status = 'pending' AND coalesce(not_before, '-infinity'::timestamptz) <= now())
        OR (status = 'running' AND claimed_at < now() - interval '4 minutes')
   ) THEN
     RETURN NULL;
