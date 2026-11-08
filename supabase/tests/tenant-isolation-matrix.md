@@ -7,7 +7,7 @@ Who may do what once `20261107214000_tenant_isolation.sql` is applied. Guests ho
 | `user_profiles` | none | read; update own name only | none | read and update all | all |
 | `accessibility_audits` | none | read own | none | none | all (written by `run-lighthouse-audit`) |
 | `violations` | none | read through own audit | none | none | all |
-| `demand_letters` | none | read and update own | none | none | all (written through `insert_demand_letter`) |
+| `demand_letters` | none | read and update own, except `created_at` | none | none | all (written through `insert_demand_letter`) |
 | `shared_analysis_links` | token lookup through `get_shared_letter_analysis` only | create, list and revoke own through RPCs | none | none | all |
 | `businesses`, `action_items` | none | none | none | none | all |
 | `audit_quota_claims` | none | own monthly usage through `my_audit_usage` only | none | none | all (claimed and released by `run-lighthouse-audit`) |

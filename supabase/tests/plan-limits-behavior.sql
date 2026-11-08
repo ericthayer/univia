@@ -5,7 +5,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap;
 
-SELECT plan(33);
+SELECT plan(37);
 
 CREATE SCHEMA test_helpers;
 
@@ -65,8 +65,10 @@ UPDATE public.user_profiles SET tier = 'pro' WHERE id = '00000000-0000-0000-0000
 SELECT is((SELECT audit_limit FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-0000000000c3'), 30, 'moving to Monitor sets 30');
 UPDATE public.user_profiles SET tier = 'enterprise' WHERE id = '00000000-0000-0000-0000-0000000000d4';
 SELECT is((SELECT audit_limit FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-0000000000d4'), -1, 'moving to Agency removes the cap');
-UPDATE public.user_profiles SET tier = 'basic', audit_limit = 7 WHERE id = '00000000-0000-0000-0000-0000000000c3';
-SELECT is((SELECT audit_limit FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-0000000000c3'), 7, 'a limit set in the same update is kept');
+UPDATE public.user_profiles SET tier = 'basic', audit_limit = 30 WHERE id = '00000000-0000-0000-0000-0000000000c3';
+SELECT is((SELECT audit_limit FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-0000000000c3'), 1, 'a plan change sets that plan''s limit, even when the update repeats the old limit');
+UPDATE public.user_profiles SET audit_limit = 7 WHERE id = '00000000-0000-0000-0000-0000000000c3';
+SELECT is((SELECT audit_limit FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-0000000000c3'), 7, 'a custom limit set on its own is kept');
 UPDATE public.user_profiles SET tier = 'pro' WHERE id = '00000000-0000-0000-0000-0000000000c3';
 SELECT is((SELECT audit_limit FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-0000000000c3'), 30, 'and the next plan change resets it');
 UPDATE public.user_profiles SET is_admin = true WHERE id = '00000000-0000-0000-0000-0000000000e5';
@@ -110,6 +112,11 @@ SELECT throws_ok($$SELECT public.letter_quota('00000000-0000-0000-0000-000000000
 SELECT throws_ok($$SELECT count(*) FROM public.audit_quota_claims$$, '42501', NULL, 'browser cannot read the claims table');
 SELECT throws_ok($$SELECT public.audit_limit_for('00000000-0000-0000-0000-0000000000b2')$$, '42501', NULL, 'browser cannot call internal helpers');
 SELECT throws_ok($$UPDATE public.user_profiles SET audit_limit = 999 WHERE id = '00000000-0000-0000-0000-0000000000b2'$$, 'P0001', 'protected profile fields cannot be changed', 'an account cannot raise its own limit');
+SELECT test_helpers.act_as('authenticated', '00000000-0000-0000-0000-0000000000c3');
+SELECT throws_ok($$UPDATE public.demand_letters SET created_at = now() - interval '2 months' WHERE user_id = '00000000-0000-0000-0000-0000000000c3'$$, 'P0001', 'letter creation time cannot be changed', 'an owner cannot backdate letters out of the month');
+SELECT lives_ok($$UPDATE public.demand_letters SET status = 'reviewed' WHERE user_id = '00000000-0000-0000-0000-0000000000c3' AND file_name = 'm1.pdf'$$, 'but can still edit them');
+SELECT test_helpers.act_as_system();
+SELECT is((SELECT status FROM public.demand_letters WHERE user_id = '00000000-0000-0000-0000-0000000000c3' AND file_name = 'm1.pdf'), 'reviewed', 'and the edit is saved');
 SELECT test_helpers.act_as('authenticated', '00000000-0000-0000-0000-0000000000a1');
 SELECT is((public.my_audit_usage()->>'limit')::int, 1, 'a guest sees a limit of 1');
 SELECT test_helpers.act_as('anon', NULL);

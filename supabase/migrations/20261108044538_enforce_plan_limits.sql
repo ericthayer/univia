@@ -15,10 +15,14 @@
   run-lighthouse-audit claims a run before calling PageSpeed and releases it
   if both devices fail, so failed audits do not use the allowance.
   insert_demand_letter() checks the letter allowance under the same per-user
-  lock it already took for guests.
+  lock it already took for guests. Owners may still edit their letters, but not
+  created_at, which the monthly count depends on.
+
+  A plan change always sets that plan's audit limit. To give one account a
+  custom limit, change audit_limit on its own, after any plan change.
 
   Reversal: restore insert_demand_letter() from 20261101120000, drop the
-  functions, table and trigger below, and set audit_limit's default back to 20.
+  functions, table and triggers below, and set audit_limit's default back to 20.
 */
 
 -- 1. Audit limits follow the plan ------------------------------------------
@@ -44,8 +48,9 @@ UPDATE public.user_profiles
 SET audit_limit = public.plan_audit_limit(tier)
 WHERE audit_limit = 20;
 
--- A plan change resets the limit to that plan's, unless the same update sets
--- the limit explicitly.
+-- A plan change always sets that plan's limit. A trigger cannot tell an
+-- explicit limit from an unchanged one, so custom limits are set by a separate
+-- update that changes audit_limit alone.
 -- SECURITY DEFINER because admins change plans from the browser, and the
 -- helper it calls is closed to browser roles.
 CREATE OR REPLACE FUNCTION public.sync_audit_limit_with_tier()
@@ -55,8 +60,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  IF NEW.tier IS DISTINCT FROM OLD.tier
-    AND NEW.audit_limit IS NOT DISTINCT FROM OLD.audit_limit THEN
+  IF NEW.tier IS DISTINCT FROM OLD.tier THEN
     NEW.audit_limit := public.plan_audit_limit(NEW.tier);
   END IF;
   RETURN NEW;
@@ -256,6 +260,29 @@ $$;
 
 REVOKE ALL ON FUNCTION public.letter_quota(uuid) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.letter_quota(uuid) TO service_role;
+
+-- Owners may update their own letters, so without this they could backdate
+-- one out of the current month and save another.
+CREATE OR REPLACE FUNCTION public.prevent_demand_letter_backdating()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  IF NEW.created_at IS DISTINCT FROM OLD.created_at
+    AND coalesce(auth.role(), '') IN ('authenticated', 'anon') THEN
+    RAISE EXCEPTION 'letter creation time cannot be changed';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS protect_demand_letter_created_at ON public.demand_letters;
+CREATE TRIGGER protect_demand_letter_created_at
+  BEFORE UPDATE OF created_at ON public.demand_letters
+  FOR EACH ROW EXECUTE FUNCTION public.prevent_demand_letter_backdating();
+
+REVOKE ALL ON FUNCTION public.prevent_demand_letter_backdating() FROM PUBLIC, anon, authenticated;
 
 -- Same as 20261101120000, except the allowance now covers every caller, not
 -- only guests. p_is_anonymous stays for callers but is no longer trusted:
