@@ -1,4 +1,4 @@
--- Behavioral test for plan limits (20261108044538_enforce_plan_limits).
+-- Behavioral test for plan limits (20261108050610_enforce_plan_limits).
 -- Run on a disposable Supabase database built from every migration, as a superuser.
 -- Everything rolls back. Do not run against production.
 BEGIN;
