@@ -1,19 +1,21 @@
-# Supabase security tests
+# Supabase database tests
 
-`tenant-isolation-matrix.md` is the required owner/other-user/admin matrix for an integration environment.
+Run these only against a disposable database built from `supabase/migrations/`, as a superuser. Each file runs in one transaction and rolls back. Never run them against production.
 
-`tenant-isolation-policy.sql` is a pgTAP policy contract. Run it only against a disposable database after applying migrations. It does not replace authenticated integration tests: those must create two users, an active admin, tenant fixtures, and verify denied operations have no side effects.
+| File | Covers | Style |
+|---|---|---|
+| `accounts-behavior.sql` | Sign-up creates a profile, guests convert, email sync, profile saving, protected profile fields, admin access | pgTAP |
+| `tenant-isolation-behavior.sql` | Owners, other users, guests and signed-out visitors on audits, violations and letters; letters always have an owner; deleting an account deletes its data | pgTAP |
+| `letter-sharing-behavior.sql` | Share-link creation, lookup, expiry and revocation | Plain SQL `ASSERT` |
+
+`tenant-isolation-matrix.md` lists who may do what. Update it with any policy change.
+
+## Running locally
+
+The `public.ecr.aws/supabase/postgres` image provides `auth` and `storage` schemas, but not every column or function that Supabase's services add at runtime. Before applying migrations to a bare container, add `auth.users.is_anonymous`, `storage.buckets`, `storage.objects` and `storage.foldername()`. Apply migrations in filename order, then run each file with `psql -v ON_ERROR_STOP=1`. pgTAP files print `ok` / `not ok` lines; the plain SQL file stops on the first failed assertion.
+
+Production applies migrations as `postgres`, which does not own `auth.users`. A migration that drops or replaces a trigger on that table will fail there even if it passes as a superuser.
 
 ## Legacy ownership gate
 
-The hardening migration fails closed if any audit or demand letter still has a
-`NULL user_id`. This is intentional: production currently has 36 unowned
-audits and 40 unowned letters, all without a business association, so there is
-no safe automatic owner mapping. Before applying the migration, export and
-review those records, obtain an approved owner mapping for each record, or
-place them in an operator-only archive. Do not assign them to the first admin
-or to the currently authenticated caller.
-
-The migration may be applied only after the approved recovery is complete and
-the preflight query returns zero unowned audits and letters. Preserve the
-backup and recovery manifest for the release record.
+`20261107214000_tenant_isolation.sql` refuses to run while any audit or letter has no owner. This is intentional: there is no safe automatic owner for those rows. Resolve them first (Monitor launch SPEC, Decision 1). Do not assign them to an admin or to whoever is signed in.

@@ -1,112 +1,94 @@
--- Behavioral RLS test for a disposable Supabase database.
--- Run after the hardening migration as a superuser/postgres role. The fixed
--- UUIDs make this fixture self-contained; the transaction rolls everything
--- back. Do not run against production.
+-- Behavioral test for tenant isolation.
+-- Run on a disposable Supabase database after 20261107214000 as a superuser.
+-- Everything rolls back. Do not run against production.
 BEGIN;
 
-SELECT plan(18);
+CREATE EXTENSION IF NOT EXISTS pgtap;
 
-INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-VALUES
-  ('00000000-0000-0000-0000-0000000000a1', 'authenticated', 'authenticated', 'tenant-a@example.invalid', '', now(), '{}', '{}', now(), now()),
-  ('00000000-0000-0000-0000-0000000000b2', 'authenticated', 'authenticated', 'tenant-b@example.invalid', '', now(), '{}', '{}', now(), now()),
-  ('00000000-0000-0000-0000-0000000000ad', 'authenticated', 'authenticated', 'admin@example.invalid', '', now(), '{}', '{}', now(), now())
-ON CONFLICT (id) DO NOTHING;
+SELECT plan(16);
 
-INSERT INTO public.user_profiles (id, email, full_name, is_admin, status)
-VALUES
-  ('00000000-0000-0000-0000-0000000000a1', 'tenant-a@example.invalid', 'Tenant A', false, 'active'),
-  ('00000000-0000-0000-0000-0000000000b2', 'tenant-b@example.invalid', 'Tenant B', false, 'active'),
-  ('00000000-0000-0000-0000-0000000000ad', 'admin@example.invalid', 'Admin', true, 'active')
-ON CONFLICT (id) DO UPDATE
-SET is_admin = EXCLUDED.is_admin, status = EXCLUDED.status;
+CREATE SCHEMA test_helpers;
 
-SET ROLE service_role;
+CREATE FUNCTION test_helpers.act_as(target_role text, target_user uuid) RETURNS void
+LANGUAGE plpgsql AS $$
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', coalesce(target_user::text, ''), true);
+  PERFORM set_config('request.jwt.claim.role', target_role, true);
+  PERFORM set_config(
+    'request.jwt.claims',
+    json_build_object('sub', target_user, 'role', target_role)::text,
+    true
+  );
+  EXECUTE format('SET LOCAL ROLE %I', target_role);
+END;
+$$;
 
-INSERT INTO public.businesses (id, name, website_url, contact_email, owner_id)
-VALUES
-  ('00000000-0000-0000-0000-0000000000ba', 'Business A', 'https://a.example.invalid', 'a@example.invalid', '00000000-0000-0000-0000-0000000000a1'),
-  ('00000000-0000-0000-0000-0000000000bb', 'Business B', 'https://b.example.invalid', 'b@example.invalid', '00000000-0000-0000-0000-0000000000b2');
+CREATE FUNCTION test_helpers.act_as_system() RETURNS void
+LANGUAGE plpgsql AS $$
+BEGIN
+  RESET ROLE;
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+  PERFORM set_config('request.jwt.claim.role', '', true);
+  PERFORM set_config('request.jwt.claims', '', true);
+END;
+$$;
 
-INSERT INTO public.accessibility_audits (id, business_id, url_scanned, user_id)
-VALUES
-  ('00000000-0000-0000-0000-0000000000aa', '00000000-0000-0000-0000-0000000000ba', 'https://a.example.invalid', '00000000-0000-0000-0000-0000000000a1'),
-  ('00000000-0000-0000-0000-0000000000ab', '00000000-0000-0000-0000-0000000000bb', 'https://b.example.invalid', '00000000-0000-0000-0000-0000000000b2');
+GRANT USAGE ON SCHEMA test_helpers TO authenticated, anon;
 
-INSERT INTO public.violations (id, audit_id, wcag_guideline, severity, title)
-VALUES
+-- Tenant A, tenant B, and a guest. Guests hold the authenticated role.
+INSERT INTO auth.users (id, email, is_anonymous) VALUES
+  ('00000000-0000-0000-0000-0000000000a1', 'tenant-a@example.invalid', false),
+  ('00000000-0000-0000-0000-0000000000b2', 'tenant-b@example.invalid', false),
+  ('00000000-0000-0000-0000-0000000000c3', NULL, true);
+
+INSERT INTO public.accessibility_audits (id, url_scanned, user_id) VALUES
+  ('00000000-0000-0000-0000-0000000000aa', 'https://a.example.invalid', '00000000-0000-0000-0000-0000000000a1'),
+  ('00000000-0000-0000-0000-0000000000ab', 'https://b.example.invalid', '00000000-0000-0000-0000-0000000000b2'),
+  ('00000000-0000-0000-0000-0000000000ac', 'https://none.example.invalid', NULL);
+
+INSERT INTO public.violations (id, audit_id, wcag_guideline, severity, title) VALUES
   ('00000000-0000-0000-0000-0000000000ca', '00000000-0000-0000-0000-0000000000aa', '1.1.1', 'minor', 'A violation'),
   ('00000000-0000-0000-0000-0000000000cb', '00000000-0000-0000-0000-0000000000ab', '1.1.1', 'minor', 'B violation');
 
-INSERT INTO public.demand_letters (id, business_id, file_name, user_id, analysis_summary)
-VALUES
-  ('00000000-0000-0000-0000-00000000001a', '00000000-0000-0000-0000-0000000000ba', 'a.pdf', '00000000-0000-0000-0000-0000000000a1', 'A analysis');
+INSERT INTO public.demand_letters (id, user_id, file_name) VALUES
+  ('00000000-0000-0000-0000-0000000000da', '00000000-0000-0000-0000-0000000000a1', 'a.pdf'),
+  ('00000000-0000-0000-0000-0000000000db', '00000000-0000-0000-0000-0000000000b2', 'b.pdf');
 
-INSERT INTO public.shared_analysis_links (share_token, letter_id, created_by, password_hash, max_access_count)
-VALUES (
-  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-  '00000000-0000-0000-0000-00000000001a',
-  '00000000-0000-0000-0000-0000000000a1',
-  extensions.crypt('correct horse', extensions.gen_salt('bf')),
-  1
-);
+-- Tenant A sees only their own rows
+SELECT test_helpers.act_as('authenticated', '00000000-0000-0000-0000-0000000000a1');
+SELECT is((SELECT count(*)::int FROM public.accessibility_audits), 1, 'tenant sees only their own audits');
+SELECT is((SELECT count(*)::int FROM public.violations), 1, 'tenant sees only their own violations');
+SELECT is((SELECT count(*)::int FROM public.demand_letters), 1, 'tenant sees only their own letters');
+SELECT is((SELECT id FROM public.demand_letters), '00000000-0000-0000-0000-0000000000da'::uuid, 'and it is theirs');
 
-SET ROLE authenticated;
-SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', true);
-SELECT set_config('request.jwt.claim.role', 'authenticated', true);
-SELECT set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}', true);
+-- Tenant A cannot change or remove tenant B's rows
+SELECT lives_ok($$UPDATE public.demand_letters SET file_name = 'taken.pdf' WHERE id = '00000000-0000-0000-0000-0000000000db'$$, 'updating another tenant''s letter runs');
+SELECT test_helpers.act_as_system();
+SELECT is((SELECT file_name FROM public.demand_letters WHERE id = '00000000-0000-0000-0000-0000000000db'), 'b.pdf', 'and changes nothing');
 
-SELECT is((SELECT count(*) FROM public.businesses), 1::bigint, 'owner A sees only business A');
-SELECT is((SELECT count(*) FROM public.businesses WHERE id = '00000000-0000-0000-0000-0000000000bb'), 0::bigint, 'owner A cannot see business B');
-INSERT INTO public.businesses (id, name, website_url, contact_email, owner_id)
-VALUES ('00000000-0000-0000-0000-0000000000bc', 'Forged owner input', 'https://forged-owner.example.invalid', 'forged@example.invalid', '00000000-0000-0000-0000-0000000000b2');
-SELECT is((SELECT owner_id FROM public.businesses WHERE id = '00000000-0000-0000-0000-0000000000bc'), '00000000-0000-0000-0000-0000000000a1'::uuid, 'business owner is derived from the authenticated user');
-SELECT is((SELECT count(*) FROM public.accessibility_audits), 1::bigint, 'owner A sees only audit A');
-SELECT is((SELECT count(*) FROM public.accessibility_audits WHERE id = '00000000-0000-0000-0000-0000000000ab'), 0::bigint, 'owner A cannot see audit B');
+-- Browser clients cannot write audits, violations or letters
+SELECT test_helpers.act_as('authenticated', '00000000-0000-0000-0000-0000000000a1');
+SELECT throws_ok($$INSERT INTO public.accessibility_audits (url_scanned, user_id) VALUES ('https://x.example.invalid', '00000000-0000-0000-0000-0000000000a1')$$, '42501', NULL, 'browser cannot create audits');
+SELECT throws_ok($$INSERT INTO public.demand_letters (user_id, file_name) VALUES ('00000000-0000-0000-0000-0000000000a1', 'x.pdf')$$, '42501', NULL, 'browser cannot create letters');
 
-SELECT throws_ok(
-  $$INSERT INTO public.accessibility_audits (id, business_id, url_scanned, user_id)
-    VALUES ('00000000-0000-0000-0000-0000000000ac', '00000000-0000-0000-0000-0000000000bb', 'https://forged.example.invalid', '00000000-0000-0000-0000-0000000000b2')$$,
-  '42501', NULL,
-  'forged audit ownership is rejected'
-);
-SELECT is((SELECT count(*) FROM public.accessibility_audits WHERE id = '00000000-0000-0000-0000-0000000000ac'), 0::bigint, 'rejected audit insert has no side effect');
-SELECT is((SELECT count(*) FROM public.violations), 1::bigint, 'owner A sees violations only through audit A');
-SELECT is((SELECT count(*) FROM public.violations WHERE id = '00000000-0000-0000-0000-0000000000cb'), 0::bigint, 'owner A cannot see violation B');
+-- Guests get the same boundary
+SELECT test_helpers.act_as('authenticated', '00000000-0000-0000-0000-0000000000c3');
+SELECT is((SELECT count(*)::int FROM public.accessibility_audits), 0, 'a guest sees no one else''s audits, and no ownerless ones');
+SELECT is((SELECT count(*)::int FROM public.violations), 0, 'a guest sees no one else''s violations');
+SELECT is((SELECT count(*)::int FROM public.demand_letters), 0, 'a guest sees no one else''s letters');
 
-SELECT is((SELECT count(*) FROM public.shared_analysis_links_safe), 1::bigint, 'owner A sees a safe share-link projection');
+-- Signed-out visitors see nothing
+SELECT test_helpers.act_as('anon', NULL);
+SELECT is((SELECT count(*)::int FROM public.accessibility_audits), 0, 'signed-out visitors see no audits');
+SELECT is((SELECT count(*)::int FROM public.demand_letters), 0, 'signed-out visitors see no letters');
+SELECT test_helpers.act_as_system();
 
-SET ROLE anon;
-SELECT set_config('request.jwt.claim.sub', '', true);
-SELECT set_config('request.jwt.claim.role', 'anon', true);
-SELECT set_config('request.jwt.claims', '{"role":"anon"}', true);
-SELECT is((SELECT count(*) FROM public.shared_analysis_links), 0::bigint, 'anonymous direct share-link reads are blocked');
-SELECT is((SELECT count(*) FROM public.get_shared_analysis('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'wrong password')), 0::bigint, 'wrong share password returns no analysis');
+-- Letters can no longer lose their owner
+SELECT throws_ok($$INSERT INTO public.demand_letters (file_name) VALUES ('orphan.pdf')$$, '23502', NULL, 'a letter must have an owner');
 
-SET ROLE service_role;
-SELECT is((SELECT access_count FROM public.shared_analysis_links WHERE share_token = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'), 0, 'failed share access does not increment the counter');
-
-SET ROLE anon;
-SELECT is((SELECT count(*) FROM public.get_shared_analysis('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'correct horse')), 1::bigint, 'correct share password returns the analysis');
-SET ROLE service_role;
-SELECT is((SELECT access_count FROM public.shared_analysis_links WHERE share_token = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'), 1, 'successful share access increments the counter');
-
-SET ROLE authenticated;
-SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', true);
-SELECT set_config('request.jwt.claim.role', 'authenticated', true);
-SELECT set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}', true);
-SELECT throws_ok(
-  $$UPDATE public.user_profiles SET is_admin = true WHERE id = '00000000-0000-0000-0000-0000000000a1'$$,
-  'P0001', NULL,
-  'non-admin cannot escalate profile privileges'
-);
-
-SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000ad', true);
-SELECT set_config('request.jwt.claim.role', 'authenticated', true);
-SELECT set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000ad","role":"authenticated"}', true);
-SELECT is((SELECT count(*) FROM public.businesses), 3::bigint, 'active admin sees all businesses');
-SELECT is((SELECT count(*) FROM public.accessibility_audits), 2::bigint, 'active admin sees all audits');
+DELETE FROM auth.users WHERE id = '00000000-0000-0000-0000-0000000000b2';
+SELECT is((SELECT count(*)::int FROM public.demand_letters WHERE id = '00000000-0000-0000-0000-0000000000db'), 0, 'deleting an account deletes its letters');
+SELECT is((SELECT count(*)::int FROM public.violations WHERE id = '00000000-0000-0000-0000-0000000000cb'), 0, 'and its audits and violations');
 
 SELECT * FROM finish();
 ROLLBACK;
-RESET ROLE;
