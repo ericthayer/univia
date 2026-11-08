@@ -5,7 +5,7 @@ Run these only against a disposable database built from `supabase/migrations/`, 
 | File | Covers | Style |
 |---|---|---|
 | `accounts-behavior.sql` | Sign-up creates a profile, guests convert, email sync, profile saving, protected profile fields, admin access | pgTAP |
-| `tenant-isolation-behavior.sql` | Owners, other users, guests and signed-out visitors on audits, violations and letters; letters always have an owner; deleting an account deletes its data | pgTAP |
+| `tenant-isolation-behavior.sql` | Owners, other users, guests and signed-out visitors on audits, violations and letters; letters and audits always have an owner; deleting an account deletes its data | pgTAP |
 | `letter-sharing-behavior.sql` | Share-link creation, lookup, expiry and revocation | Plain SQL `ASSERT` |
 
 `tenant-isolation-matrix.md` lists who may do what. Update it with any policy change.
@@ -19,3 +19,5 @@ Production applies migrations as `postgres`, which does not own `auth.users`. A 
 ## Legacy ownership gate
 
 `20261107214000_tenant_isolation.sql` refuses to run while any audit or letter has no owner. This is intentional: there is no safe automatic owner for those rows. Resolve them first (Monitor launch SPEC, Decision 1). Do not assign them to an admin or to whoever is signed in.
+
+`20261108023428_require_audit_owner.sql` has the same gate for audits. It runs after the `run-lighthouse-audit` version that rejects key-only calls (production version 34).

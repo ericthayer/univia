@@ -1,11 +1,11 @@
 -- Behavioral test for tenant isolation.
--- Run on a disposable Supabase database after 20261107214000 as a superuser.
+-- Run on a disposable Supabase database built from every migration, as a superuser.
 -- Everything rolls back. Do not run against production.
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap;
 
-SELECT plan(16);
+SELECT plan(17);
 
 CREATE SCHEMA test_helpers;
 
@@ -43,8 +43,7 @@ INSERT INTO auth.users (id, email, is_anonymous) VALUES
 
 INSERT INTO public.accessibility_audits (id, url_scanned, user_id) VALUES
   ('00000000-0000-0000-0000-0000000000aa', 'https://a.example.invalid', '00000000-0000-0000-0000-0000000000a1'),
-  ('00000000-0000-0000-0000-0000000000ab', 'https://b.example.invalid', '00000000-0000-0000-0000-0000000000b2'),
-  ('00000000-0000-0000-0000-0000000000ac', 'https://none.example.invalid', NULL);
+  ('00000000-0000-0000-0000-0000000000ab', 'https://b.example.invalid', '00000000-0000-0000-0000-0000000000b2');
 
 INSERT INTO public.violations (id, audit_id, wcag_guideline, severity, title) VALUES
   ('00000000-0000-0000-0000-0000000000ca', '00000000-0000-0000-0000-0000000000aa', '1.1.1', 'minor', 'A violation'),
@@ -73,7 +72,7 @@ SELECT throws_ok($$INSERT INTO public.demand_letters (user_id, file_name) VALUES
 
 -- Guests get the same boundary
 SELECT test_helpers.act_as('authenticated', '00000000-0000-0000-0000-0000000000c3');
-SELECT is((SELECT count(*)::int FROM public.accessibility_audits), 0, 'a guest sees no one else''s audits, and no ownerless ones');
+SELECT is((SELECT count(*)::int FROM public.accessibility_audits), 0, 'a guest sees no one else''s audits');
 SELECT is((SELECT count(*)::int FROM public.violations), 0, 'a guest sees no one else''s violations');
 SELECT is((SELECT count(*)::int FROM public.demand_letters), 0, 'a guest sees no one else''s letters');
 
@@ -83,8 +82,9 @@ SELECT is((SELECT count(*)::int FROM public.accessibility_audits), 0, 'signed-ou
 SELECT is((SELECT count(*)::int FROM public.demand_letters), 0, 'signed-out visitors see no letters');
 SELECT test_helpers.act_as_system();
 
--- Letters can no longer lose their owner
+-- Letters and audits can no longer lose their owner
 SELECT throws_ok($$INSERT INTO public.demand_letters (file_name) VALUES ('orphan.pdf')$$, '23502', NULL, 'a letter must have an owner');
+SELECT throws_ok($$INSERT INTO public.accessibility_audits (url_scanned) VALUES ('https://orphan.example.invalid')$$, '23502', NULL, 'an audit must have an owner');
 
 DELETE FROM auth.users WHERE id = '00000000-0000-0000-0000-0000000000b2';
 SELECT is((SELECT count(*)::int FROM public.demand_letters WHERE id = '00000000-0000-0000-0000-0000000000db'), 0, 'deleting an account deletes its letters');

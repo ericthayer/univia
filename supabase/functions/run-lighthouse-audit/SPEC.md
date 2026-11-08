@@ -25,8 +25,8 @@ The function validates the target, runs PageSpeed Insights for mobile and deskto
 
 ## Architecture and data flow
 
-- Authenticate with either a caller bearer token or the Supabase publishable key. A request with a missing or invalid bearer token is rejected rather than downgraded to publishable access.
-- Store user-authenticated and Supabase anonymous-session audits with their user ID. A publishable-key-only audit is stored without a user ID, and its result is available only in the immediate response.
+- Require a caller bearer token that verifies to a user. Supabase anonymous (guest) sessions qualify. A publishable key alone is rejected, as is a missing or invalid token.
+- Store every audit with the caller's user ID, so each audit has an owner who can read it and whose plan limits apply.
 - Validate HTTPS hostname, business ownership, and public DNS targets.
 - Call Google PageSpeed Insights v5 with explicit Lighthouse categories and device strategy.
 - Bound upstream response size and timeout.
@@ -38,7 +38,7 @@ The function validates the target, runs PageSpeed Insights for mobile and deskto
 
 ## Error contract
 
-- `401`: missing or invalid publishable/user credentials.
+- `401`: missing or invalid user token.
 - `403`: origin or business access denied.
 - `422`: malformed/private/unverifiable audit target.
 - `429`: PageSpeed rate limit.
@@ -78,5 +78,6 @@ A successful response must contain a non-empty `session_id` and explicit `status
 - 2026-08-25: Implemented key fallbacks, request-correlated provider diagnostics, bounded error parsing, and partial device success handling.
 - 2026-08-25: Accepted Lighthouse checklist-object detail payloads used by current PageSpeed responses after reproducing the hosted `502` with `ethayer.design`.
 - 2026-08-25: Added `@supabase/server` user-or-publishable authentication so authenticated and anonymous callers can run audits without weakening audit ownership policies.
+- 2026-11-07: Removed the publishable-key path (Monitor launch, Phase 2). It stored audits with no owner, which nobody could read and which bypassed limits. Every audit now has a `user_id`, which the database requires.
 - 2026-08-25: Accepted the Supabase dashboard anon tester's duplicate publishable-key bearer header without downgrading other invalid bearer tokens.
 - 2026-08-25: Persist audit ownership from `@supabase/server`'s `userClaims.id`, including anonymous Auth sessions, so private history RLS can return completed audits.

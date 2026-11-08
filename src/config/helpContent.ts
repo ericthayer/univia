@@ -24,7 +24,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
   {
     id: 'getting-started',
     title: 'Getting started',
-    description: 'Everything you need to know to get started with accessibility compliance testing.',
+    description: 'Everything you need to know to get started with accessibility testing.',
     icon: 'rocket_launch',
   },
   {
@@ -102,7 +102,7 @@ export const HELP_TIPS: HelpTip[] = [
   {
     id: 'track-progress',
     title: 'Track Progress',
-    description: 'Monitor your compliance score over time in the Performance Metrics dashboard.',
+    description: 'Follow your accessibility scores over time in Performance Metrics.',
     icon: 'trending_up',
   },
 ];
