@@ -80,7 +80,7 @@ Do not wait for feature work.
 - [x] Confirm the older mobile prototype is retired (Decision 2, closed 2026-11-07).
 - [x] Write the forward migration and rehearse it. Rehearsed against production's real schema in a transaction that always rolls back, because a Supabase branch rebuilds from the drifted migration history and would not match production. Removes no rows.
 - [x] Apply the migration to production (`20261107210510_close_access_gaps`, 2026-11-07). Verified with role-by-role checks, and a real guest session created afterward got its profile row.
-- [ ] Remove Edge Functions that are deployed but not in this repo. `pagespeed-proxy` is stubbed to return 410. `gemini-proxy` must be deleted from the Supabase dashboard, and `pagespeed-proxy` can go at the same time.
+- [x] Remove Edge Functions that are deployed but not in this repo. Deleted `gemini-proxy` and `pagespeed-proxy` from production on 2026-11-07. Production now runs only functions in this repo.
 - [x] Re-run the Supabase security advisors. Remaining warnings are expected: the share-link functions, owner-scoped policies that guests can reach as `authenticated`, and leaked-password protection, which is a dashboard setting. Tables with no policies are closed by design until Phase 1.
 
 **Done when:** the review's private findings list is empty and the advisors show no unexplained warnings.
