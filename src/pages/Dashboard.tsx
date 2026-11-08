@@ -62,8 +62,8 @@ const QUICK_ACTIONS: QuickAction[] = [
   {
     icon: 'analytics',
     title: 'View Metrics',
-    body: 'Track performance and compliance',
-    disabledHint: 'Coming in Q2 2026',
+    body: 'Track your audit scores over time',
+    disabledHint: 'Sign in to view',
   },
 ];
 
@@ -118,12 +118,8 @@ export default function Dashboard() {
           sx={{ mb: 5, maxWidth: '60ch', fontSize: { xs: '1.0625rem', md: '1.25rem' }, fontWeight: 450, lineHeight: 1.6 }}
         >
           Univia simplifies <a href={WCAG_URL}>Web Content Accessibility Guidelines (WCAG)</a> through intuitive tools
-          and actionable insights. Our mission is to make accessibility effortless, ensuring every person enjoys equal
-          access to the web by meeting{' '}
-          <a href={ADA_URL} title="Americans with Disabilities Act">
-            ADA
-          </a>{' '}
-          compliance.
+          and actionable insights. Our mission is to make accessibility easier to get right, so more people can use the
+          web on equal terms.
         </Typography>
         <Stack direction="row" gap={2} flexWrap="wrap" sx={{ width: { xs: '100%', sm: 'auto' } }}>
           <Tooltip title="Run a Web Accessibility Audit">

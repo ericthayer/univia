@@ -85,7 +85,7 @@ export function LatestScoreCard({ audit, loading, onRunAudit, reveal }: LatestSc
           compact
           icon="speed"
           title="No audits yet"
-          description="Run your first audit to see your compliance score."
+          description="Run your first audit to see your accessibility score."
           action={<ArrowButton onClick={onRunAudit}>Run First Audit</ArrowButton>}
         />
       )}

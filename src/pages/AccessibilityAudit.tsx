@@ -42,7 +42,7 @@ const TABS: ReadonlyArray<{ value: AuditTab; label: string }> = [
 
 const LATEST_SCORE_CATEGORIES = [
   { key: 'performance_score', title: 'Performance', subtitle: 'Speed & optimization' },
-  { key: 'accessibility_score', title: 'Accessibility', subtitle: 'WCAG compliance' },
+  { key: 'accessibility_score', title: 'Accessibility', subtitle: 'Automated WCAG checks' },
   { key: 'best_practices_score', title: 'Best Practices', subtitle: 'Code quality' },
   { key: 'seo_score', title: 'SEO', subtitle: 'Search optimization' },
 ] as const;
@@ -307,7 +307,7 @@ export default function AccessibilityAudit() {
         title="Web Accessibility Audit"
         titleComponent="h1"
         titleId="audit-page-title"
-        description="Run audits, track performance metrics, and monitor WCAG compliance over time."
+        description="Run audits, track performance metrics, and track WCAG issues over time."
       />
 
       <Box

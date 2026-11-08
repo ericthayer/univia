@@ -103,11 +103,11 @@ Two migrations, so the working fixes do not wait on Decision 1. Both are tested 
 ### Phase 2: Honest pricing and real limits
 
 - [ ] Move everything not built out of `features` in `tierConfig.ts`: extra sites, team seats, API access, webhooks, unlimited use.
-- [ ] Align Free's letter allowance with reality. Guests can currently save more letters than the Free plan offers.
+- [ ] Align Free's letter allowance with reality. Guests can currently save more letters than the Free plan offers. **Blocked on a product decision (Decision 8).** Guests may save 5 letters in total, enforced in `analyze-document` and `insert_demand_letter()`. Free advertises 1 letter, and signed-in Free accounts have no letter limit at all. Either number changes the offer or guest behavior.
 - [ ] Enforce audit and letter limits inside the Edge Functions, using `user_profiles` as the source of truth.
-- [ ] Remove `run-lighthouse-audit`'s publishable-key path. It stores audits with no owner, which bypass limits and that nobody can read. Then make `accessibility_audits.user_id` required, as letters already are.
+- [x] Remove `run-lighthouse-audit`'s publishable-key path. It stores audits with no owner, which bypass limits and that nobody can read. Then make `accessibility_audits.user_id` required, as letters already are. The function now requires a token that verifies to a user; guest sessions still qualify. `20261108021333_require_audit_owner` stops if any ownerless audit exists. Tested on a local database: the guard blocks with an ownerless audit present, the column becomes required once it is gone, and `tenant-isolation-behavior.sql` passes 17 of 17. **Not deployed or applied.** Deploy the function first, check production for ownerless audits, then apply the migration.
 - [ ] Replace the `alert()` on Pricing.
-- [ ] Fix homepage copy that breaks the product rules or has expired: "by meeting ADA compliance", "Track performance and compliance", and "Coming in Q2 2026". Sweep the rest of the site for the same.
+- [x] Fix homepage copy that breaks the product rules or has expired: "by meeting ADA compliance", "Track performance and compliance", and "Coming in Q2 2026". Sweep the rest of the site for the same. The sweep also changed "compliance score" to "accessibility score" in the empty state and help, and the audit page's "WCAG compliance" labels. Pricing's "(coming soon)" and its `alert()` stay with their own items above.
 
 **Done when:** every item a plan lists as available works today and is enforced server-side.
 
@@ -254,6 +254,7 @@ Baseline on `7de4110`, 2026-11-07.
 5. **Email provider.** Recommended: any transactional provider with a free starter tier. Needed for both auth email and alerts.
 6. **Attorney review** of Terms, Privacy, and the record's name. "Good-Faith Remediation Record" implies a legal standing the product rules say we do not claim. Recommended: review before Phase 5 copy is final.
 7. **Gemini tier.** Letters contain names and legal details. Confirm the key is paid, and read Google's data terms before anyone pays us.
+8. **Free letter allowance.** Guests can save 5 letters in total. Free advertises 1, and signed-in Free accounts are not limited. Recommended: 1 letter for guests and Free alike, enforced server-side for both, since 5 matches Monitor's monthly allowance and leaves little reason to upgrade. The other option is to advertise 5 on Free and enforce that for signed-in accounts.
 
 ## 10. Changelog
 
@@ -265,3 +266,4 @@ Baseline on `7de4110`, 2026-11-07.
 - 2026-11-07: Applied the profile repair to production as `20261108004110_repair_profile_emails_and_letter_policy`. Production had no stale emails, missing profiles or repeated timestamps, so no rows changed. The leftover letter insert policy was not present there. Rebuilt databases now drop it too.
 - 2026-11-07: Decision 1: archived the 46 ownerless letters, 42 audits and their 620 violations to the locked `archive` schema on production (`20261108014858_archive_ownerless_legacy_rows`). Production now has no ownerless rows, so the isolation migration's guard passes. Purge date 2026-12-08, via `archive.purge_expired_ownerless()`, which nothing runs automatically yet.
 - 2026-11-07: Applied tenant isolation to production as `20261108015043_tenant_isolation`. Audits and violations are visible only to their owner, and demand-letter insert policy is gone. Checked by role: a signed-out visitor sees 0 audits, an owner sees their own 24 audits and 332 violations, and another user sees only their own 8 audits. Decision 1 is closed.
+- 2026-11-07: Phase 2, first pass. Fixed the homepage copy and swept the site for compliance claims. Removed `run-lighthouse-audit`'s publishable-key path and wrote `20261108021333_require_audit_owner`, tested locally and not applied. Free's letter allowance waits on Decision 8.

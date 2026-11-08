@@ -16,6 +16,7 @@ import {
   type AuditDeviceResult,
   type AuditRunSuccess,
 } from './audit-result.ts';
+import { resolveAuditCaller } from './audit-caller.ts';
 import { parseLighthouseResult } from './lighthouse-result.ts';
 
 const UPSTREAM_TIMEOUT_MS = 90_000;
@@ -24,12 +25,6 @@ const MAX_PROVIDER_ERROR_BYTES = 16 * 1024;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function withoutAuthorization(req: Request): Request {
-  const headers = new Headers(req.headers);
-  headers.delete('Authorization');
-  return new Request(req, { headers });
 }
 
 async function readBoundedText(response: Response, maxBytes: number): Promise<string> {
@@ -108,7 +103,7 @@ async function runSingleAudit(
   sessionId: string,
   requestId: string,
   supabase: SupabaseClient,
-  userId?: string,
+  userId: string,
   businessId?: string
 ): Promise<AuditRunSuccess> {
   const strategy = deviceType === 'mobile' ? 'MOBILE' : 'DESKTOP';
@@ -201,7 +196,7 @@ async function runSingleAudit(
     .from('accessibility_audits')
     .insert({
       business_id: businessId || null,
-      user_id: userId || null,
+      user_id: userId,
       url_scanned: url,
       lighthouse_score: accessibilityScore,
       performance_score: performanceScore,
@@ -314,28 +309,26 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    // Only verified users (including anonymous guest sessions) may run audits,
+    // so every stored audit has an owner who can read it and who limits apply to.
     const hasAuthorizationHeader = req.headers.has('Authorization');
-    const userContext = await createSupabaseContext(req, { auth: 'user' });
-    if (!userContext.data && hasAuthorizationHeader) {
-      console.warn({ event: 'audit_request_rejected', requestId, reason: 'authentication_failed', status: 401 });
+    const userContext = hasAuthorizationHeader
+      ? await createSupabaseContext(req, { auth: 'user' })
+      : null;
+    const authContext = userContext?.error ? null : userContext?.data ?? null;
+    const caller = resolveAuditCaller({
+      hasAuthorizationHeader,
+      verifiedUserId: authContext?.userClaims?.id,
+    });
+    if (!caller.ok || !authContext) {
+      const reason = caller.ok ? 'authentication_failed' : caller.reason;
+      console.warn({ event: 'audit_request_rejected', requestId, reason, status: 401 });
       return new Response(JSON.stringify({ error: 'Authentication required' }), {
         status: 401,
         headers: responseHeaders,
       });
     }
-
-    const publishableContext = userContext.data
-      ? userContext
-      : await createSupabaseContext(withoutAuthorization(req), { auth: 'publishable' });
-    const { data: authContext, error: authError } = publishableContext;
-    if (authError || !authContext) {
-      console.warn({ event: 'audit_request_rejected', requestId, reason: 'authentication_failed', status: 401 });
-      return new Response(JSON.stringify({ error: 'Authentication required' }), {
-        status: 401,
-        headers: responseHeaders,
-      });
-    }
-    const userId = authContext.userClaims?.id;
+    const { userId } = caller;
 
     let requestBody: unknown;
     try {
@@ -376,14 +369,6 @@ Deno.serve(async (req: Request) => {
     const supabase = authContext.supabaseAdmin;
 
     if (business_id) {
-      if (!userId) {
-        console.warn({ event: 'audit_request_rejected', requestId, reason: 'business_access_denied', status: 403 });
-        return new Response(JSON.stringify({ error: 'Business access denied' }), {
-          status: 403,
-          headers: responseHeaders,
-        });
-      }
-
       const { data: business, error: businessError } = await supabase
         .from('businesses')
         .select('id')
