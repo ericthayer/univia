@@ -1,6 +1,6 @@
 /**
  * Reads the allowance answers returned by the plan-limit database functions
- * (claim_audit_run, letter_quota; see 20261108044538_enforce_plan_limits) and
+ * (claim_audit_run, letter_quota; see 20261108050610_enforce_plan_limits) and
  * words the message a caller sees when an allowance is used up.
  */
 

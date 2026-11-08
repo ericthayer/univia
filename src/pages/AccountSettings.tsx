@@ -69,7 +69,7 @@ export default function AccountSettings() {
   const [auditUsage, setAuditUsage] = useState<AuditUsage | null>(null);
 
   // The same monthly count the server enforces (my_audit_usage(), in
-  // 20261108044538_enforce_plan_limits), not every audit row ever saved.
+  // 20261108050610_enforce_plan_limits), not every audit row ever saved.
   const fetchAuditCount = useCallback(async () => {
     if (!user) return;
 
