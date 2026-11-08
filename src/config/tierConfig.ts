@@ -11,7 +11,7 @@ export const USER_TIERS: Record<UserTier, TierFeatures> = {
   basic: {
     name: 'Free',
     price: '$0',
-    // Mirrors plan_audit_limit() in 20261108044538_enforce_plan_limits.
+    // Mirrors plan_audit_limit() in 20261108050610_enforce_plan_limits.
     auditLimit: 1,
     features: [
       '1 site audit per month',
