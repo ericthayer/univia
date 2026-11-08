@@ -113,11 +113,17 @@ Two migrations, so the working fixes do not wait on Decision 1. Both are tested 
 
 ### Phase 3: Sites and scheduled scans
 
-- [ ] Tables and RLS from section 5, with owner-only access tested.
-- [ ] Add a site and pages: reuse the existing URL validation, 25-page limit.
-- [ ] Enable `pg_cron` and `pg_net`. Enqueue weekly runs. A worker function claims one page at a time.
-- [ ] Record per-page failures. A run with some failed pages still completes and reports them.
-- [ ] Spike first: test issue fingerprints across repeat scans of real sites. If selectors churn, every scan reports false "new" issues and alerts lose trust.
+Split into two PRs: the engine (database, queue, worker, schedule) and then the Sites screens.
+
+- [x] Spike: issue identity across repeat scans. Production had 13 repeat mobile scans of 3 sites (2026-01 to 2026-11). The set of failing accessibility rules per page was identical in every repeat. Element selectors were stable too, but not unique: two different buttons on univia.help shared one selector. **Decision: an issue is one rule failing on one page.** Element examples are stored for display only. The sample is small and low-issue, so watch for rule flicker (for example `color-contrast` on animated content) in the invite stage.
+- [x] Tables and RLS from section 5, with owner-only access tested. `20261108140000_monitor_sites_and_scans`: `monitor_allowlist`, `sites`, `site_pages`, `scan_runs`, `scan_page_results`, `issues`, `issue_events`. Owners read through RLS; every write goes through a function. Monitor access is an active admin or a non-guest account on the allow-list (section 7). One site per account, admins uncapped. `subscriptions` and `stripe_events` wait for Phase 6.
+- [x] Add a site and pages: 25-page limit, pages must be on the site's https origin. Removing a page stops scanning it but keeps its history for the record. The worker re-checks every URL with `validateAuditUrl` and `resolvesToPublicIps` before scanning it.
+- [x] Enable `pg_cron` and `pg_net`. `enqueue_due_scans()` runs hourly and queues sites whose last scheduled scan is 7 days old, so load spreads over the week. A new site is scanned right away. Owners can ask for one extra full scan a day. `kick_scan_worker()` runs every minute and calls `scan-worker` only when pages are waiting and both Vault secrets exist.
+- [x] Worker: `scan-worker` claims 2 pages at a time with `FOR UPDATE SKIP LOCKED`, runs PageSpeed (mobile, accessibility only) and stops claiming after 40 seconds. Provider failures retry up to 3 attempts; a page left running for 4 minutes counts as a crashed worker. Calls need the shared secret header.
+- [x] Record per-page failures. A run with some failed pages still completes and reports them; a run where every page failed is `failed`. Issues on a page that failed keep their state.
+- [x] Issue diffing on run completion: detected, resolved, reopened, and for issues the owner marked fixed (Phase 5), fix confirmed or not confirmed. Every change is a row in append-only `issue_events`. `monitor-scans-behavior.sql`: 58 of 58 pass, and the other suites still pass.
+- [ ] Apply to production, set the worker's secrets, deploy `scan-worker`, allow-list the owner, and watch one full run.
+- [ ] Sites screens: add a site and pages, run history, open issues (second PR).
 
 **Done when:** a site scans every week with no user action, and one failing page does not fail the run.
 
@@ -272,3 +278,4 @@ Baseline on `7de4110`, 2026-11-07.
 - 2026-11-07: Applied `20261108023428_require_audit_owner` to production after a confirmed backup, and verified it. Every audit now has an owner. The repo file is renamed to the version production records.
 - 2026-11-07: Phase 2 limits. Closed Decisions 8 and 9. Pricing lists only built features, its `alert()` is gone, and Agency is "Contact us". Wrote the `enforce_plan_limits` migration and the Edge Function checks, tested locally.
 - 2026-11-07: Applied `20261108050610_enforce_plan_limits` to production after a confirmed backup, deployed `run-lighthouse-audit` v35 and `analyze-document` v58, and verified the limits with a guest. Phase 2's checklist is complete.
+- 2026-11-08: Phase 3 engine. Ran the fingerprint spike and set issue identity to page + rule. Wrote `20261108140000_monitor_sites_and_scans` and the `scan-worker` function, tested locally, not applied.
