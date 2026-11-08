@@ -9,6 +9,7 @@ import {
   isAllowedOrigin,
   jsonResponse,
 } from '../_shared/http.ts';
+import { auditLimitMessage, parseQuota } from '../_shared/plan-limits.ts';
 import {
   getAuditErrorCode,
   getAuditErrorStatus,
@@ -391,6 +392,28 @@ Deno.serve(async (req: Request) => {
 
     const sessionId = crypto.randomUUID();
 
+    // Claim this run against the caller's monthly allowance before spending a
+    // PageSpeed call. Fails closed if the allowance cannot be read.
+    const { data: quotaData, error: quotaError } = await supabase.rpc('claim_audit_run', {
+      p_user_id: userId,
+      p_session_id: sessionId,
+    });
+    const quota = quotaError ? null : parseQuota(quotaData);
+    if (!quota) {
+      console.error({ event: 'audit_quota_unavailable', requestId });
+      return new Response(JSON.stringify({ error: 'Audit service unavailable', errorType: 'QUOTA_UNAVAILABLE' }), {
+        status: 503,
+        headers: responseHeaders,
+      });
+    }
+    if (!quota.allowed) {
+      console.warn({ event: 'audit_request_rejected', requestId, reason: 'audit_limit_reached', status: 429 });
+      return new Response(JSON.stringify({ error: auditLimitMessage(quota), errorType: 'AUDIT_LIMIT' }), {
+        status: 429,
+        headers: responseHeaders,
+      });
+    }
+
     const settledResults = await Promise.allSettled([
       runSingleAudit(url, 'mobile', sessionId, requestId, supabase, userId, business_id),
       runSingleAudit(url, 'desktop', sessionId, requestId, supabase, userId, business_id),
@@ -410,6 +433,11 @@ Deno.serve(async (req: Request) => {
     }
 
     if (mobileResult.status === 'failed' && desktopResult.status === 'failed') {
+      // Nothing was produced, so give the run back to the allowance.
+      const { error: releaseError } = await supabase.rpc('release_audit_run', { p_session_id: sessionId });
+      if (releaseError) {
+        console.error({ event: 'audit_quota_release_failed', requestId });
+      }
       const rejectedResults = settledResults.filter(
         (result): result is PromiseRejectedResult => result.status === 'rejected',
       );

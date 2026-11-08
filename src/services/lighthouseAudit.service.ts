@@ -106,6 +106,10 @@ function getErrorMessage(status: number, payload: ErrorPayload): string {
   if (status === 422 && payload.error === 'URL could not be verified as public') {
     return 'That website could not be verified as publicly reachable.';
   }
+  if (status === 429 && payload.errorType === 'AUDIT_LIMIT' && typeof payload.error === 'string') {
+    // The server words the plan allowance message, including the limit.
+    return payload.error;
+  }
   if (status === 429) return 'Audit service is busy. Please try again shortly.';
   if (status === 503) return 'Audit service is temporarily unavailable. Please try again shortly.';
   if (status >= 500) return 'The website audit could not be completed. Please try again.';

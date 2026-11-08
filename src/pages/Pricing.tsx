@@ -3,6 +3,7 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { UserTier } from '../types/auth';
@@ -24,23 +25,30 @@ const FAQS = [
   {
     question: 'Is the Free plan really free?',
     answer:
-      'Yes. The Free plan has no time limit and no card required. Upgrade to Monitor when you want weekly scans and a remediation record.',
+      'Yes. The Free plan has no time limit and no card required. Monitor adds more audits and letter analyses, with weekly scans and a remediation record on the way.',
   },
   {
     question: 'How does annual billing work?',
     answer:
-      'Monitor is $9 a month for your first site, or $90 a year, which is two months free. Each additional site is $5 a month, or $50 a year on annual billing.',
+      'Monitor is $9 a month, or $90 a year, which is two months free. It covers one site. Extra sites are planned at $5 a month, or $50 a year.',
   },
   {
     question: 'Can I upgrade or downgrade anytime?',
     answer:
-      'Yes. Upgrades take effect immediately, and downgrades take effect at the end of your billing cycle.',
+      "Monitor isn't on sale yet. When it opens, upgrades will take effect immediately and downgrades at the end of your billing cycle.",
   },
 ] as const;
+
+/** Agency is sold by conversation until its features exist. */
+const AGENCY_CONTACT_HREF = 'mailto:hello@univia.help?subject=Univia%20Agency';
+
+const MONITOR_NOT_ON_SALE =
+  "Monitor isn't on sale yet. It opens to a small group first, and your Free plan keeps working until then.";
 
 export default function Pricing() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const [showUpgradeNotice, setShowUpgradeNotice] = useState(false);
 
   const handleSelectPlan = (tier: UserTier) => {
     if (!user) {
@@ -51,7 +59,8 @@ export default function Pricing() {
     if (tier === 'basic') {
       navigate('/settings');
     } else {
-      alert(`Upgrade to ${USER_TIERS[tier].name} coming soon! This is a prototype feature.`);
+      // Payments arrive in Phase 6 of the Monitor launch plan.
+      setShowUpgradeNotice(true);
     }
   };
 
@@ -183,21 +192,39 @@ export default function Pricing() {
                   ))}
                 </Box>
 
-                <ArrowButton
-                  variant={isPopular ? 'contained' : 'outlined'}
-                  size="large"
-                  fullWidth
-                  onClick={() => handleSelectPlan(tier)}
-                  disabled={isCurrentTier}
-                >
-                  {isCurrentTier
-                    ? 'Current Plan'
-                    : isFree
-                      ? user
-                        ? 'Your Plan'
-                        : 'Get Started'
-                      : 'Upgrade'}
-                </ArrowButton>
+                <Box>
+                  {tier === 'enterprise' && !isCurrentTier ? (
+                    <ArrowButton variant="outlined" size="large" fullWidth href={AGENCY_CONTACT_HREF}>
+                      Contact us
+                    </ArrowButton>
+                  ) : (
+                    <ArrowButton
+                      variant={isPopular ? 'contained' : 'outlined'}
+                      size="large"
+                      fullWidth
+                      onClick={() => handleSelectPlan(tier)}
+                      disabled={isCurrentTier}
+                    >
+                      {isCurrentTier
+                        ? 'Current Plan'
+                        : isFree
+                          ? user
+                            ? 'Your Plan'
+                            : 'Get Started'
+                          : 'Upgrade'}
+                    </ArrowButton>
+                  )}
+                  {tier === 'pro' && (
+                    <Typography
+                      role="status"
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mt: showUpgradeNotice ? 1.5 : 0 }}
+                    >
+                      {showUpgradeNotice ? MONITOR_NOT_ON_SALE : ''}
+                    </Typography>
+                  )}
+                </Box>
               </BezelCard>
             </Box>
           );

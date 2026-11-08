@@ -6,6 +6,7 @@ import { getSupabaseKey } from '../_shared/supabase-keys.ts';
 import { validateDocumentRequest } from '../_shared/document-validation.ts';
 import { validateDocumentAnalysis, type DocumentAnalysis } from '../_shared/analysis-validation.ts';
 import { findAdviceViolations, resolveAnalysisOptions, stripAdvice } from '../_shared/analysis-policy.ts';
+import { isLetterLimitError, letterLimitMessage, parseQuota } from '../_shared/plan-limits.ts';
 import {
   createRequestId,
   getAllowedOrigins,
@@ -25,11 +26,6 @@ const GEMINI_MODELS = {
   flash: 'gemini-3-flash-preview',
   pro: 'gemini-3-pro-preview',
 } as const;
-const ANONYMOUS_LETTER_LIMIT = 5;
-
-function isAnonymousLetterLimitError(error: unknown): boolean {
-  return error instanceof Error && error.message.includes('ANONYMOUS_LETTER_LIMIT');
-}
 
 function createErrorResponse(
   message: string,
@@ -794,25 +790,23 @@ Deno.serve(async (req: Request) => {
       console.log({ event: 'analysis_options_downgraded', requestId });
     }
 
-    if (isAnonymous) {
-      const { count, error: quotaError } = await supabase
-        .from('demand_letters')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', auth.user.id);
-
-      if (quotaError) {
-        console.error({ event: 'demand_letter_quota_check_failed', requestId });
-        return createErrorResponse('Unable to save demand letter', 503, responseHeaders, 'PERSISTENCE_ERROR');
-      }
-
-      if ((count ?? 0) >= ANONYMOUS_LETTER_LIMIT) {
-        return createErrorResponse(
-          'Anonymous users can save up to 5 demand letters. Create an account to continue saving letters.',
-          429,
-          responseHeaders,
-          'ANONYMOUS_LETTER_LIMIT',
-        );
-      }
+    // Check the plan's letter allowance before spending a Gemini call.
+    // insert_demand_letter() checks it again under a lock when saving.
+    const { data: quotaData, error: quotaError } = await supabase.rpc('letter_quota', {
+      p_user_id: auth.user.id,
+    });
+    const letterQuota = quotaError ? null : parseQuota(quotaData);
+    if (!letterQuota) {
+      console.error({ event: 'demand_letter_quota_check_failed', requestId });
+      return createErrorResponse('Unable to save demand letter', 503, responseHeaders, 'PERSISTENCE_ERROR');
+    }
+    if (!letterQuota.allowed) {
+      return createErrorResponse(
+        letterLimitMessage(letterQuota),
+        429,
+        responseHeaders,
+        letterQuota.anonymous ? 'ANONYMOUS_LETTER_LIMIT' : 'LETTER_LIMIT',
+      );
     }
 
     const isPDF = fileType === 'application/pdf';
@@ -954,12 +948,12 @@ Deno.serve(async (req: Request) => {
     });
 
     if (letterError) {
-      if (isAnonymousLetterLimitError(letterError)) {
+      if (isLetterLimitError(letterError)) {
         return createErrorResponse(
-          'Anonymous users can save up to 5 demand letters. Create an account to continue saving letters.',
+          letterLimitMessage(letterQuota),
           429,
           responseHeaders,
-          'ANONYMOUS_LETTER_LIMIT',
+          letterQuota.anonymous ? 'ANONYMOUS_LETTER_LIMIT' : 'LETTER_LIMIT',
         );
       }
       console.error({ event: 'demand_letter_persistence_failed', requestId });
