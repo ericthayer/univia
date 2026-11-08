@@ -1,20 +1,20 @@
-# Tenant-isolation test matrix
+# Tenant-isolation matrix
 
-The database integration suite must execute these cases against a disposable Supabase database with two users (`owner_a`, `owner_b`), one active admin, and one business owned by each user. Tests must run inside a transaction or clean up all fixtures.
+Who may do what once `20261107214000_tenant_isolation.sql` is applied. Guests hold the `authenticated` role with their own user ID, so they follow the Owner column for their own rows. Edge Functions write as the service role.
 
-| Subject | Anonymous | Owner | Other user | Active admin | Service role |
-| --- | --- | --- | --- | --- | --- |
-| `businesses` | no read/write | CRUD own only; insert owner is server-assigned | no read/write | CRUD all | migration/worker access only |
-| `accessibility_audits` | no read/write | CRUD own; `user_id` cannot be forged; business must be owned | no read/write | CRUD all | worker access only |
-| `violations` | no read/write | CRUD through own audit only | no read/write | CRUD all | worker access only |
-| `demand_letters` | no read/write | CRUD own; business must be owned | no read/write | CRUD all | worker access only |
-| `action_items` | no read/write | CRUD through own business and same-tenant related records | no read/write | CRUD all | worker access only |
-| `action_plans` | no read/write | CRUD own; related audit must be owned | no read/write | CRUD all | worker access only |
-| `checklist_progress` | no read/write | CRUD own only | no read/write | CRUD all | worker access only |
-| `pinned_audits` | no read/write | CRUD own pins for own audits | no read/write | CRUD all | worker access only |
-| `shared_analysis_links` | direct table blocked; valid active token only through safe RPC; protected links require the password argument | CRUD own links through the password-safe view/RPC | no read/write | CRUD all | worker access only |
-| `user_profiles` | no read/write | read/update own profile fields only | no read/write | read/update all | worker access only |
-| `professional_resources` | read only | read only | read only | CRUD | worker access only |
-| `demand-letters` storage | no access | CRUD objects under own UUID prefix | no access | CRUD all | worker access only |
+| Subject | Signed out | Owner | Other user | Active admin | Service role |
+|---|---|---|---|---|---|
+| `user_profiles` | none | read; update own name only | none | read and update all | all |
+| `accessibility_audits` | none | read own | none | none | all (written by `run-lighthouse-audit`) |
+| `violations` | none | read through own audit | none | none | all |
+| `demand_letters` | none | read and update own | none | none | all (written through `insert_demand_letter`) |
+| `shared_analysis_links` | token lookup through `get_shared_letter_analysis` only | create, list and revoke own through RPCs | none | none | all |
+| `businesses`, `action_items` | none | none | none | none | all |
+| `action_plans`, `checklist_progress`, `pinned_audits` | none | own rows | none | none | all |
+| `professional_resources` | none | read | read | read | all |
+| `demand-letters` storage | none | objects under own user ID folder | none | none | all |
+| Retired prototype tables | none | none | none | none | all |
 
-Negative cases are mandatory: forged `user_id`, forged `owner_id`, cross-tenant `business_id`, cross-tenant audit/letter references, anonymous direct share-link reads, password-protected share-link reads through the public RPC, concurrent calls beyond `max_access_count`, and privilege-field updates on `user_profiles`.
+Protected `user_profiles` fields (`tier`, `is_admin`, `audit_limit`, `status`, `email`, `audit_count`, `last_login`, `created_at`) change only through the service role, an active admin, or Auth's email sync.
+
+Deleting an account deletes its letters, audits and violations. Storage files are removed separately by account deletion (SPEC Phase 7).
