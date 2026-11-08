@@ -262,3 +262,4 @@ Baseline on `7de4110`, 2026-11-07.
 - 2026-11-07: Phase 0 migration applied to production and verified. Added homepage copy fixes to Phase 2. One function removal remains.
 - 2026-11-07: Phase 1 migrations written and tested locally, not applied. Retired the 2026-02 isolation migration. Switched the rehearsal method to a local database. Added the publishable-key audit path to Phase 2.
 - 2026-11-07: Applied the sign-up and profiles migration, and deployed `generate-accessibility-analysis`. Both are verified in production. The isolation migration still waits on Decision 1.
+- 2026-11-07: Applied the profile repair to production as `20261108004110_repair_profile_emails_and_letter_policy`. Production had no stale emails, missing profiles or repeated timestamps, so no rows changed. The leftover letter insert policy was not present there. Rebuilt databases now drop it too.
