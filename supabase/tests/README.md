@@ -7,6 +7,7 @@ Run these only against a disposable database built from `supabase/migrations/`, 
 | `accounts-behavior.sql` | Sign-up creates a profile, guests convert, email sync, profile saving, protected profile fields, admin access | pgTAP |
 | `tenant-isolation-behavior.sql` | Owners, other users, guests and signed-out visitors on audits, violations and letters; letters and audits always have an owner; deleting an account deletes its data | pgTAP |
 | `plan-limits-behavior.sql` | Monthly audit allowance by plan and for guests, release of failed runs, letter allowance by plan, letters that cannot be backdated, plan changes setting the limit, and what browsers can and cannot call | pgTAP |
+| `monitor-scans-behavior.sql` | Who can use Monitor, adding sites and pages (limits, URL rules), owner-only reads, the scan queue (claims, retries, crashed workers), issue diffing across runs (detected, resolved, reopened, fix confirmed or not), weekly scheduling, pausing, losing access, append-only history, account deletion | pgTAP |
 | `letter-sharing-behavior.sql` | Share-link creation, lookup, expiry and revocation | Plain SQL `ASSERT` |
 
 `tenant-isolation-matrix.md` lists who may do what. Update it with any policy change.
