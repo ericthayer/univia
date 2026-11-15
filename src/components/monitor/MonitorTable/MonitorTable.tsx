@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { forwardRef, ReactNode } from 'react';
 import Box from '@mui/material/Box';
 import { srOnly } from '../../ui/srOnly';
 
@@ -22,9 +22,26 @@ const eyebrowSx = {
  * Native table shell matching the admin tables: hairline frame, eyebrow
  * headers, horizontal scroll on narrow screens. Callers supply thead/tbody.
  */
-export function MonitorTable({ caption, minWidth = 560, children }: MonitorTableProps) {
+export const MonitorTable = forwardRef<HTMLDivElement, MonitorTableProps>(function MonitorTable(
+  { caption, minWidth = 560, children },
+  ref,
+) {
+  // Focusable, named scroll region so keyboard users can scroll the table on
+  // narrow screens even when it has no controls (PlanLimitsCard pattern).
   return (
-    <Box sx={{ overflowX: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: '12px' }}>
+    <Box
+      ref={ref}
+      role="region"
+      aria-label={caption}
+      tabIndex={0}
+      sx={{
+        overflowX: 'auto',
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: '12px',
+        '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
+      }}
+    >
       <Box
         component="table"
         sx={{
@@ -45,6 +62,6 @@ export function MonitorTable({ caption, minWidth = 560, children }: MonitorTable
       </Box>
     </Box>
   );
-}
+});
 
 export default MonitorTable;

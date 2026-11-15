@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -33,6 +33,8 @@ export function SitePagesCard({ site, detail, onChanged }: SitePagesCardProps) {
   const [fieldError, setFieldError] = useState('');
   const [status, setStatus] = useState<{ tone: 'error' | 'success'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const fieldRef = useRef<HTMLTextAreaElement>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
   const results = new Map(detail.latestResults.map((result) => [result.page_id, result]));
   const openByPage = countOpenByPage(detail.issues);
   const remaining = MONITOR_PAGE_LIMIT - detail.pages.length;
@@ -40,9 +42,13 @@ export function SitePagesCard({ site, detail, onChanged }: SitePagesCardProps) {
   const handleAdd = async (event: FormEvent) => {
     event.preventDefault();
     setStatus(null);
-    const list = parsePageList(site.origin, text, detail.pages.length);
-    if (!list.urls.length && !list.errors.length) return setFieldError('Enter at least one page.');
-    if (list.errors.length) return setFieldError(list.errors.join(' '));
+    const list = parsePageList(site.origin, text, detail.pages.map((page) => page.url));
+    const problem = list.errors.join(' ') || (list.urls.length ? '' : 'Enter at least one new page.');
+    if (problem) {
+      setFieldError(problem);
+      fieldRef.current?.focus();
+      return;
+    }
     setFieldError('');
     setBusy(true);
     const result = await addSitePages(site.id, list.urls);
@@ -62,13 +68,17 @@ export function SitePagesCard({ site, detail, onChanged }: SitePagesCardProps) {
     const result = await removeSitePage(pageId);
     setBusy(false);
     setStatus(result.ok ? { tone: 'success', text: 'Page removed.' } : { tone: 'error', text: result.message });
-    if (result.ok) onChanged();
+    if (result.ok) {
+      // The removed row unmounts; keep keyboard users in the page list.
+      tableRef.current?.focus();
+      onChanged();
+    }
   };
 
   return (
     <BezelCard component="section" aria-labelledby="site-pages-title">
       <SectionHeader id="site-pages-title" title="Pages" meta={`${detail.pages.length} of ${MONITOR_PAGE_LIMIT}`} dense />
-      <MonitorTable caption={`Pages monitored on ${site.origin}`}>
+      <MonitorTable ref={tableRef} caption={`Pages monitored on ${site.origin}`}>
         <thead>
           <tr>
             <th scope="col">Page</th>
@@ -110,6 +120,7 @@ export function SitePagesCard({ site, detail, onChanged }: SitePagesCardProps) {
             placeholder={'/pricing\n/contact'}
             value={text}
             onChange={(event) => setText(event.target.value)}
+            inputRef={fieldRef}
             error={Boolean(fieldError)}
             helperText={fieldError || `One per line. ${remaining} more ${remaining === 1 ? 'page' : 'pages'} allowed.`}
             multiline

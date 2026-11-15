@@ -57,6 +57,10 @@ export function useMonitorSite(selectedSiteId: string | null) {
     return () => window.clearInterval(timer);
   }, [activeRun, load]);
 
-  const refresh = useCallback(() => load(true), [load]);
+  // Actions started before a site switch must refresh the current site, not
+  // the one they captured, so refresh always calls the latest load.
+  const latestLoad = useRef(load);
+  latestLoad.current = load;
+  const refresh = useCallback(() => latestLoad.current(true), []);
   return { state, refresh };
 }

@@ -144,14 +144,15 @@ export async function loadSiteDetail(siteId: string): Promise<MonitorResult<Site
     latestResults = (results.data ?? []) as PageResult[];
   }
 
+  // Removed pages keep their issue history, but are no longer scanned, so
+  // their issues are not current. finalize_scan_run counts the same way.
+  const pageRows = (pages.data ?? []) as MonitorPage[];
+  const activePageIds = new Set(pageRows.map((page) => page.id));
+  const issueRows = ((issues.data ?? []) as MonitorIssue[]).filter((issue) => activePageIds.has(issue.page_id));
+
   return {
     ok: true,
-    value: {
-      pages: (pages.data ?? []) as MonitorPage[],
-      runs: runRows,
-      latestResults,
-      issues: (issues.data ?? []) as MonitorIssue[],
-    },
+    value: { pages: pageRows, runs: runRows, latestResults, issues: issueRows },
   };
 }
 

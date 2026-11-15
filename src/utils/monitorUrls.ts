@@ -56,12 +56,13 @@ export interface PageListResult {
 
 /**
  * Turns one-per-line input into page URLs on `origin`. Lines may be full URLs
- * or paths ("/pricing"). Duplicates are dropped; fragments are removed.
+ * or paths ("/pricing"). Duplicates, and URLs already in `existing`, are
+ * dropped, matching add_site_pages; fragments are removed.
  */
-export function parsePageList(origin: string, text: string, existingCount = 0): PageListResult {
+export function parsePageList(origin: string, text: string, existing: readonly string[] = []): PageListResult {
   const urls: string[] = [];
   const errors: string[] = [];
-  const seen = new Set<string>();
+  const seen = new Set<string>(existing);
 
   for (const line of text.split(/\r?\n/)) {
     const entry = line.trim();
@@ -75,6 +76,10 @@ export function parsePageList(origin: string, text: string, existingCount = 0): 
       continue;
     }
 
+    if (url.username || url.password) {
+      errors.push(`"${entry}" cannot include a user name or password.`);
+      continue;
+    }
     url.hash = '';
     url.hostname = url.hostname.toLowerCase();
     const value = url.toString();
@@ -91,7 +96,7 @@ export function parsePageList(origin: string, text: string, existingCount = 0): 
     urls.push(value);
   }
 
-  if (existingCount + urls.length > MONITOR_PAGE_LIMIT) {
+  if (existing.length + urls.length > MONITOR_PAGE_LIMIT) {
     errors.push(`A site can have up to ${MONITOR_PAGE_LIMIT} pages.`);
   }
 

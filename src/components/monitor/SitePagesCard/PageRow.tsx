@@ -35,6 +35,11 @@ export function PageRow({ page, result, openIssues, canRemove, disabled, onRemov
   const wasConfirming = useRef(false);
   const path = pagePath(page.url);
 
+  // If this became the last page while confirming, drop the confirmation.
+  useEffect(() => {
+    if (!canRemove) setConfirming(false);
+  }, [canRemove]);
+
   useEffect(() => {
     if (confirming) confirmRef.current?.focus();
     else if (wasConfirming.current) removeRef.current?.focus();
@@ -77,7 +82,7 @@ export function PageRow({ page, result, openIssues, canRemove, disabled, onRemov
               variant="contained"
               color="error"
               onClick={() => onRemove(page.id)}
-              disabled={disabled}
+              disabled={disabled || !canRemove}
               aria-label={`Confirm remove ${path}`}
               sx={{ minHeight: 44, ml: 1 }}
             >

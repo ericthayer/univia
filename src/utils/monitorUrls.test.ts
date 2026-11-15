@@ -38,8 +38,18 @@ describe('parsePageList', () => {
   });
 
   it('enforces the 25-page limit including existing pages', () => {
-    expect(parsePageList(origin, '/a\n/b', 24).errors).toEqual(['A site can have up to 25 pages.']);
-    expect(parsePageList(origin, '/a', 24).errors).toEqual([]);
+    const existing = Array.from({ length: 24 }, (_, i) => `${origin}/p${i}`);
+    expect(parsePageList(origin, '/a\n/b', existing).errors).toEqual(['A site can have up to 25 pages.']);
+    expect(parsePageList(origin, '/a', existing).errors).toEqual([]);
+  });
+
+  it('skips pages already monitored when counting the limit', () => {
+    const existing = [`${origin}/`, ...Array.from({ length: 23 }, (_, i) => `${origin}/p${i}`)];
+    expect(parsePageList(origin, '/\n/new', existing)).toEqual({ urls: [`${origin}/new`], errors: [] });
+  });
+
+  it('rejects addresses with credentials', () => {
+    expect(parsePageList(origin, 'https://user:pass@shop.example.com/pricing').errors).toHaveLength(1);
   });
 });
 
