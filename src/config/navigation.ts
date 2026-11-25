@@ -107,6 +107,7 @@ export const ROUTE_PATHS = {
   HELP: '/help',
   ANALYZE_REPORT: '/analyze-report',
   SHARED_LETTER: '/shared/letter',
+  UNSUBSCRIBE: '/unsubscribe',
   STREAMING_DEMO: '/admin/streaming-demo',
   SIGN_IN: '/signin',
   SIGN_UP: '/signup',

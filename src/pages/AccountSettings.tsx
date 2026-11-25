@@ -12,6 +12,7 @@ import { USER_TIERS } from '../config/tierConfig';
 import { supabase } from '../services/supabaseClient';
 import Icon from '../components/ui/Icon';
 import { ArrowButton } from '../components/ui/ArrowButton/ArrowButton';
+import { ScanAlertsCard } from '../components/monitor/ScanAlertsCard/ScanAlertsCard';
 import { BezelCard } from '../components/ui/BezelCard/BezelCard';
 import { PageCanvas } from '../components/ui/PageCanvas/PageCanvas';
 import { PageHeader } from '../components/ui/PageHeader/PageHeader';
@@ -371,6 +372,8 @@ export default function AccountSettings() {
               </Alert>
             )}
           </BezelCard>
+
+          <ScanAlertsCard />
         </Box>
       </Box>
 

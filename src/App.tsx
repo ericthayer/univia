@@ -14,6 +14,7 @@ const ComplianceChecklist = lazy(() => import('./pages/ComplianceChecklist'));
 const ActionsPlan = lazy(() => import('./pages/ActionPlanBuilder'));
 const Monitor = lazy(() => import('./pages/Monitor'));
 const MonitorStatement = lazy(() => import('./pages/MonitorStatement'));
+const Unsubscribe = lazy(() => import('./pages/Unsubscribe'));
 const Resources = lazy(() => import('./pages/Resources'));
 const HelpCenter = lazy(() => import('./pages/HelpCenter'));
 const AnalyzeReport = lazy(() => import('./pages/AnalyzeReport'));
@@ -131,6 +132,7 @@ function App() {
                     />
                     <Route path={ROUTE_PATHS.RESOURCES} element={<Resources />} />
                     <Route path={ROUTE_PATHS.SHARED_LETTER} element={<SharedLetter />} />
+                    <Route path={ROUTE_PATHS.UNSUBSCRIBE} element={<Unsubscribe />} />
                     <Route path={ROUTE_PATHS.HELP} element={<HelpCenter />} />
                     <Route
                       path={ROUTE_PATHS.ANALYZE_REPORT}
