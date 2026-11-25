@@ -233,7 +233,6 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
             aria-controls="mobile-navigation"
             variant="contained"
             onClick={onMobileMenuToggle}
-            startIcon={<Icon name={mobileMenuOpen ? 'close' : 'menu'} aria-hidden />}
             sx={{
               ...controlButtonSx,
               display: { xs: 'inline-flex', md: 'none' },
