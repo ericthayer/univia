@@ -9,6 +9,7 @@ Run these only against a disposable database built from `supabase/migrations/`, 
 | `plan-limits-behavior.sql` | Monthly audit allowance by plan and for guests, release of failed runs, letter allowance by plan, letters that cannot be backdated, plan changes setting the limit, and what browsers can and cannot call | pgTAP |
 | `monitor-scans-behavior.sql` | Who can use Monitor, adding sites and pages (limits, URL rules), owner-only reads, the scan queue (claims, retries, crashed workers), issue diffing across runs (detected, resolved, reopened, fix confirmed or not), weekly scheduling, pausing, losing access, append-only history, account deletion | pgTAP |
 | `monitor-fix-tracker-behavior.sql` | Marking an issue fixed (notes, owners only, Monitor access), undo, the order of history events, one-page re-checks (queued, blocked while a scan runs, daily limit, other pages untouched, weekly schedule unchanged), fix confirmed or not after a re-check, removed pages, and what browsers cannot call | pgTAP |
+| `monitor-remediation-record-behavior.sql` | Who can make a record, period rules, the contents returned match what was fingerprinted, owner-only reads, public verification, later activity leaving a record unchanged, altered or removed history no longer matching, the daily limit, account deletion | pgTAP |
 | `letter-sharing-behavior.sql` | Share-link creation, lookup, expiry and revocation | Plain SQL `ASSERT` |
 
 `tenant-isolation-matrix.md` lists who may do what. Update it with any policy change.
