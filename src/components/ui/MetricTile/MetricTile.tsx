@@ -73,19 +73,11 @@ export function MetricTile({ label, value, support, icon, tone = 'neutral', stat
         )}
       </Box>
       {loading ? (
-        <Skeleton variant="text" width="60%" sx={{ fontSize: '2.75rem', transform: 'none' }} />
+        <Skeleton variant="text" width="60%" sx={{ fontSize: 'clamp(2.75rem, 12cqw, 4.25rem)', transform: 'none' }} />
       ) : (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            columnGap: 1.5,
-            rowGap: 1,
-            mb: support ? 1 : 0,
-          }}
-        >
-          <Typography variant="metric" component="p">
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1.5, mb: support ? 2 : 0 }}>
+          {/* Hero numeral: one step up from the `metric` variant, scaled to the tile width. */}
+          <Typography variant="metric" component="p" sx={{ fontSize: 'clamp(2.75rem, 12cqw, 4.25rem)' }}>
             {value}
           </Typography>
           {status && (
