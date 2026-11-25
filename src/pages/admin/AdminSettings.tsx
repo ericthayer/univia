@@ -23,7 +23,7 @@ function backendHost(): string {
 const ENGINE_ITEMS: SystemInfoItem[] = [
   { label: 'Primary model', value: ANALYSIS_ENGINE.primaryModel },
   { label: 'Deep analysis model', value: ANALYSIS_ENGINE.deepModel },
-  { label: 'Anonymous letter limit', value: `${ANALYSIS_ENGINE.anonymousLetterLimit} per visitor` },
+  { label: 'Anonymous letter limit', value: `${ANALYSIS_ENGINE.anonymousLetterLimit} per week` },
 ];
 
 const ENVIRONMENT_ITEMS: SystemInfoItem[] = [
