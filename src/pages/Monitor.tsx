@@ -4,7 +4,8 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
-import { useSearchParams } from 'react-router-dom';
+import { Link as RouterLink, useSearchParams } from 'react-router-dom';
+import { ROUTE_PATHS } from '../config/navigation';
 import { BezelCard } from '../components/ui/BezelCard/BezelCard';
 import { EmptyState } from '../components/ui/EmptyState/EmptyState';
 import { MetricTile } from '../components/ui/MetricTile/MetricTile';
@@ -141,7 +142,19 @@ export default function Monitor() {
 
   return (
     <PageCanvas maxWidth="xl">
-      {header(siteSelect || undefined)}
+      {header(
+        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
+          {siteSelect}
+          <Button
+            component={RouterLink}
+            to={`${ROUTE_PATHS.MONITOR_RECORD}?site=${site.id}`}
+            variant="outlined"
+            sx={{ borderRadius: controlRadius, minHeight: 44 }}
+          >
+            Remediation Record
+          </Button>
+        </Box>,
+      )}
       <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: 'minmax(0, 1fr)' }}>
         <ScanStatusCard site={site} latestRun={detail.runs[0]} onChanged={() => void refresh()} />
 

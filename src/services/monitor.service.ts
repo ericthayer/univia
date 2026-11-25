@@ -113,6 +113,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   INVALID_STATE: 'That issue changed since the page loaded. Refresh and try again.',
   NOTE_TOO_LONG: 'Notes can be up to 1,000 characters.',
   RECHECK_RATE_LIMIT: 'You can re-check pages 10 times a day per site. Weekly scans still run on schedule.',
+  INVALID_PERIOD: 'Choose a start date before the end date, no more than a year apart, and not in the future.',
+  RECORD_RATE_LIMIT: 'You can create 20 records a day per site.',
 };
 
 export function monitorErrorMessage(error: { message?: string } | null | undefined): string {
@@ -121,7 +123,7 @@ export function monitorErrorMessage(error: { message?: string } | null | undefin
   return code ? ERROR_MESSAGES[code] : 'Something went wrong. Please try again.';
 }
 
-async function call<T>(promise: PromiseLike<{ data: unknown; error: { message?: string } | null }>, map: (data: unknown) => T): Promise<MonitorResult<T>> {
+export async function call<T>(promise: PromiseLike<{ data: unknown; error: { message?: string } | null }>, map: (data: unknown) => T): Promise<MonitorResult<T>> {
   const { data, error } = await promise;
   if (error) return { ok: false, message: monitorErrorMessage(error) };
   return { ok: true, value: map(data) };

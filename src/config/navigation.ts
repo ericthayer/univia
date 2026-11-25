@@ -102,6 +102,8 @@ export const ROUTE_PATHS = {
   CHECKLIST: '/checklist',
   ACTION_PLAN: '/action-plan',
   MONITOR: '/monitor',
+  MONITOR_RECORD: '/monitor/record',
+  VERIFY_RECORD: '/verify/record/:id',
   RESOURCES: '/resources',
   HELP: '/help',
   ANALYZE_REPORT: '/analyze-report',

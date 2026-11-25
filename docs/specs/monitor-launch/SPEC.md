@@ -140,7 +140,7 @@ Split into two PRs: the engine (database, queue, worker, schedule) and then the 
 - [x] Issue list per site: open, marked fixed, confirmed fixed, reopened if it returns. Filters live in the `?issues=` URL parameter. "Reopened" and "Fix confirmed" come from each issue's history, not new states. Owners can mark an issue fixed with an optional note (1,000 characters) and undo it; each issue shows its history.
 - [x] Re-scan one page on demand to confirm a fix: `request_page_recheck` queues a one-page `recheck` run, at most 10 a day per site and never while another scan is queued or running. A re-check does not move the weekly schedule. `monitor-fix-tracker-behavior.sql`: 30 of 30 pass.
 - [x] Append-only `issue_events`, the source for the record. Adds `unmarked_fixed` for undo.
-- [ ] Record PDF, reusing the existing PDF export: dates, pages scanned, issues found, fixes confirmed, and a plain statement of what automated scans do not cover. No compliance language.
+- [x] Record PDF, reusing the existing PDF export: dates, pages scanned, issues found, fixes confirmed, and a plain statement of what automated scans do not cover. No compliance language. Built as the "Accessibility Remediation Record" at `/monitor/record`: whole-day periods up to a year, 20 records a day per site. Each record saves a SHA-256 fingerprint of every finished run and issue event up to the period end; `/verify/record/:id` (public) recomputes it and says whether the history has changed. `monitor-remediation-record-behavior.sql`: 27 of 27 pass.
 - [ ] Have an attorney review the name and wording (Decision 6).
 
 **Done when:** an issue can go from found to confirmed fixed, and the PDF shows that history accurately.
@@ -283,3 +283,4 @@ Baseline on `7de4110`, 2026-11-07.
 - 2026-11-15: Engine merged (#43). Sites screens added at `/monitor`, tested with mocked data in light, dark and at 375px. The fix tracker and record are Phase 5.
 - 2026-11-25: Decision 10. Raised plan allowances (`20261125120000_raise_plan_limits`): guests 1 audit and 1 letter a week, signed-in plans no audit cap, Free 5 letters a month, Monitor no letter cap.
 - 2026-11-25: Phase 3 is live in production; first run of the test site completed. Fix tracker (Phase 5, part 1): mark fixed and undo, one-page re-check, filters and per-issue history on `/monitor`. Migration `20261125140000_monitor_fix_tracker` tested locally, not applied.
+- 2026-11-25: Remediation Record (Phase 5, part 2): `20261126120000_monitor_remediation_record`, `/monitor/record`, public `/verify/record/:id`. Tested locally, not applied. Name still waits on the attorney review.
