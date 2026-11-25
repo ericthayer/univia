@@ -13,7 +13,9 @@
   plan allowances. Active admins have no cap, as before.
 
   Audit runs are still claimed in audit_quota_claims, so Account Settings keeps
-  showing usage, and a cap can come back by changing plan_audit_limit().
+  showing usage. Bringing a cap back takes more than changing
+  plan_audit_limit(): audit_limit_for() reads the stored audit_limit, so the
+  column default and existing profiles must be changed too (see Reversal).
 
   Profiles still holding their plan's old audit limit (Free 1, Monitor 30) move
   to no cap. Any other value was set on purpose by an admin, so leave it.
