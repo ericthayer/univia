@@ -262,7 +262,7 @@ Baseline on `7de4110`, 2026-11-07.
 7. **Gemini tier.** Letters contain names and legal details. Confirm the key is paid, and read Google's data terms before anyone pays us.
 8. **Free letter allowance: closed.** Guests and Free accounts get 1 letter in total, enforced on the server. Decided by the owner on 2026-11-07. Before this, guests could save 5 and signed-in Free accounts had no limit.
 9. **Guest audit allowance: closed.** Guests get 1 audit a month, the same as Free. Decided by the owner on 2026-11-07. Guests have no profile, so the limit lives in `audit_limit_for()`.
-10. **Plan allowances raised.** Decided by the owner on 2026-11-25, superseding the plan parts of Decisions 8 and 9: audits have no cap for anyone, guests included (free audits build goodwill for the product); letters are Free 5 a month, Monitor and Agency no cap. Guests keep 1 letter in total. `20261125120000_raise_plan_limits`; `plan-limits-behavior.sql` 39 of 39 pass.
+10. **Plan allowances raised.** Decided by the owner on 2026-11-25, superseding the plan parts of Decisions 8 and 9: guests (no account) get 1 audit and 1 letter per calendar week (UTC, Monday); Free gets unlimited audits and 5 letters a month; Monitor and Agency have no cap on either. A free account is what unlocks unlimited audits. `20261125120000_raise_plan_limits`; `plan-limits-behavior.sql` 39 of 39 pass.
 
 ## 10. Changelog
 
@@ -280,4 +280,4 @@ Baseline on `7de4110`, 2026-11-07.
 - 2026-11-07: Phase 2 limits. Closed Decisions 8 and 9. Pricing lists only built features, its `alert()` is gone, and Agency is "Contact us". Wrote the `enforce_plan_limits` migration and the Edge Function checks, tested locally.
 - 2026-11-07: Applied `20261108050610_enforce_plan_limits` to production after a confirmed backup, deployed `run-lighthouse-audit` v35 and `analyze-document` v58, and verified the limits with a guest. Phase 2's checklist is complete.
 - 2026-11-08: Phase 3 engine. Ran the fingerprint spike and set issue identity to page + rule. Wrote `20261108140000_monitor_sites_and_scans` and the `scan-worker` function, tested locally, not applied.
-- 2026-11-25: Decision 10. Raised plan allowances (`20261125120000_raise_plan_limits`): no audit cap for anyone (guests included), Free 5 letters a month, Monitor no letter cap.
+- 2026-11-25: Decision 10. Raised plan allowances (`20261125120000_raise_plan_limits`): guests 1 audit and 1 letter a week, signed-in plans no audit cap, Free 5 letters a month, Monitor no letter cap.

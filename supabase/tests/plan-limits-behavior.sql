@@ -76,24 +76,26 @@ UPDATE public.user_profiles SET is_admin = true WHERE id = '00000000-0000-0000-0
 
 -- Last month's runs and letters do not count
 INSERT INTO public.audit_quota_claims (session_id, user_id, created_at) VALUES
+  (gen_random_uuid(), '00000000-0000-0000-0000-0000000000a1', public.quota_period_start('week') - interval '1 day'),
   (gen_random_uuid(), '00000000-0000-0000-0000-0000000000b2', public.quota_period_start() - interval '1 day');
 INSERT INTO public.demand_letters (user_id, file_name, created_at) VALUES
+  ('00000000-0000-0000-0000-0000000000a1', 'last-week.pdf', public.quota_period_start('week') - interval '1 day'),
   ('00000000-0000-0000-0000-0000000000b2', 'last-month.pdf', public.quota_period_start() - interval '1 day'),
   ('00000000-0000-0000-0000-0000000000c3', 'last-month.pdf', public.quota_period_start() - interval '1 day');
 
 -- Audits, as run-lighthouse-audit calls them
 SELECT test_helpers.act_as('service_role', NULL);
-SELECT is((public.claim_audit_run('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000aa01')->>'allowed')::boolean, true, 'a guest gets their first audit of the month');
-SELECT is(test_helpers.claim_runs('00000000-0000-0000-0000-0000000000a1', 20), 20, 'a guest has no audit cap');
+SELECT is((public.claim_audit_run('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000aa01')->>'allowed')::boolean, true, 'a guest gets their first audit of the week; last week''s run does not count');
+SELECT is(public.claim_audit_run('00000000-0000-0000-0000-0000000000a1', gen_random_uuid()), '{"allowed": false, "limit": 1, "used": 1, "period": "week", "anonymous": true}'::jsonb, 'and not a second');
 SELECT lives_ok($$SELECT public.release_audit_run('00000000-0000-0000-0000-00000000aa01')$$, 'a failed run is released');
-SELECT is((public.claim_audit_run('00000000-0000-0000-0000-0000000000a1', gen_random_uuid())->>'used')::int, 21, 'and no longer counts toward usage');
+SELECT is((public.claim_audit_run('00000000-0000-0000-0000-0000000000a1', gen_random_uuid())->>'allowed')::boolean, true, 'which gives the run back');
 SELECT is(test_helpers.claim_runs('00000000-0000-0000-0000-0000000000b2', 40), 40, 'Free has no audit cap');
 SELECT is(test_helpers.claim_runs('00000000-0000-0000-0000-0000000000c3', 31), 31, 'Monitor has no audit cap');
 SELECT is(test_helpers.claim_runs('00000000-0000-0000-0000-0000000000d4', 40), 40, 'Agency has no cap');
 SELECT is(test_helpers.claim_runs('00000000-0000-0000-0000-0000000000e5', 5), 5, 'an active admin has no cap');
 
 -- Letters, as analyze-document saves them
-SELECT is(public.letter_quota('00000000-0000-0000-0000-0000000000a1'), '{"allowed": true, "limit": 1, "used": 0, "period": "total", "anonymous": true}'::jsonb, 'a guest may save 1 letter in total');
+SELECT is(public.letter_quota('00000000-0000-0000-0000-0000000000a1'), '{"allowed": true, "limit": 1, "used": 0, "period": "week", "anonymous": true}'::jsonb, 'a guest may save 1 letter a week; last week''s does not count');
 SELECT lives_ok($$SELECT public.insert_demand_letter('00000000-0000-0000-0000-0000000000a1', true, '{"file_name": "g1.pdf"}')$$, 'a guest saves their first letter');
 SELECT throws_ok($$SELECT public.insert_demand_letter('00000000-0000-0000-0000-0000000000a1', true, '{"file_name": "g2.pdf"}')$$, 'P0001', 'ANONYMOUS_LETTER_LIMIT', 'and not a second');
 SELECT is((public.letter_quota('00000000-0000-0000-0000-0000000000b2')->>'used')::int, 0, 'Free''s letter from last month does not count');
@@ -122,7 +124,7 @@ SELECT lives_ok($$UPDATE public.demand_letters SET status = 'reviewed' WHERE use
 SELECT test_helpers.act_as_system();
 SELECT is((SELECT status FROM public.demand_letters WHERE user_id = '00000000-0000-0000-0000-0000000000c3' AND file_name = 'm1.pdf'), 'reviewed', 'and the edit is saved');
 SELECT test_helpers.act_as('authenticated', '00000000-0000-0000-0000-0000000000a1');
-SELECT is((public.my_audit_usage()->>'limit')::int, -1, 'a guest sees no audit cap');
+SELECT is(public.my_audit_usage(), '{"limit": 1, "used": 1, "period": "week"}'::jsonb, 'a guest sees 1 audit a week');
 SELECT test_helpers.act_as('anon', NULL);
 SELECT throws_ok($$SELECT public.my_audit_usage()$$, '42501', NULL, 'signed-out visitors cannot read usage');
 SELECT test_helpers.act_as_system();
