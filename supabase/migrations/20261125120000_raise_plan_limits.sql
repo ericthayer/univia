@@ -5,12 +5,12 @@
     Audits: Free 1 a month, Monitor 30 a month, Agency no cap
     Letters: Free 1 in total, Monitor 5 a month, Agency no cap
   After:
-    Audits: no cap on any plan
+    Audits: no cap for anyone, guests included
     Letters: Free 5 per calendar month (UTC), Monitor and Agency no cap
 
-  Unchanged: guests (anonymous sessions, which have no profile) keep 1 audit a
-  month and 1 letter in total, so creating a free account is what unlocks the
-  plan allowances. Active admins have no cap, as before.
+  Guests (anonymous sessions, which have no profile) keep 1 letter in total,
+  so letters are what a free account unlocks. Active admins have no cap, as
+  before.
 
   Audit runs are still claimed in audit_quota_claims, so Account Settings keeps
   showing usage. Bringing a cap back takes more than changing
@@ -20,7 +20,7 @@
   Profiles still holding their plan's old audit limit (Free 1, Monitor 30) move
   to no cap. Any other value was set on purpose by an admin, so leave it.
 
-  Reversal: restore plan_audit_limit() and letter_quota() from
+  Reversal: restore plan_audit_limit(), audit_limit_for() and letter_quota() from
   20261108050610, set audit_limit's default back to 1, and set profiles with
   audit_limit = -1 back to plan_audit_limit(tier).
 */
@@ -37,6 +37,26 @@ AS $$
 $$;
 
 REVOKE ALL ON FUNCTION public.plan_audit_limit(text) FROM PUBLIC, anon, authenticated;
+
+-- Same as 20261108050610, except callers without a profile (guests) have no
+-- cap instead of 1. -1 means no cap.
+CREATE OR REPLACE FUNCTION public.audit_limit_for(p_user_id uuid)
+RETURNS integer
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT CASE
+    WHEN profiles.id IS NULL THEN -1
+    WHEN profiles.is_admin AND profiles.status = 'active' THEN -1
+    ELSE profiles.audit_limit
+  END
+  FROM (SELECT p_user_id AS id) AS caller
+  LEFT JOIN public.user_profiles AS profiles ON profiles.id = caller.id
+$$;
+
+REVOKE ALL ON FUNCTION public.audit_limit_for(uuid) FROM PUBLIC, anon, authenticated;
 
 ALTER TABLE public.user_profiles ALTER COLUMN audit_limit SET DEFAULT -1;
 

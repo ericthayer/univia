@@ -84,9 +84,9 @@ INSERT INTO public.demand_letters (user_id, file_name, created_at) VALUES
 -- Audits, as run-lighthouse-audit calls them
 SELECT test_helpers.act_as('service_role', NULL);
 SELECT is((public.claim_audit_run('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000aa01')->>'allowed')::boolean, true, 'a guest gets their first audit of the month');
-SELECT is(public.claim_audit_run('00000000-0000-0000-0000-0000000000a1', gen_random_uuid()), '{"allowed": false, "limit": 1, "used": 1, "period": "month"}'::jsonb, 'and not a second');
+SELECT is(test_helpers.claim_runs('00000000-0000-0000-0000-0000000000a1', 20), 20, 'a guest has no audit cap');
 SELECT lives_ok($$SELECT public.release_audit_run('00000000-0000-0000-0000-00000000aa01')$$, 'a failed run is released');
-SELECT is((public.claim_audit_run('00000000-0000-0000-0000-0000000000a1', gen_random_uuid())->>'allowed')::boolean, true, 'which gives the run back');
+SELECT is((public.claim_audit_run('00000000-0000-0000-0000-0000000000a1', gen_random_uuid())->>'used')::int, 21, 'and no longer counts toward usage');
 SELECT is(test_helpers.claim_runs('00000000-0000-0000-0000-0000000000b2', 40), 40, 'Free has no audit cap');
 SELECT is(test_helpers.claim_runs('00000000-0000-0000-0000-0000000000c3', 31), 31, 'Monitor has no audit cap');
 SELECT is(test_helpers.claim_runs('00000000-0000-0000-0000-0000000000d4', 40), 40, 'Agency has no cap');
@@ -122,7 +122,7 @@ SELECT lives_ok($$UPDATE public.demand_letters SET status = 'reviewed' WHERE use
 SELECT test_helpers.act_as_system();
 SELECT is((SELECT status FROM public.demand_letters WHERE user_id = '00000000-0000-0000-0000-0000000000c3' AND file_name = 'm1.pdf'), 'reviewed', 'and the edit is saved');
 SELECT test_helpers.act_as('authenticated', '00000000-0000-0000-0000-0000000000a1');
-SELECT is((public.my_audit_usage()->>'limit')::int, 1, 'a guest sees a limit of 1');
+SELECT is((public.my_audit_usage()->>'limit')::int, -1, 'a guest sees no audit cap');
 SELECT test_helpers.act_as('anon', NULL);
 SELECT throws_ok($$SELECT public.my_audit_usage()$$, '42501', NULL, 'signed-out visitors cannot read usage');
 SELECT test_helpers.act_as_system();
