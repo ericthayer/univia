@@ -116,6 +116,18 @@ export const surfaceTokens = {
   controlHeightMobile: 48,
 } as const;
 
+/**
+ * Light-scheme card surface. `background.paper` (#F5F5F5) sits too close to the
+ * page (#FCFCFC) to read as a card on phones, so light cards lift to white with
+ * a firmer hairline. Dark cards keep `background.paper` + `divider`.
+ */
+export const cardTokens = {
+  light: {
+    fill: '#FFFFFF',
+    border: '#D4D4D4',
+  },
+} as const;
+
 /** CSS length for interactive controls, usable directly in `sx`. */
 export const controlRadius = `${surfaceTokens.controlRadius}px`;
 

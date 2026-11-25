@@ -2,6 +2,7 @@ import { forwardRef, ReactNode } from 'react';
 import Box, { BoxProps } from '@mui/material/Box';
 import { keyframes, styled } from '@mui/material/styles';
 import { Tone, toneColor } from '../tone';
+import { cardTokens } from '../../../theme/tokens';
 
 export type { Tone } from '../tone';
 
@@ -45,9 +46,16 @@ const Shell = styled(Box, {
     flexDirection: 'column',
     padding: theme.surfaces.shellInset,
     borderRadius: theme.surfaces.shellRadius,
-    border: `1px solid ${palette.divider}`,
     // Single surface: the shell is the card. No tinted tray around the content.
-    backgroundColor: palette.background.paper,
+    // Light: white plate + firmer hairline for contrast against the page.
+    border: `1px solid ${cardTokens.light.border}`,
+    backgroundColor: cardTokens.light.fill,
+    ...theme.applyStyles('dark', {
+      borderColor: palette.divider,
+      backgroundColor: palette.background.paper,
+      // The dark selector outranks plain `:hover`, so restate it here.
+      ...(interactive && { '&:hover': { borderColor: palette.text.secondary } }),
+    }),
     // Only transform and border-color animate.
     transition: `transform ${slow}, border-color ${standard}`,
     ...(interactive && {

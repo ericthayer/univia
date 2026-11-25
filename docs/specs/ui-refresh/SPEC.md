@@ -24,7 +24,7 @@ No new dependencies. No changes to navigation, footer, routing, or data access.
 
 ### 3.1 Surfaces: single card
 
-Every primary card is one surface: `background.paper` fill, `1px solid divider`, 20px radius, content padding 24px (16px below `sm`). No inset tray and no inset highlight. (Superseded the two-layer "nested bezel" on 2026-11-25; the `BezelCard` name and API stay so call sites don't change.)
+Every primary card is one surface: light = `#FFFFFF` fill + `1px solid #D4D4D4` (`cardTokens.light`, since paper #F5F5F5 is too close to the #FCFCFC page), dark = `background.paper` + `1px solid divider`; 20px radius, content padding 24px (16px below `sm`). No inset tray and no inset highlight. (Superseded the two-layer "nested bezel" on 2026-11-25; the `BezelCard` name and API stay so call sites don't change.)
 
 | Token | Value | Use |
 |---|---|---|
@@ -240,4 +240,4 @@ Phases 3, 4, 5 are independent once Phase 1 lands and may run in parallel.
 - 2026-10-29 — Removed diffused ambient shadows from BezelCard (rest and hover) and the admin bulk-action bar; §3.1 and the "diffused ambient shadows" wording in the direction notes no longer apply. Inset highlights stay.
 - 2026-11-01 — App header aligned with the site language after deploy-preview feedback: nav items, Sign In / Register, the theme toggle and the mobile Menu button are 44px pills with no underline; active nav item is a contained pill. Added a `menu` icon path.
 - 2026-10-29 — Rolled the language out to every remaining page (checklist, action plan, resources, help, pricing, settings, analyze report, audit results, auth, signed-out home, admin demos, pattern library) and the analysis components. Added `TonePill`, `SegmentedToggleGroup`, `FilterSelect`, `AuthShell`. Admin page re-reviewed with an admin account. §3.4 note: the audit found `transition: all` and outer shadows in about a dozen files; none remain.
-- 2026-11-25 — Dropped the double-card (shell tray + inset core) for a single card surface app-wide (§3.1). Phones (< 600px): every contained/outlined button renders at one 48px height (`controlHeightMobile`). Footer link renamed to "Resources".
+- 2026-11-25 — Dropped the double-card (shell tray + inset core) for a single card surface app-wide (§3.1). Phones (< 600px): every contained/outlined button outside the app header renders at one 48px height (`controlHeightMobile`); header controls (Menu) stay 44px. Light cards are white with a #D4D4D4 hairline for contrast. Footer link renamed to "Resources".

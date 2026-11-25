@@ -25,3 +25,4 @@
 - 2026-10-29 — Created.
 - 2026-10-29 — Removed the diffused ambient drop shadows (rest and hover). The core keeps only a crisp 1px inset highlight; depth comes from the nested shell and hairline border.
 - 2026-11-25 — Removed the double-card effect: no tinted shell tray, no 6px inset, no core fill or inset highlight. The shell is now the paper surface; `coreRadius` = 19px (shell radius minus border).
+- 2026-11-25 — Light scheme: white fill + #D4D4D4 border (`cardTokens.light`) for contrast against the page; dark unchanged.

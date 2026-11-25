@@ -226,8 +226,9 @@ const theme = createTheme({
           // Phones: one button height and type size for every contained and
           // outlined button regardless of `size` or per-instance minHeight.
           // `&&` outranks instance `sx` so 44/48/54px variants collapse to one.
+          // Header controls (Menu, Sign In) keep their 44px pill height.
           [MOBILE_QUERY]: {
-            '&&.MuiButton-contained, &&.MuiButton-outlined': {
+            '&&.MuiButton-contained:not(.MuiAppBar-root *), &&.MuiButton-outlined:not(.MuiAppBar-root *)': {
               minHeight: surfaceTokens.controlHeightMobile,
               paddingTop: 0,
               paddingBottom: 0,
