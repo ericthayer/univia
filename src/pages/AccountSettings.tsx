@@ -367,7 +367,7 @@ export default function AccountSettings() {
 
             {usagePercentage > 90 && profile.tier === 'basic' && (
               <Alert severity="warning" sx={{ mt: 2, borderRadius: 3 }}>
-                You've used {auditCount} of {auditLimit} audits this month. {USER_TIERS.pro.name} includes {USER_TIERS.pro.auditLimit} a month.
+                You've used {auditCount} of {auditLimit} audits this month. {USER_TIERS.pro.name} has no audit cap.
               </Alert>
             )}
           </BezelCard>

@@ -262,6 +262,7 @@ Baseline on `7de4110`, 2026-11-07.
 7. **Gemini tier.** Letters contain names and legal details. Confirm the key is paid, and read Google's data terms before anyone pays us.
 8. **Free letter allowance: closed.** Guests and Free accounts get 1 letter in total, enforced on the server. Decided by the owner on 2026-11-07. Before this, guests could save 5 and signed-in Free accounts had no limit.
 9. **Guest audit allowance: closed.** Guests get 1 audit a month, the same as Free. Decided by the owner on 2026-11-07. Guests have no profile, so the limit lives in `audit_limit_for()`.
+10. **Plan allowances raised.** Decided by the owner on 2026-11-25, superseding the plan parts of Decisions 8 and 9: guests (no account) get 1 audit and 1 letter per calendar week (UTC, Monday); Free gets unlimited audits and 5 letters a month; Monitor and Agency have no cap on either. A free account is what unlocks unlimited audits. `20261125120000_raise_plan_limits`; `plan-limits-behavior.sql` 39 of 39 pass.
 
 ## 10. Changelog
 
@@ -280,4 +281,5 @@ Baseline on `7de4110`, 2026-11-07.
 - 2026-11-07: Applied `20261108050610_enforce_plan_limits` to production after a confirmed backup, deployed `run-lighthouse-audit` v35 and `analyze-document` v58, and verified the limits with a guest. Phase 2's checklist is complete.
 - 2026-11-08: Phase 3 engine. Ran the fingerprint spike and set issue identity to page + rule. Wrote `20261108140000_monitor_sites_and_scans` and the `scan-worker` function, tested locally, not applied.
 - 2026-11-15: Engine merged (#43). Sites screens added at `/monitor`, tested with mocked data in light, dark and at 375px. The fix tracker and record are Phase 5.
+- 2026-11-25: Decision 10. Raised plan allowances (`20261125120000_raise_plan_limits`): guests 1 audit and 1 letter a week, signed-in plans no audit cap, Free 5 letters a month, Monitor no letter cap.
 - 2026-11-25: Phase 3 is live in production; first run of the test site completed. Fix tracker (Phase 5, part 1): mark fixed and undo, one-page re-check, filters and per-issue history on `/monitor`. Migration `20261125140000_monitor_fix_tracker` tested locally, not applied.

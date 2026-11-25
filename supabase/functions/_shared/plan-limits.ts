@@ -1,10 +1,11 @@
 /**
  * Reads the allowance answers returned by the plan-limit database functions
- * (claim_audit_run, letter_quota; see 20261108050610_enforce_plan_limits) and
+ * (claim_audit_run, letter_quota; see 20261108050610_enforce_plan_limits and
+ * 20261125120000_raise_plan_limits) and
  * words the message a caller sees when an allowance is used up.
  */
 
-export type QuotaPeriod = 'month' | 'total' | 'none';
+export type QuotaPeriod = 'week' | 'month' | 'total' | 'none';
 
 export interface QuotaResult {
   allowed: boolean;
@@ -20,7 +21,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isPeriod(value: unknown): value is QuotaPeriod {
-  return value === 'month' || value === 'total' || value === 'none';
+  return value === 'week' || value === 'month' || value === 'total' || value === 'none';
 }
 
 /** Returns null for anything that is not a well-formed quota answer, so callers fail closed. */
@@ -42,18 +43,31 @@ function plural(count: number, singular: string, pluralForm = `${singular}s`): s
   return `${count} ${count === 1 ? singular : pluralForm}`;
 }
 
-export function auditLimitMessage(quota: Pick<QuotaResult, 'limit'>): string {
-  return `You've used your ${plural(quota.limit, 'audit')} for this month. ` +
-    'Your allowance resets on the 1st (UTC).';
+const RESETS: Partial<Record<QuotaPeriod, string>> = {
+  week: 'Your allowance resets on Monday (UTC).',
+  month: 'Your allowance resets on the 1st (UTC).',
+};
+
+export function auditLimitMessage(quota: Pick<QuotaResult, 'limit' | 'period' | 'anonymous'>): string {
+  const span = quota.period === 'week' ? 'week' : 'month';
+  if (quota.anonymous) {
+    return `You've used your ${plural(quota.limit, 'audit')} for this ${span} without an account. ` +
+      'Create a free account for unlimited audits.';
+  }
+  return `You've used your ${plural(quota.limit, 'audit')} for this ${span}. ${RESETS[span]}`;
 }
 
 export function letterLimitMessage(quota: Pick<QuotaResult, 'limit' | 'period'>): string {
+  if (quota.period === 'week') {
+    return `You've used your ${plural(quota.limit, 'demand letter analysis', 'demand letter analyses')} for this week without an account. ` +
+      'Create a free account for 5 a month.';
+  }
   if (quota.period === 'month') {
     return `You've used your ${plural(quota.limit, 'demand letter analysis', 'demand letter analyses')} for this month. ` +
       'Your allowance resets on the 1st (UTC).';
   }
-  return `You've used the ${plural(quota.limit, 'demand letter analysis', 'demand letter analyses')} included without a paid plan. ` +
-    'Monitor includes 5 a month.';
+  return `You've used the ${plural(quota.limit, 'demand letter analysis', 'demand letter analyses')} available without an account. ` +
+    'Create a free account for 5 a month.';
 }
 
 export function isLetterLimitError(error: unknown): boolean {
