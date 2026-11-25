@@ -4,7 +4,8 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
-import { useSearchParams } from 'react-router-dom';
+import Typography from '@mui/material/Typography';
+import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { BezelCard } from '../components/ui/BezelCard/BezelCard';
 import { EmptyState } from '../components/ui/EmptyState/EmptyState';
 import { MetricTile } from '../components/ui/MetricTile/MetricTile';
@@ -16,6 +17,7 @@ import { IssueTable } from '../components/monitor/IssueTable/IssueTable';
 import { RunHistoryTable } from '../components/monitor/RunHistoryTable/RunHistoryTable';
 import { ScanStatusCard } from '../components/monitor/ScanStatusCard/ScanStatusCard';
 import { SitePagesCard } from '../components/monitor/SitePagesCard/SitePagesCard';
+import { ROUTE_PATHS } from '../config/navigation';
 import { useMonitorSite } from '../hooks/useMonitorSite';
 import { controlRadius } from '../theme/tokens';
 
@@ -160,6 +162,21 @@ export default function Monitor() {
         </BezelCard>
 
         <SitePagesCard site={site} detail={detail} onChanged={() => void refresh()} />
+
+        <BezelCard component="section" aria-labelledby="statement-card-title">
+          <SectionHeader id="statement-card-title" title="Accessibility statement" dense />
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, maxWidth: '64ch' }}>
+            Draft a public statement from these results, with your contact details and the issues you are working on. You review it and publish it on your own site.
+          </Typography>
+          <Button
+            component={RouterLink}
+            to={`${ROUTE_PATHS.MONITOR_STATEMENT}?site=${encodeURIComponent(site.id)}`}
+            variant="outlined"
+            sx={{ borderRadius: controlRadius, alignSelf: 'flex-start' }}
+          >
+            Draft statement
+          </Button>
+        </BezelCard>
 
         {detail.runs.length > 0 && (
           <BezelCard component="section" aria-labelledby="scan-history-title">

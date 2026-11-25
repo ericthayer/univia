@@ -13,6 +13,7 @@ const DemandLetters = lazy(() => import('./pages/DemandLetters'));
 const ComplianceChecklist = lazy(() => import('./pages/ComplianceChecklist'));
 const ActionsPlan = lazy(() => import('./pages/ActionPlanBuilder'));
 const Monitor = lazy(() => import('./pages/Monitor'));
+const MonitorStatement = lazy(() => import('./pages/MonitorStatement'));
 const Resources = lazy(() => import('./pages/Resources'));
 const HelpCenter = lazy(() => import('./pages/HelpCenter'));
 const AnalyzeReport = lazy(() => import('./pages/AnalyzeReport'));
@@ -117,6 +118,14 @@ function App() {
                       element={
                         <RegisteredRoute>
                           <Monitor />
+                        </RegisteredRoute>
+                      }
+                    />
+                    <Route
+                      path={ROUTE_PATHS.MONITOR_STATEMENT}
+                      element={
+                        <RegisteredRoute>
+                          <MonitorStatement />
                         </RegisteredRoute>
                       }
                     />
