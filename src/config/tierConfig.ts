@@ -11,12 +11,13 @@ export const USER_TIERS: Record<UserTier, TierFeatures> = {
   basic: {
     name: 'Free',
     price: '$0',
-    // Mirrors plan_audit_limit() in 20261108050610_enforce_plan_limits.
-    auditLimit: 1,
+    // Mirrors plan_audit_limit() and letter_quota() in
+    // 20261125120000_raise_plan_limits.
+    auditLimit: 'unlimited',
     features: [
-      '1 site audit per month',
+      'Unlimited site audits',
       'Accessibility score and top issues',
-      'Demand letter triage (1 letter)',
+      '5 demand letter analyses per month',
       'Self-serve help center'
     ],
     emailNotifications: true,
@@ -27,11 +28,11 @@ export const USER_TIERS: Record<UserTier, TierFeatures> = {
     name: 'Monitor',
     price: '$9',
     annualPrice: '$90',
-    auditLimit: 30,
+    auditLimit: 'unlimited',
     features: [
-      '30 site audits per month',
-      'PDF export',
-      '5 demand letter analyses per month'
+      'Unlimited site audits',
+      'Unlimited demand letter analyses',
+      'PDF export'
     ],
     plannedFeatures: [
       'Weekly scans of up to 25 pages',
