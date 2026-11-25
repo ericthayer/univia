@@ -57,7 +57,7 @@ export function ScanStatusCard({ site, latestRun, onChanged }: ScanStatusCardPro
   };
 
   return (
-    <BezelCard component="section" accent={status?.tone} aria-labelledby="scan-status-title">
+    <BezelCard component="section" aria-labelledby="scan-status-title">
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <Box sx={{ minWidth: 0, flex: '1 1 18rem' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 1 }}>
