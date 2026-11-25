@@ -116,7 +116,9 @@ $$;
 REVOKE ALL ON FUNCTION public.owned_issue_for_update(uuid) FROM PUBLIC, anon, authenticated;
 
 -- The owner says an open issue is fixed. The next scan of its page confirms
--- it (fix_confirmed) or reopens it (fix_not_confirmed).
+-- it (fix_confirmed) or reopens it (fix_not_confirmed). Not while a scan is
+-- queued or running: that scan may already hold results from before the fix,
+-- and finalizing it would judge the mark on them.
 CREATE OR REPLACE FUNCTION public.mark_issue_fixed(p_issue_id uuid, p_note text DEFAULT NULL)
 RETURNS void
 LANGUAGE plpgsql
@@ -124,14 +126,27 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_issue public.issues%ROWTYPE := public.owned_issue_for_update(p_issue_id);
+  v_issue public.issues%ROWTYPE;
   v_note text := nullif(btrim(coalesce(p_note, '')), '');
 BEGIN
+  -- Lock the site first, as create_scan_run does, so no run can start
+  -- between the check below and the mark.
+  PERFORM 1 FROM public.sites
+  WHERE id = (SELECT site_id FROM public.issues WHERE id = p_issue_id)
+  FOR UPDATE;
+
+  v_issue := public.owned_issue_for_update(p_issue_id);
   IF v_issue.state <> 'open' THEN
     RAISE EXCEPTION 'INVALID_STATE';
   END IF;
   IF char_length(v_note) > 1000 THEN
     RAISE EXCEPTION 'NOTE_TOO_LONG';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM public.scan_runs
+    WHERE site_id = v_issue.site_id AND status IN ('queued', 'running')
+  ) THEN
+    RAISE EXCEPTION 'SCAN_IN_PROGRESS';
   END IF;
 
   UPDATE public.issues SET state = 'marked_fixed' WHERE id = v_issue.id;

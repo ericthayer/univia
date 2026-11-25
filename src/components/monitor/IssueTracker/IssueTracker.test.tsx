@@ -137,9 +137,17 @@ describe('IssueTracker', () => {
     expect(screen.getByRole('button', { name: 'Undo fixed mark: Buttons need names on /cart' })).toBeEnabled();
   });
 
-  it('disables re-check while a scan is running', () => {
+  it('pauses marking and re-checks while a scan is running', () => {
     setup('marked_fixed', { ...DETAIL, runs: [{ ...RUN, status: 'running' }] });
     expect(screen.getByRole('button', { name: 'Re-check /cart now' })).toBeDisabled();
+    expect(screen.getByText(/A scan is running/)).toBeInTheDocument();
+  });
+
+  it('keeps focus in the tracker when the last row leaves the list', async () => {
+    service.undoMarkFixed.mockResolvedValue({ ok: true, value: null });
+    const { user } = setup('marked_fixed');
+    await user.click(screen.getByRole('button', { name: 'Undo fixed mark: Buttons need names on /cart' }));
+    expect(screen.getByRole('group', { name: 'Issue list' })).toHaveFocus();
   });
 
   it('shows an empty state for a filter with nothing in it', () => {

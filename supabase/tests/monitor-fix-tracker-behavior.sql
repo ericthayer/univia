@@ -5,7 +5,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap;
 
-SELECT plan(30);
+SELECT plan(31);
 
 
 CREATE EXTENSION IF NOT EXISTS pgtap;
@@ -169,6 +169,10 @@ SELECT is(
 SELECT throws_ok(
   $$ SELECT public.request_page_recheck(current_setting('test.about')::uuid) $$,
   'P0001', 'SCAN_IN_PROGRESS', 'not while another run is unfinished'
+);
+SELECT throws_ok(
+  $$ SELECT public.mark_issue_fixed(current_setting('test.label')::uuid, NULL) $$,
+  'P0001', 'SCAN_IN_PROGRESS', 'issues cannot be marked fixed while a scan may hold results from before the fix'
 );
 
 -- The scan still finds link-name but no longer finds image-alt.

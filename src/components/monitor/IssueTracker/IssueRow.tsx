@@ -17,8 +17,8 @@ export interface IssueRowProps {
   status: IssueStatus;
   history: readonly IssueEvent[];
   busy: boolean;
-  /** False while any scan of the site is queued or running. */
-  canRecheck: boolean;
+  /** False while any scan of the site is queued or running; marking and re-checks wait. */
+  scanIdle: boolean;
   onMarkFixed: (issueId: string, note: string) => void;
   onUndo: (issueId: string) => void;
   onRecheck: (pageId: string) => void;
@@ -36,7 +36,7 @@ const buttonSx = { minHeight: 44, whiteSpace: 'nowrap' } as const;
 type Panel = 'none' | 'history' | 'mark';
 
 /** One issue, its state actions, and a details row for history or marking fixed. */
-export function IssueRow({ issue, pageUrl, status, history, busy, canRecheck, onMarkFixed, onUndo, onRecheck }: IssueRowProps) {
+export function IssueRow({ issue, pageUrl, status, history, busy, scanIdle, onMarkFixed, onUndo, onRecheck }: IssueRowProps) {
   const [panel, setPanel] = useState<Panel>('none');
   const markRef = useRef<HTMLButtonElement>(null);
   const previous = useRef<Panel>('none');
@@ -87,7 +87,7 @@ export function IssueRow({ issue, pageUrl, status, history, busy, canRecheck, on
               <Button
                 ref={markRef}
                 onClick={() => setPanel(panel === 'mark' ? 'none' : 'mark')}
-                disabled={busy}
+                disabled={busy || !scanIdle}
                 aria-expanded={panel === 'mark'}
                 aria-controls={panelId}
                 aria-label={`Mark fixed: ${issue.title} on ${path}`}
@@ -100,7 +100,7 @@ export function IssueRow({ issue, pageUrl, status, history, busy, canRecheck, on
               <>
                 <Button
                   onClick={() => onRecheck(issue.page_id)}
-                  disabled={busy || !canRecheck}
+                  disabled={busy || !scanIdle}
                   aria-label={`Re-check ${path} now`}
                   sx={buttonSx}
                 >
