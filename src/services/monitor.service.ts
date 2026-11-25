@@ -6,7 +6,7 @@ import { supabase } from './supabaseClient';
  */
 
 export type ScanRunStatus = 'queued' | 'running' | 'completed' | 'failed';
-export type ScanTrigger = 'initial' | 'scheduled' | 'manual';
+export type ScanTrigger = 'initial' | 'scheduled' | 'manual' | 'recheck';
 export type PageResultStatus = 'pending' | 'running' | 'succeeded' | 'failed';
 export type IssueState = 'open' | 'marked_fixed' | 'resolved';
 export type IssueSeverity = 'critical' | 'serious' | 'moderate' | 'minor';
@@ -68,11 +68,33 @@ export interface MonitorIssue {
   last_seen_at: string;
 }
 
+export type IssueEventKind =
+  | 'detected'
+  | 'reopened'
+  | 'resolved'
+  | 'marked_fixed'
+  | 'unmarked_fixed'
+  | 'fix_confirmed'
+  | 'fix_not_confirmed';
+
+export interface IssueEvent {
+  id: number;
+  issue_id: string;
+  run_id: string | null;
+  kind: IssueEventKind;
+  note: string | null;
+  created_at: string;
+}
+
 export interface SiteDetail {
   pages: MonitorPage[];
   runs: ScanRun[];
+  /** The newest result for each active page, from any recent run. */
   latestResults: PageResult[];
+  /** Every issue on an active page, resolved ones included. */
   issues: MonitorIssue[];
+  /** Issue history for the site, oldest first. */
+  events: IssueEvent[];
 }
 
 export type MonitorResult<T> = { ok: true; value: T } | { ok: false; message: string };
@@ -88,6 +110,9 @@ const ERROR_MESSAGES: Record<string, string> = {
   SCAN_RATE_LIMIT: 'You can ask for one extra scan a day. Weekly scans still run on schedule.',
   NO_PAGES: 'Add at least one page before scanning.',
   NOT_FOUND: 'We could not find that in your account.',
+  INVALID_STATE: 'That issue changed since the page loaded. Refresh and try again.',
+  NOTE_TOO_LONG: 'Notes can be up to 1,000 characters.',
+  RECHECK_RATE_LIMIT: 'You can re-check pages 10 times a day per site. Weekly scans still run on schedule.',
 };
 
 export function monitorErrorMessage(error: { message?: string } | null | undefined): string {
@@ -114,7 +139,7 @@ export function listSites(): Promise<MonitorResult<MonitorSite[]>> {
 }
 
 export async function loadSiteDetail(siteId: string): Promise<MonitorResult<SiteDetail>> {
-  const [pages, runs, issues] = await Promise.all([
+  const [pages, runs, issues, events] = await Promise.all([
     supabase.from('site_pages').select('id, url, created_at').eq('site_id', siteId).is('removed_at', null).order('created_at'),
     supabase
       .from('scan_runs')
@@ -126,22 +151,31 @@ export async function loadSiteDetail(siteId: string): Promise<MonitorResult<Site
       .from('issues')
       .select('id, page_id, rule_id, title, severity, element_count, sample_items, state, first_seen_at, last_seen_at')
       .eq('site_id', siteId)
-      .in('state', ['open', 'marked_fixed'])
-      .order('first_seen_at', { ascending: false }),
+      .order('first_seen_at', { ascending: false })
+      .limit(1000),
+    supabase
+      .from('issue_events')
+      .select('id, issue_id, run_id, kind, note, created_at')
+      .eq('site_id', siteId)
+      .order('id', { ascending: true })
+      .limit(5000),
   ]);
 
-  const failed = [pages, runs, issues].find((result) => result.error);
+  const failed = [pages, runs, issues, events].find((result) => result.error);
   if (failed) return { ok: false, message: monitorErrorMessage(failed.error) };
 
   const runRows = (runs.data ?? []) as ScanRun[];
+  // A one-page re-check covers one page, so take each page's newest result
+  // across the recent runs rather than only the latest run's rows.
   let latestResults: PageResult[] = [];
-  if (runRows[0]) {
+  if (runRows.length) {
     const results = await supabase
       .from('scan_page_results')
-      .select('id, page_id, url, status, error_code, accessibility_score')
-      .eq('run_id', runRows[0].id);
+      .select('id, page_id, url, status, error_code, accessibility_score, created_at')
+      .in('run_id', runRows.map((run) => run.id))
+      .order('created_at', { ascending: false });
     if (results.error) return { ok: false, message: monitorErrorMessage(results.error) };
-    latestResults = (results.data ?? []) as PageResult[];
+    latestResults = newestPerPage((results.data ?? []) as (PageResult & { created_at: string })[]);
   }
 
   // Removed pages keep their issue history, but are no longer scanned, so
@@ -150,10 +184,19 @@ export async function loadSiteDetail(siteId: string): Promise<MonitorResult<Site
   const activePageIds = new Set(pageRows.map((page) => page.id));
   const issueRows = ((issues.data ?? []) as MonitorIssue[]).filter((issue) => activePageIds.has(issue.page_id));
 
+  const issueIds = new Set(issueRows.map((issue) => issue.id));
+  const eventRows = ((events.data ?? []) as IssueEvent[]).filter((event) => issueIds.has(event.issue_id));
+
   return {
     ok: true,
-    value: { pages: pageRows, runs: runRows, latestResults, issues: issueRows },
+    value: { pages: pageRows, runs: runRows, latestResults, issues: issueRows, events: eventRows },
   };
+}
+
+/** Keeps the first row seen for each page; rows arrive newest first. */
+export function newestPerPage<T extends { page_id: string }>(rows: readonly T[]): T[] {
+  const seen = new Set<string>();
+  return rows.filter((row) => (seen.has(row.page_id) ? false : (seen.add(row.page_id), true)));
 }
 
 export function createSite(name: string, origin: string, urls: string[]): Promise<MonitorResult<string>> {
@@ -174,6 +217,18 @@ export function setSitePaused(siteId: string, paused: boolean): Promise<MonitorR
 
 export function requestSiteScan(siteId: string): Promise<MonitorResult<string>> {
   return call(supabase.rpc('request_site_scan', { p_site_id: siteId }), (data) => String(data));
+}
+
+export function markIssueFixed(issueId: string, note: string): Promise<MonitorResult<null>> {
+  return call(supabase.rpc('mark_issue_fixed', { p_issue_id: issueId, p_note: note.trim() || null }), () => null);
+}
+
+export function undoMarkFixed(issueId: string): Promise<MonitorResult<null>> {
+  return call(supabase.rpc('undo_mark_fixed', { p_issue_id: issueId }), () => null);
+}
+
+export function requestPageRecheck(pageId: string): Promise<MonitorResult<string>> {
+  return call(supabase.rpc('request_page_recheck', { p_page_id: pageId }), (data) => String(data));
 }
 
 export function isRunActive(run: ScanRun | undefined): boolean {
