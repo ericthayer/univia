@@ -46,12 +46,10 @@ const Shell = styled(Box, {
     padding: theme.surfaces.shellInset,
     borderRadius: theme.surfaces.shellRadius,
     border: `1px solid ${palette.divider}`,
-    backgroundColor: 'rgba(0, 0, 0, 0.035)',
+    // Single surface: the shell is the card. No tinted tray around the content.
+    backgroundColor: palette.background.paper,
     // Only transform and border-color animate.
     transition: `transform ${slow}, border-color ${standard}`,
-    ...theme.applyStyles('dark', {
-      backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    }),
     ...(interactive && {
       '&:hover': {
         transform: 'translateY(-2px)',
@@ -77,7 +75,6 @@ interface CoreProps {
 const Core = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'corePadding',
 })<CoreProps>(({ theme, corePadding }) => {
-  const { palette } = theme.vars ?? theme;
   const paddingMap: Record<BezelPadding, string | number> = {
     none: 0,
     sm: theme.spacing(2),
@@ -92,16 +89,11 @@ const Core = styled(Box, {
     minWidth: 0,
     padding: paddingMap[corePadding],
     borderRadius: theme.surfaces.coreRadius,
-    backgroundColor: palette.background.paper,
-    // Crisp inset highlight only. No outer drop shadow: depth comes from the
-    // shell/core nesting and the hairline border.
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.9)',
+    // Flat content area: no second fill and no inset highlight, so cards read
+    // as one plate with a hairline border.
     [theme.breakpoints.down('sm')]: {
       padding: corePadding === 'md' ? theme.spacing(2) : paddingMap[corePadding],
     },
-    ...theme.applyStyles('dark', {
-      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
-    }),
   };
 });
 
@@ -119,9 +111,9 @@ const Accent = styled('span', {
 }));
 
 /**
- * Nested-bezel surface: an outer tray (shell) holding an inner plate (core)
- * with concentric radii. `sx` applies to the core; every other prop lands on
- * the shell so callers can pick the semantic element with `component`.
+ * Single-surface card: the shell draws the border and paper fill, the core
+ * lays out content. `sx` applies to the core; every other prop lands on the
+ * shell so callers can pick the semantic element with `component`.
  */
 export const BezelCard = forwardRef<HTMLDivElement, BezelCardProps>(function BezelCard(
   { children, accent, interactive = false, reveal: revealIndex, padding = 'md', sx, className, ...shellProps },

@@ -117,7 +117,12 @@ export default function DocumentUploadDrawer({ open, onClose }: DocumentUploadDr
         <Box
           sx={{
             flex: 1,
-            overflow: 'auto',
+            minWidth: 0,
+            overflowY: 'auto',
+            // Never scroll sideways, and keep scroll chaining (iOS rubber-band)
+            // inside the panel instead of the page behind it.
+            overflowX: 'hidden',
+            overscrollBehavior: 'contain',
             p: 3,
           }}
         >

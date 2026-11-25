@@ -2,6 +2,9 @@ import { createTheme } from '@mui/material/styles';
 import type { CSSProperties } from 'react';
 import { controlRadius, motionTokens, primitiveTokens, surfaceTokens } from './tokens';
 
+/** Below the `sm` breakpoint (600px). Kept literal so static overrides can use it. */
+const MOBILE_QUERY = '@media (max-width: 599.95px)';
+
 declare module '@mui/material/styles' {
   interface BreakpointOverrides {
     tiny: true;
@@ -218,7 +221,19 @@ const theme = createTheme({
             borderWidth: 2,
             pointerEvents: 'all',
             cursor: 'not-allowed',
-          }
+          },
+
+          // Phones: one button height and type size for every contained and
+          // outlined button regardless of `size` or per-instance minHeight.
+          // `&&` outranks instance `sx` so 44/48/54px variants collapse to one.
+          [MOBILE_QUERY]: {
+            '&&.MuiButton-contained, &&.MuiButton-outlined': {
+              minHeight: surfaceTokens.controlHeightMobile,
+              paddingTop: 0,
+              paddingBottom: 0,
+              fontSize: '1rem',
+            },
+          },
         },
         contained: {
           boxShadow: 'none',
