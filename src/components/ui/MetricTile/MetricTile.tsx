@@ -75,22 +75,38 @@ export function MetricTile({ label, value, support, icon, tone = 'neutral', stat
       {loading ? (
         <Skeleton variant="text" width="60%" sx={{ fontSize: 'clamp(2.75rem, 12cqw, 4.25rem)', transform: 'none' }} />
       ) : (
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1.5, mb: support ? 2 : 0 }}>
-          {/* Hero numeral: one step up from the `metric` variant, scaled to the tile width. */}
-          <Typography variant="metric" component="p" sx={{ fontSize: 'clamp(2.75rem, 12cqw, 4.25rem)' }}>
-            {value}
-          </Typography>
-          {status && (
+        // Hero numeral: one step up from the `metric` variant, scaled to the tile width.
+        <Typography variant="metric" component="p" sx={{ fontSize: 'clamp(2.75rem, 12cqw, 4.25rem)', mb: 2 }}>
+          {value}
+        </Typography>
+      )}
+      {(support || (status && !loading)) && (
+        // Footer row: caption left, status pill right; the pill wraps under the
+        // caption (left-aligned) when the tile is too narrow for both.
+        <Box
+          sx={{
+            mt: 'auto',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            columnGap: 2,
+            rowGap: 1,
+          }}
+        >
+          {support && (
+            // Grows and wraps its own text first; the row only breaks when the
+            // caption would drop below ~8rem.
+            <Typography variant="body2" color="text.secondary" sx={{ flex: '1 1 8rem', minWidth: 0 }}>
+              {support}
+            </Typography>
+          )}
+          {status && !loading && (
             <TonePill tone={tone} dot>
               {status}
             </TonePill>
           )}
         </Box>
-      )}
-      {support && (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 'auto' }}>
-          {support}
-        </Typography>
       )}
     </BezelCard>
   );
