@@ -3,7 +3,7 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import { BezelCard } from '../../ui/BezelCard/BezelCard';
 import { SectionHeader } from '../../ui/SectionHeader/SectionHeader';
-import type { MonitorSite, SiteDetail } from '../../../services/monitor.service';
+import type { MonitorSite, ScanRun, SiteDetail } from '../../../services/monitor.service';
 import {
   buildStatement,
   statementToHtmlDocument,
@@ -19,6 +19,11 @@ import { StatementPreview } from './StatementPreview';
 export interface StatementGeneratorProps {
   site: MonitorSite;
   detail: SiteDetail;
+  /**
+   * The latest completed full scan, loaded outside the capped run history.
+   * When omitted, it is looked up in `detail.runs`.
+   */
+  latestFullScan?: ScanRun | null;
   /** Injected for tests; defaults to today's local date. */
   today?: string;
 }
@@ -36,7 +41,7 @@ const slug = (value: string): string =>
  * Drafts an accessibility statement from the site's Monitor data. The owner
  * reviews it and publishes it on their own site; Univia does not host it.
  */
-export function StatementGenerator({ site, detail, today = localToday() }: StatementGeneratorProps) {
+export function StatementGenerator({ site, detail, latestFullScan, today = localToday() }: StatementGeneratorProps) {
   const [fields, setFields] = useState<StatementFields>({
     organization: site.name,
     contactEmail: '',
@@ -51,11 +56,13 @@ export function StatementGenerator({ site, detail, today = localToday() }: State
 
   const lastScan = useMemo(() => {
     // A one-page re-check is not a site-wide check, so coverage comes from the latest full scan.
-    const run = detail.runs.find((entry) => entry.status === 'completed' && entry.completed_at && entry.trigger !== 'recheck');
+    const run = latestFullScan !== undefined
+      ? latestFullScan
+      : detail.runs.find((entry) => entry.status === 'completed' && entry.completed_at && entry.trigger !== 'recheck');
     return run?.completed_at
       ? { completedAt: run.completed_at, pagesChecked: run.pages_succeeded, pagesTotal: run.pages_total }
       : null;
-  }, [detail.runs]);
+  }, [detail.runs, latestFullScan]);
   const limitations = useMemo(() => knownLimitations(detail.issues), [detail.issues]);
 
   const statement = useMemo(

@@ -15,7 +15,7 @@ export interface AlertPayload {
   site_id: string;
   site_name: string;
   origin: string;
-  trigger: 'initial' | 'scheduled' | 'manual';
+  trigger: 'initial' | 'scheduled' | 'manual' | 'recheck';
   completed_at: string | null;
   pages_total: number;
   pages_failed: number;
@@ -81,7 +81,10 @@ export function buildAlertEmail(payload: AlertPayload, links: AlertLinks): Alert
 
   const intro = payload.trigger === 'initial'
     ? `The first scan of ${payload.origin} finished. It checked ${plural(payload.pages_total, 'page', 'pages')} and found ${plural(payload.events.length, 'issue', 'issues')}.`
-    : `This week's scan of ${payload.origin} found ${parts.join(', ')}. ${plural(payload.open_issues, 'issue is', 'issues are')} open in total.`;
+    : payload.trigger === 'recheck'
+      // A re-check covers one page, so the site-wide open count is left out.
+      ? `A one-page re-check on ${payload.origin} found ${parts.join(', ')}.`
+      : `${payload.trigger === 'manual' ? 'The scan you started' : 'The weekly scan'} of ${payload.origin} found ${parts.join(', ')}. ${plural(payload.open_issues, 'issue is', 'issues are')} open in total.`;
   const failedNote = payload.pages_failed
     ? ` ${plural(payload.pages_failed, 'page', 'pages')} could not be scanned this time.`
     : '';
@@ -157,7 +160,7 @@ export function parseAlertPayload(value: unknown): AlertPayload | null {
     site_id: payload.site_id,
     site_name: payload.site_name,
     origin: payload.origin,
-    trigger: payload.trigger === 'initial' || payload.trigger === 'manual' ? payload.trigger : 'scheduled',
+    trigger: payload.trigger === 'initial' || payload.trigger === 'manual' || payload.trigger === 'recheck' ? payload.trigger : 'scheduled',
     completed_at: typeof payload.completed_at === 'string' ? payload.completed_at : null,
     pages_total: Number(payload.pages_total) || 0,
     pages_failed: Number(payload.pages_failed) || 0,

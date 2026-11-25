@@ -46,6 +46,18 @@ describe('StatementGenerator', () => {
     expect(within(preview).getByText(/on November 20, 2026, checked 2 pages\./)).toBeInTheDocument();
   });
 
+  it('uses the full scan it is given when re-checks fill the run history', () => {
+    const base = detail(true);
+    const full = base.runs[0];
+    const rechecks = Array.from({ length: 10 }, (_, index) => ({
+      ...full, id: `rc${index}`, trigger: 'recheck' as const, pages_total: 1, pages_succeeded: 1, completed_at: '2026-11-23T15:00:00Z',
+    }));
+    renderWithTheme(<StatementGenerator site={site} detail={{ ...base, runs: rechecks }} latestFullScan={full} today="2026-11-25" />);
+    const preview = screen.getByRole('article', { name: /accessibility statement for corner bakery/i });
+    expect(within(preview).getByText(/on November 20, 2026, checked 2 pages\./)).toBeInTheDocument();
+    expect(within(preview).getByText('Image elements do not have [alt] attributes (1 page)')).toBeInTheDocument();
+  });
+
   it('turns off known issues until a scan completes', () => {
     renderWithTheme(<StatementGenerator site={site} detail={detail(false)} today="2026-11-25" />);
     expect(screen.getByRole('checkbox', { name: /known issues appear after the first scan/i })).toBeDisabled();

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -9,6 +10,7 @@ import { PageHeader } from '../components/ui/PageHeader/PageHeader';
 import { StatementGenerator } from '../components/monitor/StatementGenerator/StatementGenerator';
 import { ROUTE_PATHS } from '../config/navigation';
 import { useMonitorSite } from '../hooks/useMonitorSite';
+import { loadLatestFullScan, type ScanRun } from '../services/monitor.service';
 import { controlRadius } from '../theme/tokens';
 
 const DESCRIPTION =
@@ -22,6 +24,20 @@ export default function MonitorStatement() {
   const [params] = useSearchParams();
   const siteId = params.get('site');
   const { state, refresh } = useMonitorSite(siteId);
+  const loadedSiteId = state.status === 'ready' ? state.site?.id : undefined;
+  // undefined while loading or if it fails; the generator then falls back to the run history.
+  const [fullScan, setFullScan] = useState<{ siteId: string; run: ScanRun | null } | null>(null);
+
+  useEffect(() => {
+    if (!loadedSiteId) return;
+    let active = true;
+    void loadLatestFullScan(loadedSiteId).then((result) => {
+      if (active && result.ok) setFullScan({ siteId: loadedSiteId, run: result.value });
+    });
+    return () => {
+      active = false;
+    };
+  }, [loadedSiteId]);
   const backTo = siteId ? `${ROUTE_PATHS.MONITOR}?site=${encodeURIComponent(siteId)}` : ROUTE_PATHS.MONITOR;
 
   const header = (
@@ -80,7 +96,14 @@ export default function MonitorStatement() {
       </BezelCard>
     );
   } else {
-    body = <StatementGenerator key={state.site.id} site={state.site} detail={state.detail} />;
+    body = (
+      <StatementGenerator
+        key={state.site.id}
+        site={state.site}
+        detail={state.detail}
+        latestFullScan={fullScan?.siteId === state.site.id ? fullScan.run : undefined}
+      />
+    );
   }
 
   return (

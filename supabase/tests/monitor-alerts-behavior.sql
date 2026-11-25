@@ -5,7 +5,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap;
 
-SELECT plan(36);
+SELECT plan(40);
 
 CREATE SCHEMA test_helpers;
 
@@ -117,8 +117,16 @@ SELECT is((SELECT status FROM public.email_outbox), 'pending', 'a retryable fail
 SELECT is((SELECT count(*) FROM public.claim_email_outbox(5)), 0::bigint, 'but not before its wait is over');
 SELECT test_helpers.act_as_system();
 UPDATE public.email_outbox SET not_before = now() - interval '1 second';
+-- Edits between attempts must not change the request sent under the same idempotency key.
+UPDATE auth.users SET email = 'changed@example.invalid' WHERE id = '00000000-0000-0000-0000-0000000000c3';
+UPDATE public.issues SET title = title || ' (edited)';
 SELECT test_helpers.act_as('service_role', NULL);
-SELECT is((SELECT count(*) FROM public.claim_email_outbox(5)), 1::bigint, 'after the wait it is claimed again');
+CREATE TEMP TABLE retried ON COMMIT DROP AS SELECT * FROM public.claim_email_outbox(5);
+SELECT is((SELECT count(*) FROM retried), 1::bigint, 'after the wait it is claimed again');
+SELECT ok(
+  (SELECT retried.to_email = claimed.to_email AND retried.payload = claimed.payload FROM retried, claimed),
+  'the retry sends exactly the first request, despite later edits'
+);
 SELECT public.complete_email_outbox((SELECT outbox_id FROM claimed), 're_123');
 SELECT is((SELECT status || ':' || attempts || ':' || provider_id FROM public.email_outbox), 'sent:2:re_123', 'sent on the second attempt, with the provider id');
 
@@ -193,6 +201,20 @@ SELECT test_helpers.new_run();
 DELETE FROM public.monitor_allowlist WHERE user_id = '00000000-0000-0000-0000-0000000000c3';
 SELECT test_helpers.work_queue('{"https://shop.example.com/": ["image-alt", "color-contrast", "link-name", "list", "bypass"], "https://shop.example.com/about": ["label"]}');
 SELECT is(test_helpers.outbox_count(), 4::bigint, 'an account that lost Monitor access gets no alert');
+
+-- Mail waiting when access is removed is skipped, not sent
+INSERT INTO public.monitor_allowlist (user_id) VALUES ('00000000-0000-0000-0000-0000000000c3');
+SELECT test_helpers.new_run();
+SELECT test_helpers.work_queue('{"https://shop.example.com/": ["image-alt", "color-contrast", "link-name", "list", "bypass", "heading-order"], "https://shop.example.com/about": ["label"]}');
+SELECT is(test_helpers.outbox_count(), 5::bigint, 'an owner with access gets an alert queued');
+DELETE FROM public.monitor_allowlist WHERE user_id = '00000000-0000-0000-0000-0000000000c3';
+SELECT test_helpers.act_as('service_role', NULL);
+SELECT is((SELECT count(*) FROM public.claim_email_outbox(5)), 0::bigint, 'waiting mail is not sent after access is removed');
+SELECT test_helpers.act_as_system();
+SELECT is(
+  (SELECT count(*) FROM public.email_outbox WHERE status = 'skipped' AND last_error = 'no_access'),
+  1::bigint, 'it is marked skipped for lost access'
+);
 
 -- Deleting the account removes its mail and settings
 DELETE FROM auth.users WHERE id = '00000000-0000-0000-0000-0000000000c3';

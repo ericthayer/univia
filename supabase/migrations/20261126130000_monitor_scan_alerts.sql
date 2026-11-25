@@ -95,6 +95,10 @@ CREATE TABLE IF NOT EXISTS public.email_outbox (
   sent_at timestamptz,
   provider_id text CHECK (provider_id IS NULL OR char_length(provider_id) <= 200),
   last_error text CHECK (last_error IS NULL OR char_length(last_error) <= 200),
+  -- Frozen on the first claim, so every retry sends the same request under
+  -- the same idempotency key even if the issues or the address change.
+  to_email text,
+  payload jsonb,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
@@ -150,7 +154,9 @@ CREATE TRIGGER scan_runs_queue_alert
 
 -- Claims up to p_limit emails and returns everything needed to send them.
 -- A row left `sending` for 5 minutes is treated as a crashed worker. Rows
--- whose owner turned alerts off, or has no email, are skipped here.
+-- whose owner turned alerts off, lost Monitor access, or has no email are
+-- skipped here, on every attempt. The recipient and payload are built on the
+-- first claim and reused unchanged by retries.
 CREATE OR REPLACE FUNCTION public.claim_email_outbox(p_limit integer DEFAULT 5)
 RETURNS TABLE (outbox_id uuid, to_email text, payload jsonb)
 LANGUAGE plpgsql
@@ -170,30 +176,39 @@ BEGIN
     LIMIT greatest(1, least(coalesce(p_limit, 5), 20))
     FOR UPDATE SKIP LOCKED
   LOOP
-    SELECT users.email INTO v_email FROM auth.users AS users WHERE users.id = v_row.user_id;
+    v_email := coalesce(v_row.to_email, (SELECT users.email FROM auth.users AS users WHERE users.id = v_row.user_id));
 
-    IF v_email IS NULL
+    IF v_row.attempts >= 3
+      OR v_email IS NULL
       OR EXISTS (SELECT 1 FROM public.notification_settings WHERE user_id = v_row.user_id AND NOT scan_alerts)
-      OR v_row.attempts >= 3
+      OR NOT public.monitor_enabled_for(v_row.user_id)
     THEN
       UPDATE public.email_outbox
       SET status = CASE WHEN v_row.attempts >= 3 THEN 'failed' ELSE 'skipped' END,
           last_error = coalesce(last_error, CASE
             WHEN v_row.attempts >= 3 THEN 'worker_crashed'
             WHEN v_email IS NULL THEN 'no_email'
+            WHEN NOT public.monitor_enabled_for(v_row.user_id) THEN 'no_access'
             ELSE 'alerts_off'
           END)
       WHERE id = v_row.id;
       CONTINUE;
     END IF;
 
+    IF v_row.payload IS NOT NULL THEN
+      UPDATE public.email_outbox
+      SET status = 'sending', attempts = attempts + 1, claimed_at = now()
+      WHERE id = v_row.id;
+      outbox_id := v_row.id;
+      to_email := v_row.to_email;
+      payload := v_row.payload;
+      RETURN NEXT;
+      CONTINUE;
+    END IF;
+
     INSERT INTO public.notification_settings (user_id) VALUES (v_row.user_id)
     ON CONFLICT (user_id) DO NOTHING;
     SELECT unsubscribe_token INTO v_token FROM public.notification_settings WHERE user_id = v_row.user_id;
-
-    UPDATE public.email_outbox
-    SET status = 'sending', attempts = attempts + 1, claimed_at = now()
-    WHERE id = v_row.id;
 
     outbox_id := v_row.id;
     to_email := v_email;
@@ -231,6 +246,11 @@ BEGIN
       JOIN public.sites AS sites ON sites.id = runs.site_id
       WHERE runs.id = v_row.run_id
     );
+
+    UPDATE public.email_outbox
+    SET status = 'sending', attempts = attempts + 1, claimed_at = now(),
+        to_email = v_email, payload = claim_email_outbox.payload
+    WHERE id = v_row.id;
     RETURN NEXT;
   END LOOP;
 END;
