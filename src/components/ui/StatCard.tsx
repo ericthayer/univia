@@ -2,14 +2,13 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { ReactNode } from 'react';
 import { BezelCard } from './BezelCard/BezelCard';
-import type { Tone } from './tone';
 
 interface StatCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
   icon?: ReactNode;
-  /** Palette path such as `success.main`; its family picks the accent tone. */
+  /** Palette path such as `success.main`, used for the icon. */
   color?: string;
   trend?: {
     value: number;
@@ -17,26 +16,14 @@ interface StatCardProps {
   };
 }
 
-const TONES: Record<string, Tone> = {
-  success: 'success',
-  warning: 'warning',
-  error: 'error',
-  info: 'info',
-};
-
-function toneFromColor(color?: string): Tone {
-  const family = color?.split('.')[0];
-  return (family && TONES[family]) || 'neutral';
-}
-
 /**
- * KPI card with an optional trend. Built on BezelCard: the tone accent is a
- * decorative line on the top edge, not a colored side border. Prefer
+ * KPI card with an optional trend. Built on BezelCard with no edge accent;
+ * the icon carries the tone color. Prefer
  * `MetricTile` for new work; this keeps the older prop shape working.
  */
 export default function StatCard({ title, value, subtitle, icon, color, trend }: StatCardProps) {
   return (
-    <BezelCard accent={toneFromColor(color)} sx={{ height: '100%', containerType: 'inline-size' }}>
+    <BezelCard sx={{ height: '100%', containerType: 'inline-size' }}>
       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, mb: 2 }}>
         <Typography variant="eyebrow" component="h2">
           {title}

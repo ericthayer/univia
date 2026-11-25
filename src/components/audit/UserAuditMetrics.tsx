@@ -8,7 +8,7 @@ import DocumentUploadDrawer from '../documents/DocumentUploadDrawer';
 import Icon from '../ui/Icon';
 import { MetricTile } from '../ui/MetricTile/MetricTile';
 import { PageHeader } from '../ui/PageHeader/PageHeader';
-import { scoreTone } from '../ui/ScoreBar/scoreTone';
+import { scoreStatus, scoreTone } from '../ui/ScoreBar/scoreTone';
 import { QuickAuditBar } from '../dashboard/QuickAuditBar/QuickAuditBar';
 import { LatestScoreCard } from '../dashboard/LatestScoreCard/LatestScoreCard';
 import { RecentAuditsList } from '../dashboard/RecentAuditsList/RecentAuditsList';
@@ -69,6 +69,7 @@ export default function UserAuditMetrics({ userId, limit = 50, enabled = true, o
       value: totalAudits,
       support: totalAudits > 0 ? 'Audits completed' : 'No audits yet',
       tone: 'neutral' as const,
+      status: undefined,
       icon: 'assessment',
     },
     {
@@ -76,6 +77,7 @@ export default function UserAuditMetrics({ userId, limit = 50, enabled = true, o
       value: `${averageScores.accessibility}%`,
       support: 'Across all audits',
       tone: hasAudits ? scoreTone(averageScores.accessibility) : ('neutral' as const),
+      status: hasAudits ? scoreStatus(averageScores.accessibility) : undefined,
       icon: 'accessibility_new',
     },
     {
@@ -83,6 +85,7 @@ export default function UserAuditMetrics({ userId, limit = 50, enabled = true, o
       value: `${averageScores.performance}%`,
       support: 'Website speed & efficiency',
       tone: hasAudits ? scoreTone(averageScores.performance) : ('neutral' as const),
+      status: hasAudits ? scoreStatus(averageScores.performance) : undefined,
       icon: 'speed',
     },
     {
@@ -90,6 +93,7 @@ export default function UserAuditMetrics({ userId, limit = 50, enabled = true, o
       value: `${averageScores.bestPractices}%`,
       support: 'Code quality & standards',
       tone: hasAudits ? scoreTone(averageScores.bestPractices) : ('neutral' as const),
+      status: hasAudits ? scoreStatus(averageScores.bestPractices) : undefined,
       icon: 'verified_user',
     },
   ];
@@ -136,6 +140,7 @@ export default function UserAuditMetrics({ userId, limit = 50, enabled = true, o
               value={loading ? '' : tile.value}
               support={tile.support}
               tone={tile.tone}
+              status={tile.status}
               icon={<Icon name={tile.icon} />}
               loading={loading}
               reveal={index + 1}

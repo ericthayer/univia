@@ -4,7 +4,8 @@ import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { BezelCard } from '../BezelCard/BezelCard';
-import { Tone, toneColor } from '../tone';
+import { Tone, toneColor, toneTextColor } from '../tone';
+import { TonePill } from '../TonePill/TonePill';
 
 export interface MetricTileProps {
   label: string;
@@ -12,6 +13,11 @@ export interface MetricTileProps {
   support?: string;
   icon?: ReactNode;
   tone?: Tone;
+  /**
+   * Short state label (e.g. "Good", "Needs work") shown as a tonal pill beside
+   * the value. Pair with `tone` so state is not conveyed by color alone.
+   */
+  status?: string;
   loading?: boolean;
   /** Stagger index for the mount reveal. */
   reveal?: number;
@@ -19,15 +25,17 @@ export interface MetricTileProps {
 
 /**
  * KPI tile: eyebrow label, tabular numeral, support line, and an optional icon
- * seated in a nested circle. Built on BezelCard; tone drives the accent line
- * and icon color only.
+ * in a tone-tinted circle. Built on BezelCard with no edge accent: state reads
+ * from the tinted icon badge plus an optional `status` pill with a text label.
  */
-export function MetricTile({ label, value, support, icon, tone = 'neutral', loading = false, reveal }: MetricTileProps) {
+export function MetricTile({ label, value, support, icon, tone = 'neutral', status, loading = false, reveal }: MetricTileProps) {
   const theme = useTheme();
-  const color = toneColor(theme, tone);
+  const neutral = tone === 'neutral';
+  const color = neutral ? toneColor(theme, tone) : toneTextColor(theme, tone);
+  const tint = toneColor(theme, tone);
 
   return (
-    <BezelCard accent={tone} reveal={reveal} sx={{ containerType: 'inline-size', height: '100%' }}>
+    <BezelCard reveal={reveal} sx={{ containerType: 'inline-size', height: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, mb: 2 }}>
         <Typography variant="eyebrow" component="p">
           {label}
@@ -43,12 +51,21 @@ export function MetricTile({ label, value, support, icon, tone = 'neutral', load
               placeItems: 'center',
               flexShrink: 0,
               color,
-              bgcolor: 'action.hover',
-              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.5)',
               fontSize: '1.125rem',
-              ...theme.applyStyles('dark', {
-                boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08)',
-              }),
+              ...(neutral
+                ? {
+                    bgcolor: 'action.hover',
+                    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.5)',
+                    ...theme.applyStyles('dark', {
+                      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+                    }),
+                  }
+                : {
+                    // Tone badge: same tint recipe as TonePill.
+                    bgcolor: `color-mix(in srgb, ${tint} 14%, transparent)`,
+                    border: '1px solid',
+                    borderColor: `color-mix(in srgb, ${tint} 30%, transparent)`,
+                  }),
             }}
           >
             {icon}
@@ -58,9 +75,25 @@ export function MetricTile({ label, value, support, icon, tone = 'neutral', load
       {loading ? (
         <Skeleton variant="text" width="60%" sx={{ fontSize: '2.75rem', transform: 'none' }} />
       ) : (
-        <Typography variant="metric" component="p" sx={{ mb: support ? 1 : 0 }}>
-          {value}
-        </Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            columnGap: 1.5,
+            rowGap: 1,
+            mb: support ? 1 : 0,
+          }}
+        >
+          <Typography variant="metric" component="p">
+            {value}
+          </Typography>
+          {status && (
+            <TonePill tone={tone} dot>
+              {status}
+            </TonePill>
+          )}
+        </Box>
       )}
       {support && (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 'auto' }}>
