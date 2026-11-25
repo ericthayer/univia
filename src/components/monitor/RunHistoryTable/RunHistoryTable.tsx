@@ -13,6 +13,7 @@ const TRIGGER_LABEL: Record<ScanTrigger, string> = {
   initial: 'First scan',
   scheduled: 'Weekly',
   manual: 'On request',
+  recheck: 'Page re-check',
 };
 const STATUS: Record<ScanRunStatus, { label: string; tone: Tone }> = {
   queued: { label: 'Queued', tone: 'info' },

@@ -39,7 +39,7 @@ export function SectionHeader({ title, meta, action, component = 'h2', id, dense
           </Typography>
         )}
       </Box>
-      {action && <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>{action}</Box>}
+      {action && <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, maxWidth: '100%' }}>{action}</Box>}
     </Box>
   );
 }

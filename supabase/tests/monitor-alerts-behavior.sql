@@ -1,4 +1,4 @@
--- Behavioral test for Monitor scan alerts (20261125140000_monitor_scan_alerts).
+-- Behavioral test for Monitor scan alerts (20261126130000_monitor_scan_alerts).
 -- Run on a disposable Supabase database built from every migration, as a superuser.
 -- Everything rolls back. Do not run against production.
 BEGIN;

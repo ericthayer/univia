@@ -6,6 +6,7 @@ import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
+import { ROUTE_PATHS } from '../config/navigation';
 import { BezelCard } from '../components/ui/BezelCard/BezelCard';
 import { EmptyState } from '../components/ui/EmptyState/EmptyState';
 import { MetricTile } from '../components/ui/MetricTile/MetricTile';
@@ -13,11 +14,11 @@ import { PageCanvas } from '../components/ui/PageCanvas/PageCanvas';
 import { PageHeader } from '../components/ui/PageHeader/PageHeader';
 import { SectionHeader } from '../components/ui/SectionHeader/SectionHeader';
 import { AddSiteForm } from '../components/monitor/AddSiteForm/AddSiteForm';
-import { IssueTable } from '../components/monitor/IssueTable/IssueTable';
+import { IssueTracker } from '../components/monitor/IssueTracker/IssueTracker';
+import { parseIssueFilter, type IssueFilter } from '../components/monitor/IssueTracker/issueStatus';
 import { RunHistoryTable } from '../components/monitor/RunHistoryTable/RunHistoryTable';
 import { ScanStatusCard } from '../components/monitor/ScanStatusCard/ScanStatusCard';
 import { SitePagesCard } from '../components/monitor/SitePagesCard/SitePagesCard';
-import { ROUTE_PATHS } from '../config/navigation';
 import { useMonitorSite } from '../hooks/useMonitorSite';
 import { controlRadius } from '../theme/tokens';
 
@@ -25,7 +26,7 @@ const DESCRIPTION =
   'Weekly automated accessibility checks of the pages you choose. Automated checks find some issues, not all of them, and are not a legal or compliance determination.';
 
 /**
- * Monitor: the caller's site, its latest scan, open issues, pages and scan
+ * Monitor: the caller's site, its latest scan, the fix tracker, pages and scan
  * history. Access is decided server-side (my_monitor_access).
  */
 export default function Monitor() {
@@ -38,6 +39,17 @@ export default function Monitor() {
       next.set('site', siteId);
       return next;
     }),
+    [setParams],
+  );
+
+  const issueFilter = parseIssueFilter(params.get('issues'));
+  const selectIssueFilter = useCallback(
+    (filter: IssueFilter) => setParams((current) => {
+      const next = new URLSearchParams(current);
+      if (filter === 'open') next.delete('issues');
+      else next.set('issues', filter);
+      return next;
+    }, { replace: true }),
     [setParams],
   );
 
@@ -131,7 +143,19 @@ export default function Monitor() {
 
   return (
     <PageCanvas maxWidth="xl">
-      {header(siteSelect || undefined)}
+      {header(
+        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
+          {siteSelect}
+          <Button
+            component={RouterLink}
+            to={`${ROUTE_PATHS.MONITOR_RECORD}?site=${site.id}`}
+            variant="outlined"
+            sx={{ borderRadius: controlRadius, minHeight: 44 }}
+          >
+            Remediation Record
+          </Button>
+        </Box>,
+      )}
       <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: 'minmax(0, 1fr)' }}>
         <ScanStatusCard site={site} latestRun={detail.runs[0]} onChanged={() => void refresh()} />
 
@@ -147,19 +171,7 @@ export default function Monitor() {
           />
         </Box>
 
-        <BezelCard component="section" aria-labelledby="open-issues-title">
-          <SectionHeader id="open-issues-title" title="Open issues" meta={openIssues.length} dense />
-          {openIssues.length ? (
-            <IssueTable issues={openIssues} pages={detail.pages} />
-          ) : (
-            <EmptyState
-              icon="task_alt"
-              title={detail.runs.some((run) => run.status === 'completed') ? 'No open issues found' : 'Waiting for the first scan'}
-              description="Automated checks cannot catch everything, so keep testing with a keyboard and a screen reader."
-              compact
-            />
-          )}
-        </BezelCard>
+        <IssueTracker detail={detail} filter={issueFilter} onFilterChange={selectIssueFilter} onChanged={() => void refresh()} />
 
         <SitePagesCard site={site} detail={detail} onChanged={() => void refresh()} />
 

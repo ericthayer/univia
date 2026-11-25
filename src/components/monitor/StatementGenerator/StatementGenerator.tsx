@@ -50,7 +50,8 @@ export function StatementGenerator({ site, detail, today = localToday() }: State
   const formRef = useRef<StatementFormHandle>(null);
 
   const lastScan = useMemo(() => {
-    const run = detail.runs.find((entry) => entry.status === 'completed' && entry.completed_at);
+    // A one-page re-check is not a site-wide check, so coverage comes from the latest full scan.
+    const run = detail.runs.find((entry) => entry.status === 'completed' && entry.completed_at && entry.trigger !== 'recheck');
     return run?.completed_at
       ? { completedAt: run.completed_at, pagesChecked: run.pages_succeeded, pagesTotal: run.pages_total }
       : null;

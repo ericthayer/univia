@@ -19,6 +19,7 @@ const detail = (completed: boolean): SiteDetail => ({
       }]
     : [],
   latestResults: [],
+  events: [],
   issues: [{
     id: 'i1', page_id: 'p2', rule_id: 'image-alt', title: 'Image elements do not have [alt] attributes', severity: 'critical',
     element_count: 2, sample_items: [], state: 'open', first_seen_at: '2026-11-20T15:00:00Z', last_seen_at: '2026-11-20T15:00:00Z',
@@ -35,6 +36,14 @@ describe('StatementGenerator', () => {
     expect(within(preview).getByText(/checked 2 pages\. These are the issues/)).toBeInTheDocument();
     expect(within(preview).getByText('Image elements do not have [alt] attributes (1 page)')).toBeInTheDocument();
     expect(within(preview).getByText(/last reviewed on November 25, 2026/)).toBeInTheDocument();
+  });
+
+  it('takes coverage from the latest full scan, not a one-page re-check', () => {
+    const base = detail(true);
+    const recheck = { ...base.runs[0], id: 'r2', trigger: 'recheck' as const, pages_total: 1, pages_succeeded: 1, completed_at: '2026-11-22T15:00:00Z' };
+    renderWithTheme(<StatementGenerator site={site} detail={{ ...base, runs: [recheck, ...base.runs] }} today="2026-11-25" />);
+    const preview = screen.getByRole('article', { name: /accessibility statement for corner bakery/i });
+    expect(within(preview).getByText(/on November 20, 2026, checked 2 pages\./)).toBeInTheDocument();
   });
 
   it('turns off known issues until a scan completes', () => {

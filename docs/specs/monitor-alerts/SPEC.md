@@ -55,7 +55,7 @@ Subject: `{site}: 2 new issues, 1 issue back again` (weekly) or `First scan of {
 
 ## Production steps
 
-1. Backup, then apply `20261125140000_monitor_scan_alerts.sql` in the SQL editor.
+1. Backup, then apply `20261126130000_monitor_scan_alerts.sql` in the SQL editor.
 2. Deploy `send-alerts` and `email-unsubscribe` (verify_jwt off for both).
 3. Resend domain verified and `RESEND_API_KEY` set as an Edge Function secret.
 4. Watch one alert end to end on the owner's test site.

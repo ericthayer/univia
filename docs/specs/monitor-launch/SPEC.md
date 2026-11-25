@@ -122,7 +122,7 @@ Split into two PRs: the engine (database, queue, worker, schedule) and then the 
 - [x] Worker: `scan-worker` claims 2 pages at a time with `FOR UPDATE SKIP LOCKED`, runs PageSpeed (mobile, accessibility only) and stops claiming after 40 seconds. Provider failures retry up to 3 attempts, waiting 5 then 15 minutes; a page left running for 4 minutes counts as a crashed worker. Calls need the shared secret header.
 - [x] Record per-page failures. A run with some failed pages still completes and reports them; a run where every page failed is `failed`. Issues on a page that failed keep their state.
 - [x] Issue diffing on run completion: detected, resolved, reopened, and for issues the owner marked fixed (Phase 5), fix confirmed or not confirmed. Every change is a row in append-only `issue_events`. `monitor-scans-behavior.sql`: 67 of 67 pass, and the other suites still pass.
-- [ ] Apply to production, set the worker's secrets, deploy `scan-worker`, allow-list the owner, and watch one full run.
+- [x] Apply to production, set the worker's secrets, deploy `scan-worker`, allow-list the owner, and watch one full run.
 - [x] Sites screens at `/monitor` (signed-in, not in the main navigation yet): add a site and pages, latest scan with Scan now and pause, open issues, pages with two-step remove, and run history. The page polls every 15 seconds while a scan is queued or running. Accounts without Monitor access see an early-access message.
 
 **Done when:** a site scans every week with no user action, and one failing page does not fail the run.
@@ -137,10 +137,10 @@ Split into two PRs: the engine (database, queue, worker, schedule) and then the 
 
 ### Phase 5: Fix tracker and record
 
-- [ ] Issue list per site: open, marked fixed, confirmed fixed, reopened if it returns.
-- [ ] Re-scan one page on demand to confirm a fix.
-- [ ] Append-only `issue_events`, the source for the record.
-- [ ] Record PDF, reusing the existing PDF export: dates, pages scanned, issues found, fixes confirmed, and a plain statement of what automated scans do not cover. No compliance language.
+- [x] Issue list per site: open, marked fixed, confirmed fixed, reopened if it returns. Filters live in the `?issues=` URL parameter. "Reopened" and "Fix confirmed" come from each issue's history, not new states. Owners can mark an issue fixed with an optional note (1,000 characters) and undo it; each issue shows its history.
+- [x] Re-scan one page on demand to confirm a fix: `request_page_recheck` queues a one-page `recheck` run, at most 10 a day per site and never while another scan is queued or running. A re-check does not move the weekly schedule. `monitor-fix-tracker-behavior.sql`: 30 of 30 pass.
+- [x] Append-only `issue_events`, the source for the record. Adds `unmarked_fixed` for undo.
+- [x] Record PDF, reusing the existing PDF export: dates, pages scanned, issues found, fixes confirmed, and a plain statement of what automated scans do not cover. No compliance language. Built as the "Accessibility Remediation Record" at `/monitor/record`: whole-day periods up to a year, 20 records a day per site. Each record saves a SHA-256 fingerprint of every finished run and issue event up to the period end; `/verify/record/:id` (public) recomputes it and says whether the history has changed. `monitor-remediation-record-behavior.sql`: 27 of 27 pass.
 - [ ] Have an attorney review the name and wording (Decision 6).
 
 **Done when:** an issue can go from found to confirmed fixed, and the PDF shows that history accurately.
@@ -282,3 +282,5 @@ Baseline on `7de4110`, 2026-11-07.
 - 2026-11-08: Phase 3 engine. Ran the fingerprint spike and set issue identity to page + rule. Wrote `20261108140000_monitor_sites_and_scans` and the `scan-worker` function, tested locally, not applied.
 - 2026-11-15: Engine merged (#43). Sites screens added at `/monitor`, tested with mocked data in light, dark and at 375px. The fix tracker and record are Phase 5.
 - 2026-11-25: Decision 10. Raised plan allowances (`20261125120000_raise_plan_limits`): guests 1 audit and 1 letter a week, signed-in plans no audit cap, Free 5 letters a month, Monitor no letter cap.
+- 2026-11-25: Phase 3 is live in production; first run of the test site completed. Fix tracker (Phase 5, part 1): mark fixed and undo, one-page re-check, filters and per-issue history on `/monitor`. Migration `20261125140000_monitor_fix_tracker` tested locally, not applied.
+- 2026-11-25: Remediation Record (Phase 5, part 2): `20261126120000_monitor_remediation_record`, `/monitor/record`, public `/verify/record/:id`. Tested locally, not applied. Name still waits on the attorney review.
