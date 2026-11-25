@@ -101,6 +101,7 @@ export const ROUTE_PATHS = {
   LETTERS: '/letters',
   CHECKLIST: '/checklist',
   ACTION_PLAN: '/action-plan',
+  MONITOR: '/monitor',
   RESOURCES: '/resources',
   HELP: '/help',
   ANALYZE_REPORT: '/analyze-report',
