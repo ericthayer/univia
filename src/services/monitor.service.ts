@@ -6,7 +6,7 @@ import { supabase } from './supabaseClient';
  */
 
 export type ScanRunStatus = 'queued' | 'running' | 'completed' | 'failed';
-export type ScanTrigger = 'initial' | 'scheduled' | 'manual';
+export type ScanTrigger = 'initial' | 'scheduled' | 'manual' | 'recheck';
 export type PageResultStatus = 'pending' | 'running' | 'succeeded' | 'failed';
 export type IssueState = 'open' | 'marked_fixed' | 'resolved';
 export type IssueSeverity = 'critical' | 'serious' | 'moderate' | 'minor';
@@ -68,11 +68,33 @@ export interface MonitorIssue {
   last_seen_at: string;
 }
 
+export type IssueEventKind =
+  | 'detected'
+  | 'reopened'
+  | 'resolved'
+  | 'marked_fixed'
+  | 'unmarked_fixed'
+  | 'fix_confirmed'
+  | 'fix_not_confirmed';
+
+export interface IssueEvent {
+  id: number;
+  issue_id: string;
+  run_id: string | null;
+  kind: IssueEventKind;
+  note: string | null;
+  created_at: string;
+}
+
 export interface SiteDetail {
   pages: MonitorPage[];
   runs: ScanRun[];
+  /** The newest result for each active page, from any recent run. */
   latestResults: PageResult[];
+  /** Every issue on an active page, resolved ones included. */
   issues: MonitorIssue[];
+  /** Issue history for the site, oldest first. */
+  events: IssueEvent[];
 }
 
 export type MonitorResult<T> = { ok: true; value: T } | { ok: false; message: string };
@@ -88,6 +110,9 @@ const ERROR_MESSAGES: Record<string, string> = {
   SCAN_RATE_LIMIT: 'You can ask for one extra scan a day. Weekly scans still run on schedule.',
   NO_PAGES: 'Add at least one page before scanning.',
   NOT_FOUND: 'We could not find that in your account.',
+  INVALID_STATE: 'That issue changed since the page loaded. Refresh and try again.',
+  NOTE_TOO_LONG: 'Notes can be up to 1,000 characters.',
+  RECHECK_RATE_LIMIT: 'You can re-check pages 10 times a day per site. Weekly scans still run on schedule.',
 };
 
 export function monitorErrorMessage(error: { message?: string } | null | undefined): string {
@@ -113,46 +138,81 @@ export function listSites(): Promise<MonitorResult<MonitorSite[]>> {
   );
 }
 
+type Page<T> = PromiseLike<{ data: T[] | null; error: { message?: string } | null }>;
+const PAGE_SIZE = 1000;
+
+/**
+ * Reads every row of an ordered query, PAGE_SIZE at a time, so long histories
+ * are never cut off by the API's row cap.
+ */
+export async function fetchAllRows<T>(page: (from: number, to: number) => Page<T>): Promise<{ data: T[]; error: { message?: string } | null }> {
+  const rows: T[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await page(from, from + PAGE_SIZE - 1);
+    if (error) return { data: rows, error };
+    rows.push(...(data ?? []));
+    if (!data || data.length < PAGE_SIZE) return { data: rows, error: null };
+  }
+}
+
 export async function loadSiteDetail(siteId: string): Promise<MonitorResult<SiteDetail>> {
-  const [pages, runs, issues] = await Promise.all([
-    supabase.from('site_pages').select('id, url, created_at').eq('site_id', siteId).is('removed_at', null).order('created_at'),
+  const pages = await supabase.from('site_pages').select('id, url, created_at').eq('site_id', siteId).is('removed_at', null).order('created_at');
+  if (pages.error) return { ok: false, message: monitorErrorMessage(pages.error) };
+  // Removed pages keep their issue history, but are no longer scanned, so
+  // their issues and results are not current. finalize_scan_run counts the same way.
+  const pageRows = (pages.data ?? []) as MonitorPage[];
+  const activePageIds = pageRows.map((page) => page.id);
+
+  const [runs, issues, events, ...results] = await Promise.all([
     supabase
       .from('scan_runs')
       .select('id, trigger, status, pages_total, pages_succeeded, pages_failed, new_issues, resolved_issues, open_issues, created_at, started_at, completed_at')
       .eq('site_id', siteId)
       .order('created_at', { ascending: false })
       .limit(10),
-    supabase
-      .from('issues')
-      .select('id, page_id, rule_id, title, severity, element_count, sample_items, state, first_seen_at, last_seen_at')
-      .eq('site_id', siteId)
-      .in('state', ['open', 'marked_fixed'])
-      .order('first_seen_at', { ascending: false }),
+    activePageIds.length
+      ? fetchAllRows<MonitorIssue>((from, to) =>
+          supabase
+            .from('issues')
+            .select('id, page_id, rule_id, title, severity, element_count, sample_items, state, first_seen_at, last_seen_at')
+            .eq('site_id', siteId)
+            .in('page_id', activePageIds)
+            .order('first_seen_at', { ascending: false })
+            .order('id')
+            .range(from, to) as unknown as Page<MonitorIssue>,
+        )
+      : Promise.resolve({ data: [] as MonitorIssue[], error: null }),
+    fetchAllRows<IssueEvent>((from, to) =>
+      supabase
+        .from('issue_events')
+        .select('id, issue_id, run_id, kind, note, created_at')
+        .eq('site_id', siteId)
+        .order('id', { ascending: true })
+        .range(from, to) as unknown as Page<IssueEvent>,
+    ),
+    // A one-page re-check covers one page, so read each active page's newest
+    // result directly rather than only the latest runs' rows.
+    ...activePageIds.map((pageId) =>
+      supabase
+        .from('scan_page_results')
+        .select('id, page_id, url, status, error_code, accessibility_score, created_at')
+        .eq('page_id', pageId)
+        .order('created_at', { ascending: false })
+        .limit(1),
+    ),
   ]);
 
-  const failed = [pages, runs, issues].find((result) => result.error);
+  const failed = [runs, issues, events, ...results].find((result) => result.error);
   if (failed) return { ok: false, message: monitorErrorMessage(failed.error) };
 
-  const runRows = (runs.data ?? []) as ScanRun[];
-  let latestResults: PageResult[] = [];
-  if (runRows[0]) {
-    const results = await supabase
-      .from('scan_page_results')
-      .select('id, page_id, url, status, error_code, accessibility_score')
-      .eq('run_id', runRows[0].id);
-    if (results.error) return { ok: false, message: monitorErrorMessage(results.error) };
-    latestResults = (results.data ?? []) as PageResult[];
-  }
-
-  // Removed pages keep their issue history, but are no longer scanned, so
-  // their issues are not current. finalize_scan_run counts the same way.
-  const pageRows = (pages.data ?? []) as MonitorPage[];
-  const activePageIds = new Set(pageRows.map((page) => page.id));
-  const issueRows = ((issues.data ?? []) as MonitorIssue[]).filter((issue) => activePageIds.has(issue.page_id));
+  const latestResults = results.flatMap((result) => (result.data ?? []) as PageResult[]);
+  const issueRows = issues.data;
+  const issueIds = new Set(issueRows.map((issue) => issue.id));
+  const eventRows = events.data.filter((event) => issueIds.has(event.issue_id));
 
   return {
     ok: true,
-    value: { pages: pageRows, runs: runRows, latestResults, issues: issueRows },
+    value: { pages: pageRows, runs: (runs.data ?? []) as ScanRun[], latestResults, issues: issueRows, events: eventRows },
   };
 }
 
@@ -174,6 +234,18 @@ export function setSitePaused(siteId: string, paused: boolean): Promise<MonitorR
 
 export function requestSiteScan(siteId: string): Promise<MonitorResult<string>> {
   return call(supabase.rpc('request_site_scan', { p_site_id: siteId }), (data) => String(data));
+}
+
+export function markIssueFixed(issueId: string, note: string): Promise<MonitorResult<null>> {
+  return call(supabase.rpc('mark_issue_fixed', { p_issue_id: issueId, p_note: note.trim() || null }), () => null);
+}
+
+export function undoMarkFixed(issueId: string): Promise<MonitorResult<null>> {
+  return call(supabase.rpc('undo_mark_fixed', { p_issue_id: issueId }), () => null);
+}
+
+export function requestPageRecheck(pageId: string): Promise<MonitorResult<string>> {
+  return call(supabase.rpc('request_page_recheck', { p_page_id: pageId }), (data) => String(data));
 }
 
 export function isRunActive(run: ScanRun | undefined): boolean {
