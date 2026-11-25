@@ -4,10 +4,12 @@
  */
 export const srOnly = {
   position: 'absolute',
-  width: 1,
-  height: 1,
+  // Explicit px strings: in MUI `sx`, width/height of 1 mean 100% and a bare
+  // margin number is a spacing multiple, which made "hidden" nodes full width.
+  width: '1px',
+  height: '1px',
   padding: 0,
-  margin: -1,
+  margin: '-1px',
   overflow: 'hidden',
   clip: 'rect(0 0 0 0)',
   whiteSpace: 'nowrap',

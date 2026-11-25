@@ -142,7 +142,7 @@ export function AdminAccessCard({
                 </Box>
                 {!isSelf && (
                   <Button
-                    variant="text"
+                    variant="contained"
                     color="error"
                     disabled={busy}
                     onClick={() => setPendingRevoke(admin)}

@@ -22,16 +22,17 @@ No new dependencies. No changes to navigation, footer, routing, or data access.
 
 ## 3. Design language
 
-### 3.1 Surfaces: the nested bezel
+### 3.1 Surfaces: single card
 
-Every primary card is two layers so it reads like a glass plate seated in a tray.
+Every primary card is one surface: light = `#FFFFFF` fill + `1px solid #D4D4D4` (`cardTokens.light`, since paper #F5F5F5 is too close to the #FCFCFC page), dark = `background.paper` + `1px solid divider`; 20px radius, content padding 24px (16px below `sm`). No inset tray and no inset highlight. (Superseded the two-layer "nested bezel" on 2026-11-25; the `BezelCard` name and API stay so call sites don't change.)
 
-| Layer | Light | Dark | Radius | Notes |
-|---|---|---|---|---|
-| Shell (outer) | `rgba(0,0,0,0.035)` fill, `1px solid divider` | `rgba(255,255,255,0.04)` fill, `1px solid divider` | 20px | 6px inset padding |
-| Core (inner) | `background.paper` + `inset 0 1px 0 rgba(255,255,255,0.9)` (no outer shadow) | `background.paper` + `inset 0 1px 0 rgba(255,255,255,0.06)` | 14px (= 20 − 6, concentric) | content padding 24px (16px below `sm`) |
+| Token | Value | Use |
+|---|---|---|
+| `shellRadius` | 20px | Card corner |
+| `shellInset` | 0 | No tray; kept for API compatibility |
+| `coreRadius` | 19px (= 20 − 1px border) | Full-bleed interactive areas inside a card |
 
-Interactive surfaces lift 2px on hover and settle on press. Optional `accent` renders a 2px tone line along the core's top edge (replaces today's left-border stripe on stat cards).
+Interactive surfaces lift 2px on hover and settle on press. Cards carry no edge accents (the former top tone line was removed 2026-11-25); state is shown in content with a `TonePill` text label or a tone-tinted icon.
 
 ### 3.2 Typography additions (theme variants, additive)
 
@@ -75,7 +76,7 @@ Container widths: Dashboard, Site Audit, Analyze Letter use `lg`; User Managemen
 
 | Component | Props | Purpose |
 |---|---|---|
-| `BezelCard` | `children`, `accent?: Tone`, `interactive?`, `reveal?: number` (stagger index), `padding?: 'none' \| 'sm' \| 'md'`, `component?`, `sx?` | Nested-bezel surface (3.1). `styled` implementation; `sx` lands on the core. |
+| `BezelCard` | `children`, `interactive?`, `reveal?: number` (stagger index), `padding?: 'none' \| 'sm' \| 'md'`, `component?`, `sx?` | Single card surface (3.1). `styled` implementation; `sx` lands on the core. |
 | `MetricTile` | `label`, `value: string \| number`, `support?`, `icon?: ReactNode`, `tone?: Tone`, `loading?` | KPI tile: eyebrow label, `metric` numeral, support line, icon in a 36px nested circle. Skeleton when `loading`. Built on `BezelCard`. |
 | `ScoreBar` | `label`, `value: number`, `tone?: Tone` (defaults to value-based), `size?: 'sm' \| 'md'` | Label + tabular value + 6px pill `LinearProgress` with `aria-label`. Replaces 14 duplicated blocks. |
 | `ScoreStrip` | `scores: { performance, accessibility, bestPractices, seo }`, `size?: 'sm' \| 'md'` | Four-up Perf / A11y / BP / SEO readout, value-colored (3.3). Each cell is a `<dl>` pair for screen readers. |
@@ -194,7 +195,7 @@ Unchanged: Supabase queries, `useUserAudits`, `useFormValidation`, `ensureSessio
 
 Vitest + Testing Library, colocated:
 
-- `BezelCard.test.tsx`: renders children; `interactive` sets hover styles via class; `accent` renders the decorative line `aria-hidden`.
+- `BezelCard.test.tsx`: renders children; `interactive` sets hover styles via class.
 - `MetricTile.test.tsx`: label / value / support render; `loading` renders a skeleton and no numeral.
 - `ScoreBar.test.tsx`: `scoreTone` thresholds (90 → success, 89 → warning, 70 → warning, 69 → error); progressbar has `aria-label` and `aria-valuenow`.
 - `ScoreStrip.test.tsx`: four cells, values colored by threshold.
@@ -239,3 +240,6 @@ Phases 3, 4, 5 are independent once Phase 1 lands and may run in parallel.
 - 2026-10-29 — Removed diffused ambient shadows from BezelCard (rest and hover) and the admin bulk-action bar; §3.1 and the "diffused ambient shadows" wording in the direction notes no longer apply. Inset highlights stay.
 - 2026-11-01 — App header aligned with the site language after deploy-preview feedback: nav items, Sign In / Register, the theme toggle and the mobile Menu button are 44px pills with no underline; active nav item is a contained pill. Added a `menu` icon path.
 - 2026-10-29 — Rolled the language out to every remaining page (checklist, action plan, resources, help, pricing, settings, analyze report, audit results, auth, signed-out home, admin demos, pattern library) and the analysis components. Added `TonePill`, `SegmentedToggleGroup`, `FilterSelect`, `AuthShell`. Admin page re-reviewed with an admin account. §3.4 note: the audit found `transition: all` and outer shadows in about a dozen files; none remain.
+- 2026-11-25 — Dropped the double-card (shell tray + inset core) for a single card surface app-wide (§3.1). Phones (< 600px): every contained/outlined button outside the app header renders at one 48px height (`controlHeightMobile`); header controls (Menu) stay 44px. Light cards are white with a #D4D4D4 hairline for contrast. Footer link renamed to "Resources".
+- 2026-11-25 — KPI tiles (MetricTile/StatCard) drop the top tone line. State = tone-tinted icon badge + `status` TonePill with a text label (`scoreStatus`: Good ≥90, Needs work 70–89, Poor <70).
+- 2026-11-25 — Removed BezelCard `accent` everywhere (Pricing popular plan, pro-bono resources, Danger Zone, Pattern Library). Each already has a text pill or heading carrying the state.

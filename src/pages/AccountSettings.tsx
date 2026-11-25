@@ -374,13 +374,13 @@ export default function AccountSettings() {
         </Box>
       </Box>
 
-      <BezelCard component="section" aria-labelledby="danger-heading" accent="error" reveal={4} sx={{ mt: 3 }}>
+      <BezelCard component="section" aria-labelledby="danger-heading" reveal={4} style={{ marginTop: 24 }}>
         <SectionHeader id="danger-heading" title="Danger Zone" dense />
         <Typography variant="body2" color="text.secondary" sx={{ maxWidth: '60ch' }}>
           Once you delete your account, there is no going back. This action cannot be undone.
         </Typography>
         <Box sx={{ mt: 2.5 }}>
-          <Button variant="outlined" color="error" sx={{ borderRadius: controlRadius, minHeight: 48, px: 3 }}>
+          <Button variant="contained" color="error" sx={{ borderRadius: controlRadius, minHeight: 48, px: 3 }}>
             Delete Account
           </Button>
         </Box>

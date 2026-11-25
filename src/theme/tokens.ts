@@ -98,16 +98,34 @@ export const primitiveTokens = {
 } as const;
 
 /**
- * Surface tokens for the nested-bezel card system (docs/specs/ui-refresh/SPEC.md §3.1).
- * The core radius is derived from the shell radius minus the inset so the two
- * curves stay concentric.
+ * Surface tokens for the card system (docs/specs/ui-refresh/SPEC.md §3.1).
+ * Cards are a single surface: the shell carries the border and the paper fill,
+ * with no inset tray. `coreRadius` is the shell radius minus the 1px border, so
+ * full-bleed interactive areas inside a card follow its corners.
  */
 export const surfaceTokens = {
   shellRadius: 20,
-  shellInset: 6,
-  coreRadius: 14,
+  shellInset: 0,
+  coreRadius: 19,
   /** Buttons, inputs, selects and other interactive controls. Chips stay pill-shaped. */
   controlRadius: 16,
+  /**
+   * Single button height on phones (< sm). Every contained/outlined button, of
+   * any size, renders at this height so stacked CTAs line up.
+   */
+  controlHeightMobile: 48,
+} as const;
+
+/**
+ * Light-scheme card surface. `background.paper` (#F5F5F5) sits too close to the
+ * page (#FCFCFC) to read as a card on phones, so light cards lift to white with
+ * a firmer hairline. Dark cards keep `background.paper` + `divider`.
+ */
+export const cardTokens = {
+  light: {
+    fill: '#FFFFFF',
+    border: '#D4D4D4',
+  },
 } as const;
 
 /** CSS length for interactive controls, usable directly in `sx`. */

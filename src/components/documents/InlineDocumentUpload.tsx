@@ -19,6 +19,7 @@ import { useTheme } from '@mui/material/styles';
 import Icon from '../ui/Icon';
 import { ArrowButton } from '../ui/ArrowButton/ArrowButton';
 import LegalDisclaimer from '../ui/LegalDisclaimer';
+import { srOnly } from '../ui/srOnly';
 import { DocumentAnalysis } from './DocumentUploadDialog';
 import { useAuth } from '../../contexts/AuthContext';
 import { ensureSession } from '../../services/session';
@@ -30,18 +31,6 @@ interface InlineDocumentUploadProps {
   /** Render the "What happens next?" block. Pages that show it elsewhere pass false. */
   showNextSteps?: boolean;
 }
-
-const srOnlyInput = {
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  padding: 0,
-  margin: -1,
-  overflow: 'hidden',
-  clip: 'rect(0 0 0 0)',
-  whiteSpace: 'nowrap',
-  border: 0,
-} as const;
 
 type AnalysisStage = 'idle' | 'uploading' | 'processing' | 'extracting' | 'analyzing' | 'complete' | 'error';
 
@@ -328,7 +317,7 @@ export default function InlineDocumentUpload({ onUploadComplete, showNextSteps =
               type="file"
               accept=".pdf,.png,.jpg,.jpeg,.webp"
               onChange={handleFileSelect}
-              sx={srOnlyInput}
+              sx={srOnly}
             />
 
             {file ? (
