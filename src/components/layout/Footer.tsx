@@ -67,7 +67,7 @@ export default function Footer() {
           {/* Signed-in users lose the home-screen entry point, so the footer carries it. */}
           {isRegistered && (
             <Button size="small" variant="text" component={RouterLink} to={ROUTE_PATHS.RESOURCES}>
-              Professional Resources
+              Resources
             </Button>
           )}
         </Stack>

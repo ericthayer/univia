@@ -101,7 +101,7 @@ export default function CustomChecklistManager() {
             <>
               {checklists.length > 0 && (
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   color="error"
                   startIcon={<Icon name="delete_sweep" />}
                   onClick={() => setResetDialogOpen(true)}

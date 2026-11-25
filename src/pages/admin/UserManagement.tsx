@@ -548,7 +548,7 @@ export default function UserManagement() {
                   <Button size="small" variant="outlined" sx={{ borderRadius: controlRadius }}>
                     Export
                   </Button>
-                  <Button size="small" variant="outlined" color="error" sx={{ borderRadius: controlRadius }}>
+                  <Button size="small" variant="contained" color="error" sx={{ borderRadius: controlRadius }}>
                     Delete
                   </Button>
                 </Box>

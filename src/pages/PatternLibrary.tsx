@@ -298,8 +298,8 @@ export default function PatternLibrary() {
                   BezelCard
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Use for every primary container. Add interactive for clickable cards and accent for a
-                  decorative tone line.
+                  Use for every primary container. Add interactive for clickable cards. State is shown
+                  with a TonePill or tinted icon, never an edge line.
                 </Typography>
                 <Grid container spacing={3}>
                   <Grid size={{ xs: 12, md: 4 }}>
@@ -315,9 +315,9 @@ export default function PatternLibrary() {
                     </BezelCard>
                   </Grid>
                   <Grid size={{ xs: 12, md: 4 }}>
-                    <BezelCard accent="success" sx={{ height: '100%' }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Accent</Typography>
-                      <Typography variant="body2" color="text.secondary">Tone line on the top edge.</Typography>
+                    <BezelCard sx={{ height: '100%', alignItems: 'flex-start', gap: 1 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>With state</Typography>
+                      <TonePill tone="success" dot>Good</TonePill>
                     </BezelCard>
                   </Grid>
                 </Grid>

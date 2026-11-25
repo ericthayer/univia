@@ -10,6 +10,16 @@ export function scoreTone(value: number): Tone {
   return 'error';
 }
 
+/**
+ * Plain-language band for a score, paired with `scoreTone` so state is never
+ * carried by color alone (WCAG 1.4.1). Bands match Lighthouse.
+ */
+export function scoreStatus(value: number): string {
+  if (value >= 90) return 'Good';
+  if (value >= 70) return 'Needs work';
+  return 'Poor';
+}
+
 export function clampScore(value: number): number {
   if (Number.isNaN(value)) return 0;
   return Math.min(100, Math.max(0, Math.round(value)));

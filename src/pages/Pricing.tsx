@@ -101,7 +101,6 @@ export default function Pricing() {
               <BezelCard
                 component="article"
                 aria-labelledby={titleId}
-                accent={isPopular ? 'neutral' : undefined}
                 reveal={index}
                 sx={{ gap: 3 }}
                 style={{ width: '100%' }}

@@ -23,14 +23,14 @@ describe('Footer', () => {
     mockIsRegistered = false;
   });
 
-  it('hides the Professional Resources link when signed out', () => {
+  it('hides the Resources link when signed out', () => {
     renderFooter();
-    expect(screen.queryByRole('link', { name: 'Professional Resources' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Resources' })).not.toBeInTheDocument();
   });
 
-  it('links to Professional Resources when signed in', () => {
+  it('links to Resources when signed in', () => {
     mockIsRegistered = true;
     renderFooter();
-    expect(screen.getByRole('link', { name: 'Professional Resources' })).toHaveAttribute('href', '/resources');
+    expect(screen.getByRole('link', { name: 'Resources' })).toHaveAttribute('href', '/resources');
   });
 });

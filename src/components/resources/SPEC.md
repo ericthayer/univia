@@ -9,7 +9,7 @@
 3. **Professional directory**: the existing Supabase-backed list (`useProfessionalResources`). Search and filters render only when listings exist. Two empty states are distinct: no listings yet ("directory in review") vs. no matches ("clear filters").
 4. **Non-endorsement note**: listings and links are not endorsements; Univia is not a law firm.
 
-**Global access:** `Footer` shows a "Professional Resources" link for registered (signed-in, non-anonymous) users, because the home-screen quick action disappears once signed in.
+**Global access:** `Footer` shows a "Resources" link for registered (signed-in, non-anonymous) users, because the home-screen quick action disappears once signed in.
 
 **Architecture**
 

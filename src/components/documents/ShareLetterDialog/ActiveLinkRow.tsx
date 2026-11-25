@@ -69,6 +69,7 @@ export function ActiveLinkRow({ link, disabled, onRevoke }: ActiveLinkRowProps) 
       ) : (
         <Button
           ref={revokeRef}
+          variant="contained"
           color="error"
           onClick={() => setConfirming(true)}
           disabled={disabled}

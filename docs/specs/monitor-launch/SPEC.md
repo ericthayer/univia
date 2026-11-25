@@ -123,7 +123,7 @@ Split into two PRs: the engine (database, queue, worker, schedule) and then the 
 - [x] Record per-page failures. A run with some failed pages still completes and reports them; a run where every page failed is `failed`. Issues on a page that failed keep their state.
 - [x] Issue diffing on run completion: detected, resolved, reopened, and for issues the owner marked fixed (Phase 5), fix confirmed or not confirmed. Every change is a row in append-only `issue_events`. `monitor-scans-behavior.sql`: 67 of 67 pass, and the other suites still pass.
 - [ ] Apply to production, set the worker's secrets, deploy `scan-worker`, allow-list the owner, and watch one full run.
-- [ ] Sites screens: add a site and pages, run history, open issues (second PR).
+- [x] Sites screens at `/monitor` (signed-in, not in the main navigation yet): add a site and pages, latest scan with Scan now and pause, open issues, pages with two-step remove, and run history. The page polls every 15 seconds while a scan is queued or running. Accounts without Monitor access see an early-access message.
 
 **Done when:** a site scans every week with no user action, and one failing page does not fail the run.
 
@@ -280,4 +280,5 @@ Baseline on `7de4110`, 2026-11-07.
 - 2026-11-07: Phase 2 limits. Closed Decisions 8 and 9. Pricing lists only built features, its `alert()` is gone, and Agency is "Contact us". Wrote the `enforce_plan_limits` migration and the Edge Function checks, tested locally.
 - 2026-11-07: Applied `20261108050610_enforce_plan_limits` to production after a confirmed backup, deployed `run-lighthouse-audit` v35 and `analyze-document` v58, and verified the limits with a guest. Phase 2's checklist is complete.
 - 2026-11-08: Phase 3 engine. Ran the fingerprint spike and set issue identity to page + rule. Wrote `20261108140000_monitor_sites_and_scans` and the `scan-worker` function, tested locally, not applied.
+- 2026-11-15: Engine merged (#43). Sites screens added at `/monitor`, tested with mocked data in light, dark and at 375px. The fix tracker and record are Phase 5.
 - 2026-11-25: Decision 10. Raised plan allowances (`20261125120000_raise_plan_limits`): guests 1 audit and 1 letter a week, signed-in plans no audit cap, Free 5 letters a month, Monitor no letter cap.

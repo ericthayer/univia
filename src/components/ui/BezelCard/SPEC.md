@@ -1,11 +1,11 @@
 # BezelCard
 
-**Intent:** The one surface primitive for the refreshed pages. A shell (tray) with a hairline border holds a core (plate) with an inset highlight; radii are concentric (`shellRadius − shellInset = coreRadius`). See `docs/specs/ui-refresh/SPEC.md` §3.1.
+**Intent:** The one surface primitive for the refreshed pages. A single card: the shell draws the hairline border and `background.paper` fill at `shellRadius` (20px); the core is the unpadded-by-default content area with no second fill or inset highlight. See `docs/specs/ui-refresh/SPEC.md` §3.1.
 
 **Usage**
 
 ```tsx
-<BezelCard component="section" aria-labelledby="recent-audits" accent="success" interactive reveal={2}>
+<BezelCard component="section" aria-labelledby="recent-audits" interactive reveal={2}>
   …
 </BezelCard>
 ```
@@ -17,10 +17,13 @@
 
 **Architecture:** `styled` components reading `theme.surfaces`, `theme.transitions.easing.spring`, `theme.transitions.duration.slow`. Dark-scheme overrides via `theme.applyStyles('dark', …)`.
 
-**Accessibility:** The accent line is `aria-hidden`. No color is the sole signal. Motion honors the global `prefers-reduced-motion` rule in `index.css`.
+**Accessibility:** No edge accents; state goes in content (TonePill with a text label, tinted icon). No color is the sole signal. Motion honors the global `prefers-reduced-motion` rule in `index.css`.
 
-**Performance:** Animates `transform`, `opacity`, `border-color` only. No backdrop filters, no outer shadows.
+**Performance:** Animates `transform`, `opacity`, `border-color` only. No backdrop filters, no shadows.
 
 **Changelog**
 - 2026-10-29 — Created.
 - 2026-10-29 — Removed the diffused ambient drop shadows (rest and hover). The core keeps only a crisp 1px inset highlight; depth comes from the nested shell and hairline border.
+- 2026-11-25 — Removed the double-card effect: no tinted shell tray, no 6px inset, no core fill or inset highlight. The shell is now the paper surface; `coreRadius` = 19px (shell radius minus border).
+- 2026-11-25 — Light scheme: white fill + #D4D4D4 border (`cardTokens.light`) for contrast against the page; dark unchanged.
+- 2026-11-25 — Removed the `accent` prop (top tone line). Cards show state with a TonePill or tinted icon instead.

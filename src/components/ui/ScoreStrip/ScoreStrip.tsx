@@ -3,6 +3,7 @@ import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { toneTextColor } from '../tone';
 import { clampScore, scoreTone } from '../ScoreBar/scoreTone';
+import { srOnly } from '../srOnly';
 
 export interface ScoreStripScores {
   performance?: number | null;
@@ -22,18 +23,6 @@ const CELLS: ReadonlyArray<{ key: keyof ScoreStripScores; abbr: string; full: st
   { key: 'bestPractices', abbr: 'BP', full: 'Best Practices' },
   { key: 'seo', abbr: 'SEO', full: 'SEO' },
 ];
-
-const srOnly = {
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  padding: 0,
-  margin: -1,
-  overflow: 'hidden',
-  clip: 'rect(0 0 0 0)',
-  whiteSpace: 'nowrap',
-  border: 0,
-} as const;
 
 /**
  * Four-up Perf / A11y / BP / SEO readout. Each cell is a definition pair so
