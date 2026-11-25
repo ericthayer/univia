@@ -380,7 +380,7 @@ export default function AccountSettings() {
           Once you delete your account, there is no going back. This action cannot be undone.
         </Typography>
         <Box sx={{ mt: 2.5 }}>
-          <Button variant="outlined" color="error" sx={{ borderRadius: controlRadius, minHeight: 48, px: 3 }}>
+          <Button variant="contained" color="error" sx={{ borderRadius: controlRadius, minHeight: 48, px: 3 }}>
             Delete Account
           </Button>
         </Box>
