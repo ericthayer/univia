@@ -218,6 +218,24 @@ export async function loadSiteDetail(siteId: string): Promise<MonitorResult<Site
   };
 }
 
+/**
+ * The latest completed full scan (any trigger except a one-page re-check),
+ * read on its own so a run of re-checks can't push it out of the capped history.
+ */
+export async function loadLatestFullScan(siteId: string): Promise<MonitorResult<ScanRun | null>> {
+  const { data, error } = await supabase
+    .from('scan_runs')
+    .select('id, trigger, status, pages_total, pages_succeeded, pages_failed, new_issues, resolved_issues, open_issues, created_at, started_at, completed_at')
+    .eq('site_id', siteId)
+    .eq('status', 'completed')
+    .neq('trigger', 'recheck')
+    .not('completed_at', 'is', null)
+    .order('completed_at', { ascending: false })
+    .limit(1);
+  if (error) return { ok: false, message: monitorErrorMessage(error) };
+  return { ok: true, value: ((data ?? [])[0] as ScanRun | undefined) ?? null };
+}
+
 export function createSite(name: string, origin: string, urls: string[]): Promise<MonitorResult<string>> {
   return call(supabase.rpc('create_site', { p_name: name, p_origin: origin, p_urls: urls }), (data) => String(data));
 }

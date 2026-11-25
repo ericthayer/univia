@@ -13,6 +13,8 @@ const DemandLetters = lazy(() => import('./pages/DemandLetters'));
 const ComplianceChecklist = lazy(() => import('./pages/ComplianceChecklist'));
 const ActionsPlan = lazy(() => import('./pages/ActionPlanBuilder'));
 const Monitor = lazy(() => import('./pages/Monitor'));
+const MonitorStatement = lazy(() => import('./pages/MonitorStatement'));
+const Unsubscribe = lazy(() => import('./pages/Unsubscribe'));
 const MonitorRecord = lazy(() => import('./pages/MonitorRecord'));
 const VerifyRecord = lazy(() => import('./pages/VerifyRecord'));
 const Resources = lazy(() => import('./pages/Resources'));
@@ -123,6 +125,14 @@ function App() {
                       }
                     />
                     <Route
+                      path={ROUTE_PATHS.MONITOR_STATEMENT}
+                      element={
+                        <RegisteredRoute>
+                          <MonitorStatement />
+                        </RegisteredRoute>
+                      }
+                    />
+                    <Route
                       path={ROUTE_PATHS.MONITOR_RECORD}
                       element={
                         <RegisteredRoute>
@@ -133,6 +143,7 @@ function App() {
                     <Route path={ROUTE_PATHS.VERIFY_RECORD} element={<VerifyRecord />} />
                     <Route path={ROUTE_PATHS.RESOURCES} element={<Resources />} />
                     <Route path={ROUTE_PATHS.SHARED_LETTER} element={<SharedLetter />} />
+                    <Route path={ROUTE_PATHS.UNSUBSCRIBE} element={<Unsubscribe />} />
                     <Route path={ROUTE_PATHS.HELP} element={<HelpCenter />} />
                     <Route
                       path={ROUTE_PATHS.ANALYZE_REPORT}
