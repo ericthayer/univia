@@ -52,8 +52,8 @@ export function letterLimitMessage(quota: Pick<QuotaResult, 'limit' | 'period'>)
     return `You've used your ${plural(quota.limit, 'demand letter analysis', 'demand letter analyses')} for this month. ` +
       'Your allowance resets on the 1st (UTC).';
   }
-  return `You've used the ${plural(quota.limit, 'demand letter analysis', 'demand letter analyses')} included without a paid plan. ` +
-    'Monitor includes 5 a month.';
+  return `You've used the ${plural(quota.limit, 'demand letter analysis', 'demand letter analyses')} available without an account. ` +
+    'Create a free account for 5 a month.';
 }
 
 export function isLetterLimitError(error: unknown): boolean {

@@ -1,11 +1,12 @@
--- Behavioral test for plan limits (20261108050610_enforce_plan_limits).
+-- Behavioral test for plan limits (20261108050610_enforce_plan_limits,
+-- 20261125120000_raise_plan_limits).
 -- Run on a disposable Supabase database built from every migration, as a superuser.
 -- Everything rolls back. Do not run against production.
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap;
 
-SELECT plan(37);
+SELECT plan(39);
 
 CREATE SCHEMA test_helpers;
 
@@ -60,23 +61,24 @@ INSERT INTO auth.users (id, email, is_anonymous) VALUES
   ('00000000-0000-0000-0000-0000000000e5', 'admin@example.invalid', false);
 
 -- Audit limits follow the plan
-SELECT is((SELECT audit_limit FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-0000000000b2'), 1, 'a new Free profile gets 1 audit a month');
+SELECT is((SELECT audit_limit FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-0000000000b2'), -1, 'a new Free profile has no audit cap');
 UPDATE public.user_profiles SET tier = 'pro' WHERE id = '00000000-0000-0000-0000-0000000000c3';
-SELECT is((SELECT audit_limit FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-0000000000c3'), 30, 'moving to Monitor sets 30');
+SELECT is((SELECT audit_limit FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-0000000000c3'), -1, 'moving to Monitor keeps no cap');
 UPDATE public.user_profiles SET tier = 'enterprise' WHERE id = '00000000-0000-0000-0000-0000000000d4';
 SELECT is((SELECT audit_limit FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-0000000000d4'), -1, 'moving to Agency removes the cap');
 UPDATE public.user_profiles SET tier = 'basic', audit_limit = 30 WHERE id = '00000000-0000-0000-0000-0000000000c3';
-SELECT is((SELECT audit_limit FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-0000000000c3'), 1, 'a plan change sets that plan''s limit, even when the update repeats the old limit');
+SELECT is((SELECT audit_limit FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-0000000000c3'), -1, 'a plan change sets that plan''s limit, even when the update repeats the old limit');
 UPDATE public.user_profiles SET audit_limit = 7 WHERE id = '00000000-0000-0000-0000-0000000000c3';
 SELECT is((SELECT audit_limit FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-0000000000c3'), 7, 'a custom limit set on its own is kept');
 UPDATE public.user_profiles SET tier = 'pro' WHERE id = '00000000-0000-0000-0000-0000000000c3';
-SELECT is((SELECT audit_limit FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-0000000000c3'), 30, 'and the next plan change resets it');
+SELECT is((SELECT audit_limit FROM public.user_profiles WHERE id = '00000000-0000-0000-0000-0000000000c3'), -1, 'and the next plan change resets it');
 UPDATE public.user_profiles SET is_admin = true WHERE id = '00000000-0000-0000-0000-0000000000e5';
 
 -- Last month's runs and letters do not count
 INSERT INTO public.audit_quota_claims (session_id, user_id, created_at) VALUES
   (gen_random_uuid(), '00000000-0000-0000-0000-0000000000b2', public.quota_period_start() - interval '1 day');
 INSERT INTO public.demand_letters (user_id, file_name, created_at) VALUES
+  ('00000000-0000-0000-0000-0000000000b2', 'last-month.pdf', public.quota_period_start() - interval '1 day'),
   ('00000000-0000-0000-0000-0000000000c3', 'last-month.pdf', public.quota_period_start() - interval '1 day');
 
 -- Audits, as run-lighthouse-audit calls them
@@ -85,8 +87,8 @@ SELECT is((public.claim_audit_run('00000000-0000-0000-0000-0000000000a1', '00000
 SELECT is(public.claim_audit_run('00000000-0000-0000-0000-0000000000a1', gen_random_uuid()), '{"allowed": false, "limit": 1, "used": 1, "period": "month"}'::jsonb, 'and not a second');
 SELECT lives_ok($$SELECT public.release_audit_run('00000000-0000-0000-0000-00000000aa01')$$, 'a failed run is released');
 SELECT is((public.claim_audit_run('00000000-0000-0000-0000-0000000000a1', gen_random_uuid())->>'allowed')::boolean, true, 'which gives the run back');
-SELECT is(test_helpers.claim_runs('00000000-0000-0000-0000-0000000000b2', 2), 1, 'Free gets 1 audit a month; last month''s run does not count');
-SELECT is(test_helpers.claim_runs('00000000-0000-0000-0000-0000000000c3', 31), 30, 'Monitor gets 30');
+SELECT is(test_helpers.claim_runs('00000000-0000-0000-0000-0000000000b2', 40), 40, 'Free has no audit cap');
+SELECT is(test_helpers.claim_runs('00000000-0000-0000-0000-0000000000c3', 31), 31, 'Monitor has no audit cap');
 SELECT is(test_helpers.claim_runs('00000000-0000-0000-0000-0000000000d4', 40), 40, 'Agency has no cap');
 SELECT is(test_helpers.claim_runs('00000000-0000-0000-0000-0000000000e5', 5), 5, 'an active admin has no cap');
 
@@ -94,18 +96,20 @@ SELECT is(test_helpers.claim_runs('00000000-0000-0000-0000-0000000000e5', 5), 5,
 SELECT is(public.letter_quota('00000000-0000-0000-0000-0000000000a1'), '{"allowed": true, "limit": 1, "used": 0, "period": "total", "anonymous": true}'::jsonb, 'a guest may save 1 letter in total');
 SELECT lives_ok($$SELECT public.insert_demand_letter('00000000-0000-0000-0000-0000000000a1', true, '{"file_name": "g1.pdf"}')$$, 'a guest saves their first letter');
 SELECT throws_ok($$SELECT public.insert_demand_letter('00000000-0000-0000-0000-0000000000a1', true, '{"file_name": "g2.pdf"}')$$, 'P0001', 'ANONYMOUS_LETTER_LIMIT', 'and not a second');
-SELECT lives_ok($$SELECT public.insert_demand_letter('00000000-0000-0000-0000-0000000000b2', false, '{"file_name": "f1.pdf"}')$$, 'Free saves 1 letter');
-SELECT throws_ok($$SELECT public.insert_demand_letter('00000000-0000-0000-0000-0000000000b2', true, '{"file_name": "f2.pdf"}')$$, 'P0001', 'LETTER_LIMIT', 'and not a second, whatever the caller claims about being a guest');
-SELECT is((public.letter_quota('00000000-0000-0000-0000-0000000000c3')->>'used')::int, 0, 'Monitor''s letter from last month does not count');
-SELECT lives_ok($$SELECT public.insert_demand_letter('00000000-0000-0000-0000-0000000000c3', false, jsonb_build_object('file_name', 'm' || n || '.pdf')) FROM generate_series(1, 5) AS n$$, 'Monitor saves 5 letters this month');
-SELECT throws_ok($$SELECT public.insert_demand_letter('00000000-0000-0000-0000-0000000000c3', false, '{"file_name": "m6.pdf"}')$$, 'P0001', 'LETTER_LIMIT', 'and not a sixth');
+SELECT is((public.letter_quota('00000000-0000-0000-0000-0000000000b2')->>'used')::int, 0, 'Free''s letter from last month does not count');
+SELECT is(public.letter_quota('00000000-0000-0000-0000-0000000000b2')->>'period', 'month', 'Free letters are counted per month');
+SELECT lives_ok($$SELECT public.insert_demand_letter('00000000-0000-0000-0000-0000000000b2', false, jsonb_build_object('file_name', 'f' || n || '.pdf')) FROM generate_series(1, 5) AS n$$, 'Free saves 5 letters this month');
+SELECT throws_ok($$SELECT public.insert_demand_letter('00000000-0000-0000-0000-0000000000b2', true, '{"file_name": "f6.pdf"}')$$, 'P0001', 'LETTER_LIMIT', 'and not a sixth, whatever the caller claims about being a guest');
+SELECT is((public.letter_quota('00000000-0000-0000-0000-0000000000c3')->>'limit')::int, -1, 'Monitor has no letter cap');
+SELECT lives_ok($$SELECT public.insert_demand_letter('00000000-0000-0000-0000-0000000000c3', false, jsonb_build_object('file_name', 'm' || n || '.pdf')) FROM generate_series(1, 11) AS n$$, 'Monitor saves 11 letters this month');
+SELECT is(public.letter_quota('00000000-0000-0000-0000-0000000000c3')->>'allowed', 'true', 'and may save more');
 SELECT lives_ok($$SELECT public.insert_demand_letter('00000000-0000-0000-0000-0000000000d4', false, jsonb_build_object('file_name', 'a' || n || '.pdf')) FROM generate_series(1, 7) AS n$$, 'Agency has no letter cap');
 SELECT lives_ok($$SELECT public.insert_demand_letter('00000000-0000-0000-0000-0000000000e5', false, jsonb_build_object('file_name', 'x' || n || '.pdf')) FROM generate_series(1, 3) AS n$$, 'nor does an active admin');
 SELECT test_helpers.act_as_system();
 
 -- Browser clients can read only their own usage
 SELECT test_helpers.act_as('authenticated', '00000000-0000-0000-0000-0000000000b2');
-SELECT is(public.my_audit_usage(), '{"limit": 1, "used": 1, "period": "month"}'::jsonb, 'an account sees its own monthly usage');
+SELECT is(public.my_audit_usage(), '{"limit": -1, "used": 40, "period": "month"}'::jsonb, 'an account sees its own monthly usage');
 SELECT throws_ok($$SELECT public.claim_audit_run('00000000-0000-0000-0000-0000000000b2', gen_random_uuid())$$, '42501', NULL, 'browser cannot claim runs');
 SELECT throws_ok($$SELECT public.release_audit_run(gen_random_uuid())$$, '42501', NULL, 'browser cannot release runs');
 SELECT throws_ok($$SELECT public.letter_quota('00000000-0000-0000-0000-0000000000b2')$$, '42501', NULL, 'browser cannot call the letter quota');

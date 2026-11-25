@@ -35,7 +35,7 @@ describe('limit messages', () => {
 
   it('words the letter allowance by period', () => {
     expect(letterLimitMessage({ limit: 1, period: 'total' })).toBe(
-      "You've used the 1 demand letter analysis included without a paid plan. Monitor includes 5 a month.",
+      "You've used the 1 demand letter analysis available without an account. Create a free account for 5 a month.",
     );
     expect(letterLimitMessage({ limit: 5, period: 'month' })).toBe(
       "You've used your 5 demand letter analyses for this month. Your allowance resets on the 1st (UTC).",

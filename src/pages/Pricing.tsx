@@ -25,7 +25,7 @@ const FAQS = [
   {
     question: 'Is the Free plan really free?',
     answer:
-      'Yes. The Free plan has no time limit and no card required. Monitor adds more audits and letter analyses, with weekly scans and a remediation record on the way.',
+      'Yes. The Free plan has no time limit and no card required. It includes unlimited site audits and 5 demand letter analyses a month. Monitor removes the letter cap, with weekly scans and a remediation record on the way.',
   },
   {
     question: 'How does annual billing work?',
