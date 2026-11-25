@@ -58,7 +58,7 @@ interface QuickAction {
 const QUICK_ACTIONS: QuickAction[] = [
   { icon: 'search', title: 'Run Audit', body: 'Scan your website for accessibility issues', to: '/audit' },
   { icon: 'gavel', title: 'Analyze Letter', body: 'Upload and analyze demand letters', to: '/letters' },
-  { icon: 'people', title: 'Find Professionals', body: 'Connect with legal and technical experts', to: '/resources' },
+  { icon: 'people', title: 'Find Resources', body: 'Legal help, remediation, and trusted references', to: '/resources' },
   {
     icon: 'analytics',
     title: 'View Metrics',
@@ -202,7 +202,7 @@ export default function Dashboard() {
                 <Box sx={{ ...iconCircleSx, mb: 2, opacity: disabled ? 0.55 : 1 }} aria-hidden="true">
                   <Icon name={action.icon} />
                 </Box>
-                <Typography variant="h6" component="p" sx={{ fontWeight: 600, mb: 0.5 }}>
+                <Typography className="QuickAction-title" variant="h6" component="p" sx={{ fontWeight: 600, mb: 0.5 }}>
                   {action.title}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -217,7 +217,16 @@ export default function Dashboard() {
             );
 
             return (
-              <Box component="li" key={action.title} sx={{ minWidth: 0 }}>
+              <Box
+                component="li"
+                key={action.title}
+                sx={{
+                  minWidth: 0,
+                  // Keyboard focus gets the same brighter edge BezelCard uses on hover.
+                  // Doubled `&` outranks BezelCard's dark-scheme border rule.
+                  ...(!disabled && { '&&:focus-within > *': { borderColor: 'text.secondary' } }),
+                }}
+              >
                 <BezelCard
                   interactive={!disabled}
                   padding="none"
@@ -232,7 +241,19 @@ export default function Dashboard() {
                   ) : (
                     <CardActionArea
                       onClick={() => navigate(action.to as string)}
-                      sx={{ p: 3, flex: 1, borderRadius: 'inherit', display: 'block' }}
+                      sx={{
+                        p: 3,
+                        flex: 1,
+                        borderRadius: 'inherit',
+                        display: 'block',
+                        // Link cue on intent only: the whole tile is the target, so the
+                        // title underlines on hover and keyboard focus, never at rest.
+                        '&:hover .QuickAction-title, &.Mui-focusVisible .QuickAction-title': {
+                          textDecoration: 'underline',
+                          textUnderlineOffset: '0.2em',
+                          textDecorationThickness: '2px',
+                        },
+                      }}
                     >
                       {content}
                     </CardActionArea>
