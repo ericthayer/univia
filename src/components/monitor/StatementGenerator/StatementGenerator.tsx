@@ -49,10 +49,12 @@ export function StatementGenerator({ site, detail, today = localToday() }: State
   const [errors, setErrors] = useState<StatementErrors>({});
   const formRef = useRef<StatementFormHandle>(null);
 
-  const lastScanAt = useMemo(
-    () => detail.runs.find((run) => run.status === 'completed' && run.completed_at)?.completed_at ?? null,
-    [detail.runs],
-  );
+  const lastScan = useMemo(() => {
+    const run = detail.runs.find((entry) => entry.status === 'completed' && entry.completed_at);
+    return run?.completed_at
+      ? { completedAt: run.completed_at, pagesChecked: run.pages_succeeded, pagesTotal: run.pages_total }
+      : null;
+  }, [detail.runs]);
   const limitations = useMemo(() => knownLimitations(detail.issues), [detail.issues]);
 
   const statement = useMemo(
@@ -62,12 +64,13 @@ export function StatementGenerator({ site, detail, today = localToday() }: State
         organization: fields.organization || site.name,
         siteName: site.name,
         origin: site.origin,
-        pagesChecked: detail.pages.length,
-        lastScanAt,
+        pagesMonitored: detail.pages.length,
+        weeklyScans: !site.paused,
+        lastScan,
         limitations,
         reviewedOn: today,
       }),
-    [fields, site.name, site.origin, detail.pages.length, lastScanAt, limitations, today],
+    [fields, site.name, site.origin, site.paused, detail.pages.length, lastScan, limitations, today],
   );
 
   const handleChange = (next: StatementFields) => {
@@ -94,7 +97,7 @@ export function StatementGenerator({ site, detail, today = localToday() }: State
           fields={fields}
           errors={errors}
           onChange={handleChange}
-          limitationsAvailable={Boolean(lastScanAt)}
+          limitationsAvailable={Boolean(lastScan)}
         />
       </BezelCard>
 

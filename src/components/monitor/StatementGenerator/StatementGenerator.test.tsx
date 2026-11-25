@@ -32,6 +32,7 @@ describe('StatementGenerator', () => {
     renderWithTheme(<StatementGenerator site={site} detail={detail(true)} today="2026-11-25" />);
     const preview = screen.getByRole('article', { name: /accessibility statement for corner bakery/i });
     expect(within(preview).getByText(/on 2 pages of this site every week/)).toBeInTheDocument();
+    expect(within(preview).getByText(/checked 2 pages\. These are the issues/)).toBeInTheDocument();
     expect(within(preview).getByText('Image elements do not have [alt] attributes (1 page)')).toBeInTheDocument();
     expect(within(preview).getByText(/last reviewed on November 25, 2026/)).toBeInTheDocument();
   });

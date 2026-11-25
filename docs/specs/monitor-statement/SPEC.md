@@ -23,8 +23,8 @@ Structure follows the W3C statement outline, minus a conformance status (we do n
 
 1. Title: "Accessibility statement for {site name}"
 2. Our commitment: organization, site address, target (WCAG 2.2 or 2.1, Level AA), worded as an aim.
-3. How we check: weekly automated checks of N pages, that automated checks find some problems but not all, plus the owner's own optional measures.
-4. Known limitations (optional, on by default): issues from the latest data that are not resolved, grouped by rule, with page counts. Top 10, then "and N more". Omitted when no scan has completed. When none are open, says so without implying the site is accessible.
+3. How we check: automated checks of the N monitored pages, "every week" only while scans are not paused, that automated checks find some problems but not all, plus the owner's own optional measures.
+4. Known limitations (optional, on by default): how many pages the latest completed scan could check ("could check X of Y" when some failed), then the unresolved issues currently known, grouped by rule, with page counts. Top 10, then "and N more". They are not attributed to the latest scan, because a page that failed keeps its earlier issues. Omitted when no scan has completed. When none are open, says so without implying the site is accessible.
 5. Feedback and contact: email (required), phone (optional), reply time (2, 5 or 10 business days).
 6. About this statement: review date (today).
 
@@ -60,3 +60,4 @@ New lazy route; nothing added to the main chunk. Builder is O(issues).
 ## Changelog
 
 - 2026-11-25: Created.
+- 2026-11-25: Review fixes: paused sites don't claim weekly checks; coverage states checked vs monitored pages; known issues aren't attributed to the latest scan.

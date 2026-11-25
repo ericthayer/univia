@@ -14,12 +14,13 @@ const base: StatementInput = {
   siteName: 'Corner Bakery',
   origin: 'https://bakery.example.com',
   standard: '2.2',
-  pagesChecked: 12,
+  pagesMonitored: 12,
+  weeklyScans: true,
   measures: '',
   contactEmail: 'help@bakery.example.com',
   contactPhone: '',
   responseDays: 5,
-  lastScanAt: '2026-11-20T15:00:00Z',
+  lastScan: { completedAt: '2026-11-20T15:00:00Z', pagesChecked: 12, pagesTotal: 12 },
   includeLimitations: true,
   limitations: [{ ruleId: 'color-contrast', title: 'Background and foreground colors do not have a sufficient contrast ratio.', pages: 3 }],
   reviewedOn: '2026-11-25',
@@ -34,7 +35,8 @@ describe('buildStatement', () => {
     expect(text).toContain('Accessibility statement for Corner Bakery');
     expect(text).toContain('WCAG) 2.2 at Level AA');
     expect(text).toContain('on 12 pages of this site every week');
-    expect(text).toContain('on November 20, 2026, found these issues');
+    expect(text).toContain('Our most recent automated check, on November 20, 2026, checked 12 pages.');
+    expect(text).toContain('issues our automated checks know about that are not yet fixed');
     expect(text).toContain('- Background and foreground colors do not have a sufficient contrast ratio (3 pages)');
     expect(text).toContain('- Email: help@bakery.example.com');
     expect(text).toContain('within 5 business days');
@@ -48,13 +50,24 @@ describe('buildStatement', () => {
 
   it('omits known limitations when switched off or before any scan completes', () => {
     expect(headings({ ...base, includeLimitations: false })).not.toContain('Known limitations');
-    expect(headings({ ...base, lastScanAt: null })).not.toContain('Known limitations');
+    expect(headings({ ...base, lastScan: null })).not.toContain('Known limitations');
   });
 
   it('says no issues were found without calling the site accessible', () => {
     const text = statementToText(buildStatement({ ...base, limitations: [] }));
-    expect(text).toContain('found no issues on the pages it covers');
+    expect(text).toContain('have found no open issues on the pages we monitor');
     expect(text).toContain('cannot find every problem');
+  });
+
+  it('says how many pages the latest check could reach', () => {
+    const text = statementToText(buildStatement({ ...base, limitations: [], lastScan: { completedAt: '2026-11-20T15:00:00Z', pagesChecked: 1, pagesTotal: 25 } }));
+    expect(text).toContain('could check 1 of 25 pages.');
+  });
+
+  it('does not promise weekly checks while scans are paused', () => {
+    const text = statementToText(buildStatement({ ...base, weeklyScans: false }));
+    expect(text).not.toContain('every week');
+    expect(text).toContain('We check 12 pages of this site with automated accessibility tools');
   });
 
   it('caps the list and counts the rest', () => {

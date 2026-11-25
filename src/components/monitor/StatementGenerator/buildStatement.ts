@@ -8,13 +8,16 @@ export interface StatementInput {
   siteName: string;
   origin: string;
   standard: StatementStandard;
-  pagesChecked: number;
+  /** Pages currently set up for monitoring. */
+  pagesMonitored: number;
+  /** False when the owner has paused weekly scans. */
+  weeklyScans: boolean;
   measures: string;
   contactEmail: string;
   contactPhone: string;
   responseDays: ResponseDays;
-  /** ISO timestamp of the latest completed scan, or null if none completed. */
-  lastScanAt: string | null;
+  /** The latest completed scan, or null if none completed. */
+  lastScan: { completedAt: string; pagesChecked: number; pagesTotal: number } | null;
   includeLimitations: boolean;
   limitations: KnownLimitation[];
   /** ISO date (YYYY-MM-DD) the owner reviewed the statement. */
@@ -48,15 +51,21 @@ export function formatStatementDate(value: string): string {
 const plural = (count: number, one: string, many: string): string => `${count} ${count === 1 ? one : many}`;
 
 function limitationsSection(input: StatementInput): StatementSection | null {
-  if (!input.includeLimitations || !input.lastScanAt) return null;
-  const when = formatStatementDate(input.lastScanAt);
+  const scan = input.lastScan;
+  if (!input.includeLimitations || !scan) return null;
+  const when = formatStatementDate(scan.completedAt);
+  // Pages that failed to load keep their earlier issues, so the coverage
+  // sentence says how many pages the latest check actually reached.
+  const coverage = scan.pagesChecked < scan.pagesTotal
+    ? `Our most recent automated check, on ${when}, could check ${scan.pagesChecked} of ${plural(scan.pagesTotal, 'page', 'pages')}.`
+    : `Our most recent automated check, on ${when}, checked ${plural(scan.pagesChecked, 'page', 'pages')}.`;
   if (!input.limitations.length) {
     return {
       heading: 'Known limitations',
       blocks: [
         {
           kind: 'paragraph',
-          text: `Our most recent automated check, on ${when}, found no issues on the pages it covers. Automated checks cannot find every problem, so please tell us about anything that gets in your way.`,
+          text: `${coverage} Automated checks have found no open issues on the pages we monitor. They cannot find every problem, so please tell us about anything that gets in your way.`,
         },
       ],
     };
@@ -68,7 +77,7 @@ function limitationsSection(input: StatementInput): StatementSection | null {
   return {
     heading: 'Known limitations',
     blocks: [
-      { kind: 'paragraph', text: `Our most recent automated check, on ${when}, found these issues. We are working on them:` },
+      { kind: 'paragraph', text: `${coverage} These are the issues our automated checks know about that are not yet fixed. We are working on them:` },
       { kind: 'list', items },
     ],
   };
@@ -96,7 +105,9 @@ export function buildStatement(input: StatementInput): Statement {
       blocks: [
         {
           kind: 'paragraph',
-          text: `We run automated accessibility checks on ${plural(input.pagesChecked, 'page', 'pages')} of this site every week and fix the issues they find. Automated checks find some accessibility problems, not all of them, so we also welcome reports from people who use the site.`,
+          text: `${input.weeklyScans
+            ? `We run automated accessibility checks on ${plural(input.pagesMonitored, 'page', 'pages')} of this site every week`
+            : `We check ${plural(input.pagesMonitored, 'page', 'pages')} of this site with automated accessibility tools`} and fix the issues they find. Automated checks find some accessibility problems, not all of them, so we also welcome reports from people who use the site.`,
         },
         ...(measures ? [{ kind: 'paragraph' as const, text: measures }] : []),
       ],
