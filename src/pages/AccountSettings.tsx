@@ -374,7 +374,7 @@ export default function AccountSettings() {
         </Box>
       </Box>
 
-      <BezelCard component="section" aria-labelledby="danger-heading" accent="error" reveal={4} sx={{ mt: 3 }}>
+      <BezelCard component="section" aria-labelledby="danger-heading" reveal={4} style={{ marginTop: 24 }}>
         <SectionHeader id="danger-heading" title="Danger Zone" dense />
         <Typography variant="body2" color="text.secondary" sx={{ maxWidth: '60ch' }}>
           Once you delete your account, there is no going back. This action cannot be undone.

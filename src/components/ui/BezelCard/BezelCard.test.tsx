@@ -23,14 +23,4 @@ describe('BezelCard', () => {
     expect(section.tagName).toBe('SECTION');
     expect(section).toHaveClass('BezelCard-shell');
   });
-
-  it('renders the accent line as decoration only', () => {
-    const { container } = renderWithTheme(
-      <BezelCard accent="success">
-        <span>inner</span>
-      </BezelCard>
-    );
-    const accent = container.querySelector('span[aria-hidden="true"]');
-    expect(accent).not.toBeNull();
-  });
 });

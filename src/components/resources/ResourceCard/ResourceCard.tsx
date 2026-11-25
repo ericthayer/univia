@@ -35,7 +35,6 @@ export function ResourceCard({ resource, reveal }: ResourceCardProps) {
       aria-labelledby={titleId}
       interactive
       reveal={reveal}
-      accent={resource.pro_bono ? 'success' : undefined}
       sx={{ height: '100%', gap: 2 }}
     >
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, minWidth: 0 }}>

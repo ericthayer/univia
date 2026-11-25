@@ -1,7 +1,6 @@
 import { forwardRef, ReactNode } from 'react';
 import Box, { BoxProps } from '@mui/material/Box';
 import { keyframes, styled } from '@mui/material/styles';
-import { Tone, toneColor } from '../tone';
 import { cardTokens } from '../../../theme/tokens';
 
 export type { Tone } from '../tone';
@@ -10,8 +9,6 @@ export type BezelPadding = 'none' | 'sm' | 'md';
 
 export interface BezelCardProps extends Omit<BoxProps, 'padding'> {
   children: ReactNode;
-  /** Draws a 2px tone line along the top edge of the core. Decorative only. */
-  accent?: Tone;
   /** Lifts the surface on hover and settles it on press. */
   interactive?: boolean;
   /** Stagger index for the mount reveal. Omit to render statically. */
@@ -105,26 +102,13 @@ const Core = styled(Box, {
   };
 });
 
-const Accent = styled('span', {
-  shouldForwardProp: (prop) => prop !== 'tone',
-})<{ tone: Tone }>(({ theme, tone }) => ({
-  position: 'absolute',
-  top: 0,
-  left: theme.spacing(3),
-  right: theme.spacing(3),
-  height: 2,
-  borderRadius: 1,
-  backgroundColor: toneColor(theme, tone),
-  pointerEvents: 'none',
-}));
-
 /**
  * Single-surface card: the shell draws the border and paper fill, the core
  * lays out content. `sx` applies to the core; every other prop lands on the
  * shell so callers can pick the semantic element with `component`.
  */
 export const BezelCard = forwardRef<HTMLDivElement, BezelCardProps>(function BezelCard(
-  { children, accent, interactive = false, reveal: revealIndex, padding = 'md', sx, className, ...shellProps },
+  { children, interactive = false, reveal: revealIndex, padding = 'md', sx, className, ...shellProps },
   ref
 ) {
   const shellClassName = className ? `BezelCard-shell ${className}` : 'BezelCard-shell';
@@ -138,7 +122,6 @@ export const BezelCard = forwardRef<HTMLDivElement, BezelCardProps>(function Bez
       {...shellProps}
     >
       <Core corePadding={padding} sx={sx}>
-        {accent && <Accent tone={accent} aria-hidden="true" />}
         {children}
       </Core>
     </Shell>
