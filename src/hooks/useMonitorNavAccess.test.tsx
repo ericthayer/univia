@@ -39,6 +39,18 @@ describe('useMonitorNavAccess', () => {
     expect(failed.result.current).toBe(false);
   });
 
+  it('retries after a lookup that throws', async () => {
+    access.getMonitorAccess.mockRejectedValueOnce(new Error('network'));
+    const failed = renderHook(() => useMonitorNavAccess());
+    await waitFor(() => expect(access.getMonitorAccess).toHaveBeenCalledTimes(1));
+    expect(failed.result.current).toBe(false);
+
+    access.getMonitorAccess.mockResolvedValueOnce({ ok: true, value: true });
+    const retried = renderHook(() => useMonitorNavAccess());
+    await waitFor(() => expect(retried.result.current).toBe(true));
+    expect(access.getMonitorAccess).toHaveBeenCalledTimes(2);
+  });
+
   it('does not ask for guests or signed-out visitors', () => {
     auth.isRegistered = false;
     const { result } = renderHook(() => useMonitorNavAccess());

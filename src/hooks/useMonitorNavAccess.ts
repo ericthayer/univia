@@ -8,8 +8,11 @@ const cache = new Map<string, Promise<boolean>>();
 function lookup(userId: string): Promise<boolean> {
   let pending = cache.get(userId);
   if (!pending) {
-    pending = getMonitorAccess().then((result) => result.ok && result.value);
-    // A failed lookup hides the item but is not cached, so the next mount retries.
+    pending = getMonitorAccess().then(
+      (result) => result.ok && result.value,
+      () => false,
+    );
+    // A failed or thrown lookup hides the item but is not cached, so the next mount retries.
     void pending.then((allowed) => {
       if (!allowed) cache.delete(userId);
     });
