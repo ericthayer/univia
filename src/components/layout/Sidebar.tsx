@@ -15,6 +15,7 @@ import Icon from '../ui/Icon';
 import { useThemeToggle } from '../../hooks/useThemeToggle';
 import { controlRadius } from '../../theme/tokens';
 import { useAuth } from '../../contexts/AuthContext';
+import { useMonitorNavAccess } from '../../hooks/useMonitorNavAccess';
 
 const drawerWidth = 240;
 
@@ -27,7 +28,8 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { isRegistered } = useAuth();
-  const menuItems = getSidebarMenuItems(isRegistered);
+  const monitorAccess = useMonitorNavAccess();
+  const menuItems = getSidebarMenuItems(isRegistered, { monitorAccess });
   const { resolvedMode, toggle: toggleColorMode } = useThemeToggle();
   const [mounted, setMounted] = useState(false);
 
