@@ -8,6 +8,13 @@ export interface MenuItem {
   showInSidebar?: boolean;
   badge?: string;
   disabled?: boolean;
+  /** Shown only to signed-in accounts that have Monitor access. */
+  requiresMonitorAccess?: boolean;
+}
+
+export interface MenuOptions {
+  /** True once the server confirms this account has Monitor access. */
+  monitorAccess?: boolean;
 }
 
 export const MENU_ITEMS: MenuItem[] = [
@@ -46,6 +53,16 @@ export const MENU_ITEMS: MenuItem[] = [
     ariaLabel: 'Analyze demand letters',
     showInHeader: true,
     showInSidebar: true,
+  },
+  {
+    id: 'monitor',
+    text: 'Monitor',
+    icon: 'monitor_heart',
+    path: '/monitor',
+    ariaLabel: 'Monitor your sites',
+    showInHeader: true,
+    showInSidebar: true,
+    requiresMonitorAccess: true,
   },
   {
     id: 'checklist',
@@ -128,8 +145,12 @@ const SIGN_IN_MENU_ITEM: MenuItem = {
   showInHeader: true,
 };
 
-export function getHeaderMenuItems(isAuthenticated: boolean = false): MenuItem[] {
-  const items = MENU_ITEMS.filter(item => item.showInHeader).map(item => {
+function isVisible(item: MenuItem, isAuthenticated: boolean, options: MenuOptions): boolean {
+  return !item.requiresMonitorAccess || (isAuthenticated && options.monitorAccess === true);
+}
+
+export function getHeaderMenuItems(isAuthenticated: boolean = false, options: MenuOptions = {}): MenuItem[] {
+  const items = MENU_ITEMS.filter(item => item.showInHeader && isVisible(item, isAuthenticated, options)).map(item => {
     if (item.id === 'dashboard') {
       return {
         ...item,
@@ -144,8 +165,8 @@ export function getHeaderMenuItems(isAuthenticated: boolean = false): MenuItem[]
 }
 
 /** Mirrors the header: signed-out users get Sign In as a nav item, no Register. */
-export function getSidebarMenuItems(isAuthenticated: boolean = false): MenuItem[] {
-  const items = MENU_ITEMS.filter(item => item.showInSidebar).map(item => {
+export function getSidebarMenuItems(isAuthenticated: boolean = false, options: MenuOptions = {}): MenuItem[] {
+  const items = MENU_ITEMS.filter(item => item.showInSidebar && isVisible(item, isAuthenticated, options)).map(item => {
     if (item.id === 'dashboard') {
       return {
         ...item,

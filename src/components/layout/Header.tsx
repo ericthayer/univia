@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import logoUniviaUrl from '../../assets/images/logo-univia.svg';
 import { getHeaderMenuItems, MenuItem } from '../../config/navigation';
 import { useAuth } from '../../contexts/AuthContext';
+import { useMonitorNavAccess } from '../../hooks/useMonitorNavAccess';
 import UserMenu from '../auth/UserMenu';
 import Icon from '../ui/Icon';
 import { useThemeToggle } from '../../hooks/useThemeToggle';
@@ -42,8 +43,9 @@ export default function Header({ onMobileMenuToggle, mobileMenuOpen = false }: H
   const navigate = useNavigate();
   const location = useLocation();
   const { isRegistered, loading: authLoading } = useAuth();
+  const monitorAccess = useMonitorNavAccess();
   // Hold back "Sign In" until auth resolves so signed-in users never see it flash.
-  const menuItems = getHeaderMenuItems(isRegistered).filter(
+  const menuItems = getHeaderMenuItems(isRegistered, { monitorAccess }).filter(
     (item) => !(authLoading && item.id === 'sign-in'),
   );
 
